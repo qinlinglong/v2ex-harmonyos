@@ -124,8 +124,12 @@ struct Index {
           Button('我的收藏').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Favorites' }))
         }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
       } else {
-        List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
-          .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
+        Refresh({ refreshing: this.loading }) {
+          List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+            .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
+        }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
+          if (state === RefreshStatus.Refresh) this.loadTopics(this.selectedTab === 0 ? 'hot' : 'latest');
+        })
       }
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
   }
