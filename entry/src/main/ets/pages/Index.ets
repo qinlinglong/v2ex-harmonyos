@@ -116,6 +116,7 @@ struct Index {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
           .layoutWeight(1).height(42).fontSize(14).backgroundColor('#F1F4F7')
           .onChange((value: string) => this.searchText = value)
+          .onSubmit(() => this.searchRemote())
         Text('⌕').fontSize(22).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
           .onClick(() => this.searchRemote())
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
