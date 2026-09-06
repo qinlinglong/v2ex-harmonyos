@@ -43,6 +43,8 @@ struct TopicDetail {
   @State appendOpen: boolean = false;
   @State appendText: string = '';
   @State appendStatus: string = '';
+  @State voteState: number = 0;
+  @State replyOrder: number = 0;
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -79,7 +81,7 @@ struct TopicDetail {
     finally { this.replying = false; }
   }
 
-  private async action(kind: 'favorite' | 'thank' | 'up'): Promise<void> {
+  private async action(kind: 'favorite' | 'thank' | 'up' | 'down'): Promise<boolean> {
     this.actionStatus = '处理中…';
     const action = kind === 'favorite' ? (this.favorited ? 'unfavorite' : 'favorite') : kind;
     try {
@@ -88,17 +90,31 @@ struct TopicDetail {
         if (kind === 'favorite') this.favorited = !this.favorited;
         if (kind === 'thank') this.thanked = true;
         this.actionStatus = kind === 'favorite' ? (this.favorited ? '已收藏' : '已取消收藏') : '已完成';
+        return true;
       } else this.actionStatus = '请先登录';
     } catch (_) { this.actionStatus = '操作失败'; }
+    return false;
   }
 
   private async thankReply(replyId: number): Promise<void> {
     if (this.thankedReplies.indexOf(replyId) >= 0) return;
     try {
       const ok: boolean = await V2exService.replyAction(this.topicId, replyId, 'thank');
-      if (ok) this.thankedReplies = this.thankedReplies.concat([replyId]);
+      if (ok) {
+        this.thankedReplies = this.thankedReplies.concat([replyId]);
+        this.replies = this.replies.map((item: V2exReply) => {
+          if (item.id !== replyId) return item;
+          return { id: item.id, content: item.content, created: item.created, member: item.member, thanks: (item.thanks ?? 0) + 1, thanked: true } as V2exReply;
+        });
+      }
       else this.replyStatus = '请先登录';
     } catch (_) { this.replyStatus = '操作失败'; }
+  }
+
+  private orderedReplies(): V2exReply[] {
+    const list: V2exReply[] = this.replies.slice();
+    if (this.replyOrder === 1) list.reverse();
+    return list;
   }
 
   private beginEditReply(reply: V2exReply): void {
@@ -170,7 +186,14 @@ struct TopicDetail {
               Row() {
                 Button(this.favorited ? '★ 已收藏' : '☆ 收藏').layoutWeight(1).onClick(() => this.action('favorite'))
                 Button(this.thanked ? '♥ 已感谢' : '♥ 感谢').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('thank'))
-                Button('▲ 赞').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('up'))
+                Button(this.voteState === 1 ? '▲ 已赞' : '▲ 赞').layoutWeight(1).margin({ left: 8 }).onClick(async () => {
+                  const ok: boolean = await this.action('up');
+                  if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
+                })
+                Button(this.voteState === -1 ? '▼ 已踩' : '▼ 踩').layoutWeight(1).margin({ left: 8 }).onClick(async () => {
+                  const ok: boolean = await this.action('down');
+                  if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
+                })
               }.width('100%').margin({ top: 16 })
               Button('编辑主题').fontSize(13).fontColor('#4F7CAC').backgroundColor(Color.Transparent)
                 .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
@@ -195,9 +218,13 @@ struct TopicDetail {
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
             }.width('100%').padding(20).backgroundColor(Color.White)
-            Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124')
-              .width('100%').padding({ left: 18, top: 20, bottom: 12 })
-            ForEach(this.replies, (reply: V2exReply, index: number) => {
+            Row() {
+              Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124')
+              Blank()
+              Text(this.replyOrder === 0 ? '默认排序' : '最新在前').fontSize(13).fontColor('#7B8794')
+                .onClick(() => this.replyOrder = this.replyOrder === 0 ? 1 : 0)
+            }.width('100%').padding({ left: 18, right: 18, top: 20, bottom: 12 })
+            ForEach(this.orderedReplies(), (reply: V2exReply, index: number) => {
               Column() {
                 Row() {
                   Stack() {
@@ -224,7 +251,7 @@ struct TopicDetail {
                 } else {
                   Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
                   Row() {
-                    Text(this.thankedReplies.indexOf(reply.id) >= 0 ? '♥ 已感谢' : '♡ 感谢')
+                    Text(this.thankedReplies.indexOf(reply.id) >= 0 ? `♥ 已感谢 ${reply.thanks ?? 0}` : `♡ 感谢 ${reply.thanks ?? 0}`)
                       .fontSize(13).fontColor('#4F7CAC').onClick(() => this.thankReply(reply.id))
                     Blank()
                     Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
