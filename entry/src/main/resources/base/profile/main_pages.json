@@ -7,6 +7,7 @@
     "pages/Profile",
     "pages/Notifications",
     "pages/MyTopics",
-    "pages/MyNodes"
+    "pages/MyNodes",
+    "pages/Favorites"
   ]
 }

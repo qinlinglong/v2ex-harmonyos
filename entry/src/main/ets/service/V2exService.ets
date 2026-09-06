@@ -141,4 +141,21 @@ export class V2exService {
       return response.responseCode >= 200 && response.responseCode < 400;
     } finally { request.destroy(); }
   }
+
+  static async memberAction(username: string, action: 'follow' | 'unfollow'): Promise<boolean> {
+    const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`);
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/${action}/member/${encodeURIComponent(username)}?once=${V2exService.formValue(onceMatch[1])}`, {
+        method: http.RequestMethod.GET,
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/member/${username}` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
 }

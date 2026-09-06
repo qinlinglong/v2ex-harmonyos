@@ -8,6 +8,7 @@ struct Profile {
   @State member: V2exMember | undefined = undefined;
   @State username: string = '';
   @State status: string = '加载中…';
+  @State followed: boolean = false;
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
@@ -30,6 +31,11 @@ struct Profile {
         Column() {
           Text(this.member.username).fontSize(26).fontWeight(FontWeight.Bold).fontColor('#202124')
           Text(this.member.tagline || 'V2EX 用户').fontSize(15).fontColor('#7B8794').margin({ top: 10 })
+          Button(this.followed ? '已关注' : '关注').margin({ top: 22 }).onClick(async () => {
+            const ok: boolean = await V2exService.memberAction(this.username, this.followed ? 'unfollow' : 'follow');
+            if (ok) this.followed = !this.followed;
+            else this.status = '请先登录';
+          })
           Text('主题 · 回复 · 收藏').fontSize(14).fontColor('#4F7CAC').margin({ top: 26 })
         }.width('100%').padding({ top: 42, bottom: 42 }).backgroundColor(Color.White)
       } else {
