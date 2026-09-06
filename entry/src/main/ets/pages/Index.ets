@@ -40,6 +40,11 @@ struct Index {
     if (index === 2 && this.nodes.length === 0) this.loadNodes();
   }
 
+  private shiftTab(delta: number): void {
+    const next: number = Math.max(0, Math.min(this.tabs.length - 1, this.selectedTab + delta));
+    if (next !== this.selectedTab) this.selectTab(next);
+  }
+
   private visibleTopics(): V2exTopic[] {
     const query: string = this.searchText.trim().toLowerCase();
     if (query.length === 0) return this.topics;
@@ -132,5 +137,7 @@ struct Index {
         })
       }
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
+      .gesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
+        .onActionEnd((event: GestureEvent) => { if (event.offsetX > 80) this.shiftTab(-1); else if (event.offsetX < -80) this.shiftTab(1); }))
   }
 }
