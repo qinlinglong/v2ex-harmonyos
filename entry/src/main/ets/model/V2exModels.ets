@@ -40,6 +40,8 @@ export interface V2exReply {
   content: string;
   created: number;
   member?: V2exMember;
+  topic_id?: number;
+  topic_title?: string;
   thanks?: number;
   thanked?: boolean;
 }

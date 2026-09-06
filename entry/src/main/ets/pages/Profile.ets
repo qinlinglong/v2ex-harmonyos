@@ -16,6 +16,10 @@ struct Profile {
   @State blocked: boolean = false;
   @State tab: number = 0;
 
+  private replyTopicId(reply: V2exReply): number {
+    return Number(reply.topic_id ?? 0);
+  }
+
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
     this.username = String(params?.['username'] ?? '');
@@ -61,11 +65,16 @@ struct Profile {
   replyRow(reply: V2exReply) {
     ListItem() {
       Column() {
+        Text(reply.topic_title ?? '回复').fontSize(13).fontColor(this.themeColor).maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(reply.content).fontSize(15).fontColor('#30343B').maxLines(4)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text('回复').fontSize(12).fontColor(this.themeColor).margin({ top: 7 })
+        Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
       }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
-    }
+    }.onClick(() => {
+      const topicId: number = this.replyTopicId(reply);
+      if (topicId > 0) router.pushUrl({ url: 'pages/TopicDetail', params: { id: topicId } });
+    })
   }
 
   build() {
@@ -104,9 +113,9 @@ struct Profile {
               }.width('80%').margin({ top: 16 })
             }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(Color.White)
             Row() {
-              Text('主题').fontColor(this.tab === 0 ? '#4F7CAC' : '#7B8794').fontSize(15)
+              Text('主题').fontColor(this.tab === 0 ? this.themeColor : '#7B8794').fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 0)
-              Text('回复').fontColor(this.tab === 1 ? '#4F7CAC' : '#7B8794').fontSize(15)
+              Text('回复').fontColor(this.tab === 1 ? this.themeColor : '#7B8794').fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 1)
             }.width('100%').height(52).backgroundColor(Color.White)
             if (this.tab === 0) {
