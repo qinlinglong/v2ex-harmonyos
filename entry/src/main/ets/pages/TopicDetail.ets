@@ -361,16 +361,32 @@ struct TopicDetail {
                 Text(` · ${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
               }.margin({ top: 10 })
               Row() {
-                Button(this.favorited ? '★ 已收藏' : '☆ 收藏').layoutWeight(1).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.action('favorite'))
-                Button(this.thanked ? '♥ 已感谢' : '♥ 感谢').layoutWeight(1).margin({ left: 8 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.action('thank'))
-                Button(this.voteState === 1 ? '▲ 已赞' : '▲ 赞').layoutWeight(1).margin({ left: 8 }).onClick(async () => {
-                  const ok: boolean = await this.action('up');
-                  if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
-                }).backgroundColor(this.themeColor).fontColor(Color.White)
-                Button(this.voteState === -1 ? '▼ 已踩' : '▼ 踩').layoutWeight(1).margin({ left: 8 }).onClick(async () => {
-                  const ok: boolean = await this.action('down');
-                  if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
-                }).backgroundColor(this.themeColor).fontColor(Color.White)
+                Column() {
+                  Text(this.favorited ? '★' : '☆').fontSize(19).fontColor(this.favorited ? '#D69E00' : this.themeColor)
+                  Text('收藏').fontSize(12).fontColor(this.favorited ? '#D69E00' : '#66727F').margin({ top: 2 })
+                }.layoutWeight(1).height(50).justifyContent(FlexAlign.Center).backgroundColor(this.favorited ? '#FFF7D6' : '#F3F6FA').borderRadius(10)
+                  .onClick(() => this.action('favorite'))
+                Column() {
+                  Image($r('app.media.ic_heart')).width(20).height(20).fillColor(this.thanked ? '#D05A73' : this.themeColor)
+                  Text('感谢').fontSize(12).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ top: 2 })
+                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(10)
+                  .onClick(() => this.action('thank'))
+                Column() {
+                  Text('▲').fontSize(18).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
+                  Text('赞').fontSize(12).fontColor(this.voteState === 1 ? this.themeColor : '#66727F').margin({ top: 2 })
+                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === 1 ? '#EAF3FF' : '#F3F6FA').borderRadius(10)
+                  .onClick(async () => {
+                    const ok: boolean = await this.action('up');
+                    if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
+                  })
+                Column() {
+                  Text('▼').fontSize(18).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6')
+                  Text('踩').fontSize(12).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6').margin({ top: 2 })
+                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === -1 ? '#E9EDF2' : '#F3F6FA').borderRadius(10)
+                  .onClick(async () => {
+                    const ok: boolean = await this.action('down');
+                    if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
+                  })
               }.width('100%').margin({ top: 16 })
               if (this.topic.editable === true) {
                 Button('编辑主题').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
