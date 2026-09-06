@@ -88,7 +88,12 @@ export class V2exService {
   }
 
   static async searchTopics(query: string): Promise<V2exTopic[]> {
-    const raw: Object = JSON.parse(await V2exService.get(`https://www.sov2ex.com/api/search?q=${encodeURIComponent(query)}&size=50&from=0&sort=created&order=0`)) as Object;
+    const sort: string = AppStorage.get<string>('v2exSearchSort') ?? 'created';
+    const order: string = AppStorage.get<string>('v2exSearchOrder') ?? '0';
+    const gte: string = AppStorage.get<string>('v2exSearchGte') ?? '';
+    const lte: string = AppStorage.get<string>('v2exSearchLte') ?? '';
+    const dateParams: string = `${gte.length > 0 ? `&gte=${encodeURIComponent(gte)}` : ''}${lte.length > 0 ? `&lte=${encodeURIComponent(lte)}` : ''}`;
+    const raw: Object = JSON.parse(await V2exService.get(`https://www.sov2ex.com/api/search?q=${encodeURIComponent(query)}&size=50&from=0&sort=${encodeURIComponent(sort)}&order=${encodeURIComponent(order)}${dateParams}`)) as Object;
     const payload: Record<string, Object> = raw as Record<string, Object>;
     const hits: Object[] = (payload['hits'] as Object[] | undefined) ?? [];
     const allNodes: V2exNode[] = await V2exService.nodes();
