@@ -344,7 +344,7 @@ struct Index {
         })
       }
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor('#F5F7FA')
-      .parallelGesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
+      .gesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
         .onActionEnd((event: GestureEvent) => { if (event.offsetX > 80) this.shiftTab(-1); else if (event.offsetX < -80) this.shiftTab(1); }))
       if (this.drawerOpen) {
         Row() {
