@@ -2,6 +2,26 @@ import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exReply, V2exTopic } from '../model/V2exModels';
 
+interface DetailPart { kind: string; value: string; }
+
+function detailParts(markdown: string): DetailPart[] {
+  const parts: DetailPart[] = [];
+  const pattern: RegExp = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/gi;
+  let cursor: number = 0;
+  let match: RegExpExecArray | null = pattern.exec(markdown);
+  while (match !== null) {
+    const before: string = markdown.substring(cursor, match.index).trim();
+    if (before.length > 0) parts.push({ kind: 'text', value: before });
+    parts.push({ kind: 'image', value: match[1] });
+    cursor = match.index + match[0].length;
+    match = pattern.exec(markdown);
+  }
+  const tail: string = markdown.substring(cursor).trim();
+  if (tail.length > 0) parts.push({ kind: 'text', value: tail });
+  if (parts.length === 0 && markdown.trim().length > 0) parts.push({ kind: 'text', value: markdown.trim() });
+  return parts;
+}
+
 @Entry
 @Component
 struct TopicDetail {
@@ -81,8 +101,14 @@ struct TopicDetail {
                 Button('▲ 赞').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('up'))
               }.width('100%').margin({ top: 16 })
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
-              Text(this.topic.content || '（无正文）').fontSize(16).fontColor('#30343B').lineHeight(26)
-                .margin({ top: 20 }).textAlign(TextAlign.Start)
+              ForEach(detailParts(this.topic.content || '（无正文）'), (part: DetailPart) => {
+                if (part.kind === 'image') {
+                  Image(part.value).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
+                    .margin({ top: 14, bottom: 4 })
+                } else {
+                  Text(part.value).fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
+                }
+              }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
             }.width('100%').padding(20).backgroundColor(Color.White)
             Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124')
               .width('100%').padding({ left: 18, top: 20, bottom: 12 })
