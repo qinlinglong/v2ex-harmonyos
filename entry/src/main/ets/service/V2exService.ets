@@ -76,7 +76,7 @@ export class V2exService {
       return {
         id: Number(source['id'] ?? 0), title: String(source['title'] ?? ''), content: String(source['content'] ?? ''),
         replies: Number(source['replies'] ?? 0), last_modified: 0,
-        last_touched: Math.floor(new Date(String(source['created'] ?? '')).getTime() / 1000),
+        last_touched: Math.floor(Date.parse(String(source['created'] ?? '')) / 1000),
         node: nodeMap.get(nodeId), member: { username: String(source['member'] ?? '') }
       } as V2exTopic;
     });
