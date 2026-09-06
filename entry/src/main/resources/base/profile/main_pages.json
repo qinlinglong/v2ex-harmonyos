@@ -15,6 +15,7 @@
     "pages/HotestTopics",
     "pages/MyFollowing",
     "pages/Rank",
-    "pages/Search"
+    "pages/Search",
+    "pages/TopicBlockSettings"
   ]
 }

@@ -50,10 +50,15 @@ struct Index {
 
   private visibleTopics(): V2exTopic[] {
     const query: string = this.searchText.trim().toLowerCase();
-    if (query.length === 0) return this.topics;
-    return this.topics.filter((topic: V2exTopic) =>
-      topic.title.toLowerCase().includes(query) || (topic.content ?? '').toLowerCase().includes(query) ||
-      (topic.member?.username ?? '').toLowerCase().includes(query) || (topic.node?.title ?? '').toLowerCase().includes(query));
+    let blocked: string[] = [];
+    try { blocked = JSON.parse(AppStorage.get<string>('v2exBlockedKeywords') ?? '[]') as string[]; } catch (_) { blocked = []; }
+    return this.topics.filter((topic: V2exTopic) => {
+      const text: string = `${topic.title} ${topic.content ?? ''}`.toLowerCase();
+      if (blocked.some((value: string) => value.length > 0 && text.includes(value.toLowerCase()))) return false;
+      if (query.length === 0) return true;
+      return topic.title.toLowerCase().includes(query) || (topic.content ?? '').toLowerCase().includes(query) ||
+        (topic.member?.username ?? '').toLowerCase().includes(query) || (topic.node?.title ?? '').toLowerCase().includes(query);
+    });
   }
 
   private async loadNodes(): Promise<void> {

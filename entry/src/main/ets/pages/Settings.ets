@@ -45,6 +45,9 @@ struct Settings {
         Row() { Text('社区排行').fontSize(16).layoutWeight(1); Text('查看').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/Rank' }))
+        Row() { Text('主题屏蔽').fontSize(16).layoutWeight(1); Text('管理').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/TopicBlockSettings' }))
         Row() { Text('退出登录').fontSize(16).layoutWeight(1); Button('退出').fontSize(13).onClick(() => { try { webview.WebCookieManager.clearAllCookiesSync(); this.status = '已退出登录'; } catch (_) { this.status = '退出失败'; } }) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
         if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 16 })
