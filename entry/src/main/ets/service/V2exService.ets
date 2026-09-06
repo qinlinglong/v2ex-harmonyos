@@ -15,6 +15,13 @@ export class V2exService {
     return API_BASE;
   }
 
+  private static assetUrl(value: string): string {
+    const raw: string = value.trim();
+    if (raw.startsWith('//')) return `https:${raw}`;
+    if (raw.startsWith('/')) return `${V2exService.base().replace(/\/$/, '')}${raw}`;
+    return raw;
+  }
+
   private static cookie(): string {
     try { return webview.WebCookieManager.fetchCookieSync(V2exService.base()) || ''; } catch (_) { return ''; }
   }
@@ -233,7 +240,7 @@ export class V2exService {
     const pattern: RegExp = /id=["']n_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
     let match: RegExpExecArray | null = pattern.exec(html);
     while (match !== null) {
-      result.push({ id: Number(match[1]), avatar: match[2], username: match[3], topicId: Number(match[4]), topicTitle: V2exService.cleanHtml(match[5]) });
+      result.push({ id: Number(match[1]), avatar: V2exService.assetUrl(match[2]), username: match[3], topicId: Number(match[4]), topicTitle: V2exService.cleanHtml(match[5]) });
       match = pattern.exec(html);
     }
     return result;
@@ -274,7 +281,7 @@ export class V2exService {
       const username: string = V2exService.cleanHtml(match[3]);
       if (username.length > 0 && seen.indexOf(username) < 0) {
         seen.push(username);
-        result.push({ username, avatar_large: match[2] });
+        result.push({ username, avatar_large: V2exService.assetUrl(match[2]) });
       }
       match = pattern.exec(html);
     }
@@ -365,7 +372,7 @@ export class V2exService {
     const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<div class=["']reply_content["']>([\s\S]*?)<\/div>/gi;
     let match: RegExpExecArray | null = pattern.exec(html);
     while (match !== null) {
-      result.push({ id: Number(match[1]), content: V2exService.cleanHtml(match[4]), created: 0, member: { username: match[3], avatar_large: match[2] } });
+      result.push({ id: Number(match[1]), content: V2exService.cleanHtml(match[4]), created: 0, member: { username: match[3], avatar_large: V2exService.assetUrl(match[2]) } });
       match = pattern.exec(html);
     }
     return result;
