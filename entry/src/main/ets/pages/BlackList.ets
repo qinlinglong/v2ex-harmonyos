@@ -40,7 +40,7 @@ struct BlackList {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('屏蔽列表').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('屏蔽列表').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text('清空').fontSize(14).fontColor(this.themeColor).onClick(() => this.tab === 0 ? this.clearUsers() : this.clearTopics())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
@@ -64,6 +64,6 @@ struct BlackList {
         }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id } })), (id: number) => `${id}`) }.layoutWeight(1).width('100%')
       }
       if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ bottom: 12 })
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

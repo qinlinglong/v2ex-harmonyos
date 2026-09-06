@@ -70,7 +70,7 @@ struct Notifications {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('通知').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('通知').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text('↻').fontSize(24).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
@@ -88,6 +88,6 @@ struct Notifications {
             .layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

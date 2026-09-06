@@ -29,6 +29,8 @@ const DEFAULT_HOME_TABS: HomeTabItem[] = [
 @Component
 struct Index {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exSafeAreaTop') safeAreaTop: number = 0;
+  @StorageLink('v2exSafeAreaBottom') safeAreaBottom: number = 0;
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
   @StorageLink('v2exLastCheckinDate') lastCheckinDate: string = '';
@@ -245,7 +247,7 @@ struct Index {
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
-          .layoutWeight(1).height(42).fontSize(14).fontColor('#30343B').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
+          .layoutWeight(1).height(42).fontSize(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
         Text('⌕').fontSize(22).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
@@ -272,8 +274,8 @@ struct Index {
           .margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       } else if (this.activeTab().type === 'nodes') {
         Column() {
-          Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).margin({ top: 18, bottom: 12 })
-          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14)
+          Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).fontColor('#202124').margin({ top: 18, bottom: 12 })
+          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor('#202124')
             .onChange((value: string) => this.nodeQuery = value).margin({ bottom: 10 })
           List({ space: 1 }) {
             ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
@@ -294,11 +296,11 @@ struct Index {
                   .width(54).height(54).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(27)
                 if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(54).height(54).borderRadius(27).objectFit(ImageFit.Cover)
               }
-              Column() { Text(this.currentMember.username).fontSize(20).fontWeight(FontWeight.Medium); Text('已登录').fontSize(13).fontColor('#8A97A6').margin({ top: 5 }) }
+              Column() { Text(this.currentMember.username).fontSize(20).fontWeight(FontWeight.Medium).fontColor('#202124'); Text('已登录').fontSize(13).fontColor('#8A97A6').margin({ top: 5 }) }
                 .alignItems(HorizontalAlign.Start).margin({ left: 14 })
             }.margin({ top: 36 })
           } else {
-            Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium)
+            Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium).fontColor('#202124')
             Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
           }
           Button(this.currentMember ? '个人资料' : '打开登录页面').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 22 }).onClick(() => {
@@ -339,7 +341,7 @@ struct Index {
           }
         })
       }
-      }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor('#F5F7FA')
       .parallelGesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
         .onActionEnd((event: GestureEvent) => { if (event.offsetX > 80) this.shiftTab(-1); else if (event.offsetX < -80) this.shiftTab(1); }))
       if (this.drawerOpen) {

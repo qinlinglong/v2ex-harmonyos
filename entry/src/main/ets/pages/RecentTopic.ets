@@ -41,7 +41,7 @@ struct RecentTopic {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('最近浏览').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('最近浏览').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text('↻').fontSize(24).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
@@ -51,6 +51,6 @@ struct RecentTopic {
         List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`) }
           .layoutWeight(1).width('100%')
       }
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

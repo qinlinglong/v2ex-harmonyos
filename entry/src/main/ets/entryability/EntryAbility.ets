@@ -61,6 +61,31 @@ export default class EntryAbility extends UIAbility {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
         return;
       }
+      // Keep recently opened topics available immediately on the next visit;
+      // the detail page refreshes these records in the background.
+      PersistentStorage.persistProp('v2exTopicCache', '{}');
+      PersistentStorage.persistProp('v2exRepliesCache', '{}');
+      AppStorage.setOrCreate('v2exSafeAreaTop', 0);
+      AppStorage.setOrCreate('v2exSafeAreaBottom', 0);
+      const uiContext = windowStage.getMainWindowSync().getUIContext();
+      const updateSafeAreas = (): void => {
+        try {
+          const systemArea = windowStage.getMainWindowSync().getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+          AppStorage.setOrCreate('v2exSafeAreaTop', uiContext.px2vp(systemArea.topRect.height));
+        } catch (_) { }
+        try {
+          const navigationArea = windowStage.getMainWindowSync().getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+          AppStorage.setOrCreate('v2exSafeAreaBottom', uiContext.px2vp(navigationArea.bottomRect.height));
+        } catch (_) { }
+      };
+      updateSafeAreas();
+      windowStage.getMainWindowSync().on('avoidAreaChange', (data) => {
+        if (data.type === window.AvoidAreaType.TYPE_SYSTEM) {
+          AppStorage.setOrCreate('v2exSafeAreaTop', uiContext.px2vp(data.area.topRect.height));
+        } else if (data.type === window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR) {
+          AppStorage.setOrCreate('v2exSafeAreaBottom', uiContext.px2vp(data.area.bottomRect.height));
+        }
+      });
       // Keep the native pages visually continuous with the reference client: the
       // system bars use the same light surface instead of the platform black default.
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');

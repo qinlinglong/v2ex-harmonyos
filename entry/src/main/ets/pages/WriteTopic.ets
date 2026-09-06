@@ -74,7 +74,7 @@ struct WriteTopic {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold)
+        Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text(this.preview ? '返回编辑' : '预览').fontSize(14).fontColor(this.themeColor).margin({ right: 16 })
           .onClick(() => this.preview = !this.preview)
@@ -83,9 +83,9 @@ struct WriteTopic {
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Scroll() {
         Column({ space: 14 }) {
-          TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17)
+          TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor('#202124')
             .onChange((value: string) => this.title = value)
-          TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15)
+          TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor('#202124')
             .onChange((value: string) => this.node = value)
           if (!this.editing && this.nodeSuggestions().length > 0) {
             Column() {
@@ -105,12 +105,12 @@ struct WriteTopic {
               Text(this.content || '（无正文）').fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 })
             }.width('100%').padding(18).backgroundColor(Color.White)
           } else {
-            TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16)
+            TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16).fontColor('#202124')
               .onChange((value: string) => this.content = value)
           }
           if (this.status.length > 0) Text(this.status).fontSize(14).fontColor('#4F7CAC')
         }.width('100%').padding(18)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

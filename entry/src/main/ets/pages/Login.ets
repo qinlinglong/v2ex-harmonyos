@@ -11,7 +11,7 @@ struct Login {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
       }.height(60).width('100%').backgroundColor(Color.White)
       Web({ src: `${this.domain.replace(/\/$/, '')}/signin`, controller: this.controller })
         .javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%')
@@ -21,6 +21,6 @@ struct Login {
             setTimeout(() => router.back(), 300);
           }
         })
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

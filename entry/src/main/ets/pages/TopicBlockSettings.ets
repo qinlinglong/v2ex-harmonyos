@@ -33,13 +33,13 @@ struct TopicBlockSettings {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('主题屏蔽').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('主题屏蔽').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
       }.height(60).width('100%').backgroundColor(Color.White)
       Scroll() {
         Column() {
           Text('屏蔽标题或正文中包含关键词的主题').fontSize(14).fontColor('#7B8794').width('100%').margin({ bottom: 14 })
           Row() {
-            TextInput({ placeholder: '输入关键词', text: this.keyword }).layoutWeight(1).height(46).fontSize(15)
+            TextInput({ placeholder: '输入关键词', text: this.keyword }).layoutWeight(1).height(46).fontSize(15).fontColor('#202124')
               .onChange((value: string) => this.keyword = value).onSubmit(() => this.add())
             Button('添加').fontSize(14).margin({ left: 10 }).onClick(() => this.add())
           }.width('100%')
@@ -51,6 +51,6 @@ struct TopicBlockSettings {
           if (this.keywords.length === 0) Text('暂无屏蔽规则').fontSize(14).fontColor('#8A97A6').margin({ top: 36 })
         }.width('100%').padding(18)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

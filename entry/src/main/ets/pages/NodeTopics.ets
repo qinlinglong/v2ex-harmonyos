@@ -91,7 +91,7 @@ struct NodeTopics {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
           .onClick(() => router.back())
         Column() {
-          Text(titleOrName(this.title, this.name)).fontSize(19).fontWeight(FontWeight.Bold)
+          Text(titleOrName(this.title, this.name)).fontSize(19).fontWeight(FontWeight.Bold).fontColor('#202124')
           Text(this.name).fontSize(12).fontColor('#8A97A6').margin({ top: 2 })
         }.alignItems(HorizontalAlign.Start)
         Blank()
@@ -119,7 +119,7 @@ struct NodeTopics {
           if (state === RefreshStatus.Refresh) this.load();
         })
       }
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }
 

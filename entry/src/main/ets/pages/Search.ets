@@ -111,10 +111,10 @@ struct SearchPage {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('搜索').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('搜索').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
       }.height(60).width('100%').backgroundColor(Color.White)
       Row() {
-        TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15)
+        TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15).fontColor('#202124')
           .fontColor('#30343B').placeholderColor('#8A97A6').backgroundColor('#F1F4F7').borderRadius(8)
           .onChange((value: string) => this.query = value).onSubmit(() => this.submit())
         Button('搜索').fontSize(14).margin({ left: 10 }).onClick(() => this.submit())
@@ -129,7 +129,7 @@ struct SearchPage {
       else if (this.query.trim().length === 0 && this.history().length > 0) {
         Column() {
           Row() {
-            Text('搜索历史').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1)
+            Text('搜索历史').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').layoutWeight(1)
             Text('清除').fontSize(13).fontColor(this.themeColor).onClick(() => this.historyJson = '[]')
           }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 10 })
           List({ space: 1 }) { ForEach(this.history(), (item: string) => this.historyRow(item), (item: string) => item) }.layoutWeight(1).width('100%')
@@ -138,6 +138,6 @@ struct SearchPage {
       else if (this.mode === 0) List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
       else if (this.mode === 1) List({ space: 1 }) { ForEach(this.members, (member: V2exMember) => this.memberRow(member), (member: V2exMember) => member.username) }.layoutWeight(1).width('100%')
       else List({ space: 1 }) { ForEach(this.nodes, (node: V2exNode) => this.nodeRow(node), (node: V2exNode) => node.name) }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

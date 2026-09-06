@@ -31,7 +31,7 @@ struct RelatedReplies {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('关联回复').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('关联回复').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(60).width('100%').backgroundColor(Color.White)
@@ -49,6 +49,6 @@ struct RelatedReplies {
           }.width('100%').padding(16).backgroundColor(Color.White)
         }, (reply: V2exReply) => `${reply.id}`)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

@@ -79,7 +79,7 @@ struct HomeTabs {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
           .onClick(() => router.back())
-        Text('首页板块').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('首页板块').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text(this.editing ? '完成' : '编辑').fontSize(15).fontColor(this.themeColor)
           .onClick(() => this.editing = !this.editing)
@@ -105,6 +105,6 @@ struct HomeTabs {
           Text('至少保留一个首页板块。设置会保存在本机。').fontSize(12).fontColor('#8A97A6').margin({ top: 16 })
         }.width('100%').padding(16)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

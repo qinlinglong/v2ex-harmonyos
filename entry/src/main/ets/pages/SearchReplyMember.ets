@@ -43,10 +43,10 @@ struct SearchReplyMember {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('选择回复对象').fontSize(20).fontWeight(FontWeight.Bold).layoutWeight(1)
+        Text('选择回复对象').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124').layoutWeight(1)
         Text('确定').fontSize(15).fontColor(this.themeColor).onClick(() => this.confirm())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
-      TextInput({ placeholder: '搜索用户名或回复内容', text: this.query }).width('100%').height(48).margin({ top: 1 }).padding(14)
+      TextInput({ placeholder: '搜索用户名或回复内容', text: this.query }).width('100%').height(48).margin({ top: 1 }).padding(14).fontColor('#202124')
         .onChange((value: string) => this.query = value).backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0 || this.visibleReplies().length === 0) Text(this.status || '暂无搜索结果').fontSize(15).fontColor('#8A97A6').margin({ top: 42 })
@@ -63,6 +63,6 @@ struct SearchReplyMember {
           this.selected = this.selected.indexOf(reply.id) >= 0 ? this.selected.filter((id: number) => id !== reply.id) : this.selected.concat([reply.id]);
         }), (reply: V2exReply) => `${reply.id}`)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

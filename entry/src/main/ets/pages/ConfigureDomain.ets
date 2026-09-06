@@ -21,16 +21,16 @@ struct ConfigureDomain {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('域名配置').fontSize(20).fontWeight(FontWeight.Bold)
+        Text('域名配置').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
       }.height(60).width('100%').backgroundColor(Color.White)
       Column() {
         Text('默认使用 https://www.v2ex.com。自建镜像或代理可在这里配置。').fontSize(14).fontColor('#7B8794').lineHeight(22).width('100%')
-        TextInput({ placeholder: 'https://www.v2ex.com', text: this.input }).width('100%').height(50).fontSize(15).margin({ top: 18 })
+        TextInput({ placeholder: 'https://www.v2ex.com', text: this.input }).width('100%').height(50).fontSize(15).fontColor('#202124').margin({ top: 18 })
           .onChange((value: string) => this.input = value)
         Button('保存').width('100%').margin({ top: 16 }).onClick(() => this.save())
         if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 14 })
       }.width('100%').padding(20).backgroundColor(Color.White).margin({ top: 12 })
       Blank()
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

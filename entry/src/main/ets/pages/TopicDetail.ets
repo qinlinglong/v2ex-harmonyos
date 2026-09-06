@@ -50,11 +50,15 @@ function replyTextParts(value: string): ReplyTextPart[] {
 @Component
 struct TopicDetail {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exSafeAreaTop') safeAreaTop: number = 0;
+  @StorageLink('v2exSafeAreaBottom') safeAreaBottom: number = 0;
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
   @StorageLink('v2exIgnoredTopicIds') ignoredTopicsJson: string = '[]';
   @StorageLink('v2exParseContent') parseContent: boolean = true;
   @StorageLink('v2exReplyMention') replyMention: string = '';
   @StorageLink('v2exIgnoredReplyIds') ignoredReplyIdsJson: string = '[]';
+  @StorageLink('v2exTopicCache') topicCacheJson: string = '{}';
+  @StorageLink('v2exRepliesCache') repliesCacheJson: string = '{}';
   @State topic: V2exTopic | undefined = undefined;
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
@@ -84,6 +88,7 @@ struct TopicDetail {
     if (savedSort === 'latest') this.replyOrder = 1;
     this.rememberRecentTopic();
     this.applyReplyMention();
+    this.restoreCache();
     this.load();
   }
 
@@ -112,7 +117,10 @@ struct TopicDetail {
   }
 
   private async load(): Promise<void> {
-    this.loading = true;
+    // Cached content stays on screen while the network refresh runs. This
+    // avoids the blank detail transition seen when opening a topic from a list.
+    const hasCachedTopic: boolean = this.topic !== undefined;
+    if (!hasCachedTopic) this.loading = true;
     this.errorText = '';
     try {
       this.topic = await V2exService.topic(this.topicId);
@@ -122,16 +130,57 @@ struct TopicDetail {
       try { locallyIgnored = JSON.parse(this.ignoredTopicsJson) as number[]; } catch (_) { locallyIgnored = []; }
       this.ignored = this.topic.ignored === true || locallyIgnored.indexOf(this.topicId) >= 0;
       if (this.topic.vote === 1 || this.topic.vote === -1) this.voteState = this.topic.vote;
+      this.saveTopicCache(this.topic);
       this.loading = false;
       try {
         this.replies = await V2exService.replies(this.topicId);
+        this.saveRepliesCache(this.topicId, this.replies);
       } catch (_) {
-        this.replyStatus = '回复暂时无法加载，可稍后重试';
+        if (this.replies.length === 0) this.replyStatus = '回复暂时无法加载，可稍后重试';
       }
     } catch (_) {
-      this.errorText = '主题加载失败，请稍后重试';
-      this.loading = false;
+      if (!hasCachedTopic) {
+        this.errorText = '主题加载失败，请稍后重试';
+        this.loading = false;
+      } else {
+        this.actionStatus = '网络刷新失败，当前显示缓存';
+      }
     }
+  }
+
+  private restoreCache(): void {
+    try {
+      const topics: Record<string, Object> = JSON.parse(this.topicCacheJson) as Record<string, Object>;
+      const cachedTopic: V2exTopic | undefined = topics[String(this.topicId)] as V2exTopic | undefined;
+      if (cachedTopic && cachedTopic.id === this.topicId) {
+        this.topic = cachedTopic;
+        this.favorited = cachedTopic.favorited === true;
+        this.thanked = cachedTopic.thanked === true;
+        this.voteState = cachedTopic.vote === 1 || cachedTopic.vote === -1 ? cachedTopic.vote : 0;
+        this.loading = false;
+      }
+      const replies: Record<string, Object> = JSON.parse(this.repliesCacheJson) as Record<string, Object>;
+      const cachedReplies: V2exReply[] | undefined = replies[String(this.topicId)] as V2exReply[] | undefined;
+      if (cachedReplies && Array.isArray(cachedReplies)) this.replies = cachedReplies;
+    } catch (_) {
+      // A corrupt cache must never prevent the live request from loading.
+    }
+  }
+
+  private saveTopicCache(topic: V2exTopic): void {
+    try {
+      const topics: Record<string, Object> = JSON.parse(this.topicCacheJson) as Record<string, Object>;
+      topics[String(topic.id)] = topic as Object;
+      this.topicCacheJson = JSON.stringify(topics);
+    } catch (_) { /* ignore cache failures */ }
+  }
+
+  private saveRepliesCache(topicId: number, replies: V2exReply[]): void {
+    try {
+      const cache: Record<string, Object> = JSON.parse(this.repliesCacheJson) as Record<string, Object>;
+      cache[String(topicId)] = replies as Object;
+      this.repliesCacheJson = JSON.stringify(cache);
+    } catch (_) { /* ignore cache failures */ }
   }
 
   private async submitReply(): Promise<void> {
@@ -283,10 +332,10 @@ struct TopicDetail {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
+        Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).fontColor('#202124').textAlign(TextAlign.Center)
+          .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
         Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
-          .onClick(() => { this.loading = true; this.load(); })
+          .onClick(() => this.load())
       }.height(60).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.loading) {
         LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 32 })
@@ -330,7 +379,7 @@ struct TopicDetail {
                 Text('举报').fontSize(13).fontColor('#C05A73').onClick(() => this.action('report'))
               }.width('80%').margin({ top: 4 })
               if (this.appendOpen) {
-                TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15)
+                TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15).fontColor('#202124')
                   .onChange((value: string) => this.appendText = value)
                 Row() {
                   if (this.appendStatus.length > 0) Text(this.appendStatus).fontSize(12).fontColor(this.themeColor)
@@ -376,7 +425,7 @@ struct TopicDetail {
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
                 }
                 if (this.editingReplyId === reply.id) {
-                  TextArea({ placeholder: '编辑回复', text: this.editingReplyText }).width('100%').height(130).fontSize(15)
+                  TextArea({ placeholder: '编辑回复', text: this.editingReplyText }).width('100%').height(130).fontSize(15).fontColor('#202124')
                     .onChange((value: string) => this.editingReplyText = value)
                   Row() {
                     if (this.editingReplyStatus.length > 0) Text(this.editingReplyStatus).fontSize(12).fontColor(this.themeColor)
@@ -416,7 +465,7 @@ struct TopicDetail {
                 .backgroundColor(Color.White).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
             Column() {
-              TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15)
+              TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15).fontColor('#202124')
                 .onChange((value: string) => this.replyText = value)
               Row() {
                 if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor)
@@ -429,6 +478,6 @@ struct TopicDetail {
           }.width('100%')
         }.layoutWeight(1).width('100%')
       }
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor('#F5F7FA')
   }
 }
