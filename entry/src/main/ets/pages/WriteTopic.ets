@@ -9,13 +9,34 @@ struct WriteTopic {
   @State content: string = '';
   @State status: string = '';
   @State submitting: boolean = false;
+  @State preview: boolean = false;
+  @State editing: boolean = false;
+  private topicId: number = 0;
+
+  aboutToAppear(): void {
+    const params = router.getParams() as Record<string, Object> | undefined;
+    this.topicId = Number(params?.['topicId'] ?? 0);
+    this.editing = this.topicId > 0;
+    if (this.editing) this.loadDraft();
+  }
+
+  private async loadDraft(): Promise<void> {
+    try {
+      const topic = await V2exService.topic(this.topicId);
+      this.title = topic.title;
+      this.content = topic.content;
+      this.node = topic.node?.name ?? this.node;
+    } catch (_) { this.status = '编辑内容加载失败'; }
+  }
 
   private async submit(): Promise<void> {
     if (this.title.trim().length < 3 || this.content.trim().length < 3) { this.status = '标题和正文至少 3 个字符'; return; }
     this.submitting = true; this.status = '正在发布…';
     try {
-      const ok: boolean = await V2exService.writeTopic(this.title.trim(), this.content.trim(), this.node.trim());
-      this.status = ok ? '发布成功' : '发布失败，请先登录';
+      const ok: boolean = this.editing
+        ? await V2exService.editTopic(this.topicId, this.title.trim(), this.content.trim())
+        : await V2exService.writeTopic(this.title.trim(), this.content.trim(), this.node.trim());
+      this.status = ok ? (this.editing ? '保存成功' : '发布成功') : '操作失败，请先登录';
       if (ok) setTimeout(() => router.back(), 500);
     } catch (_) { this.status = '发布失败，请先登录'; }
     finally { this.submitting = false; }
@@ -25,9 +46,11 @@ struct WriteTopic {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor('#4F7CAC').width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('发布主题').fontSize(20).fontWeight(FontWeight.Bold)
+        Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold)
         Blank()
-        Text(this.submitting ? '发布中' : '发布').fontSize(15).fontColor('#4F7CAC').onClick(() => this.submit())
+        Text(this.preview ? '返回编辑' : '预览').fontSize(14).fontColor('#4F7CAC').margin({ right: 16 })
+          .onClick(() => this.preview = !this.preview)
+        Text(this.submitting ? '保存中' : (this.editing ? '保存' : '发布')).fontSize(15).fontColor('#4F7CAC').onClick(() => this.submit())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Scroll() {
         Column({ space: 14 }) {
@@ -35,8 +58,15 @@ struct WriteTopic {
             .onChange((value: string) => this.title = value)
           TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15)
             .onChange((value: string) => this.node = value)
-          TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16)
-            .onChange((value: string) => this.content = value)
+          if (this.preview) {
+            Column() {
+              Text(this.title || '（无标题）').fontSize(22).fontWeight(FontWeight.Bold).fontColor('#202124')
+              Text(this.content || '（无正文）').fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 })
+            }.width('100%').padding(18).backgroundColor(Color.White)
+          } else {
+            TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16)
+              .onChange((value: string) => this.content = value)
+          }
           if (this.status.length > 0) Text(this.status).fontSize(14).fontColor('#4F7CAC')
         }.width('100%').padding(18)
       }.layoutWeight(1).width('100%')

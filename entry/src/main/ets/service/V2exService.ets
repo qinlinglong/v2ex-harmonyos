@@ -217,6 +217,24 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
+  static async editTopic(id: number, title: string, content: string, syntax: string = 'default'): Promise<boolean> {
+    const html: string = await V2exService.get(`/edit/topic/${id}`, true);
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/edit/topic/${id}`, {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/edit/topic/${id}` },
+        extraData: `title=${V2exService.formValue(title)}&content=${V2exService.formValue(content)}&syntax=${V2exService.formValue(syntax)}&once=${V2exService.formValue(onceMatch[1])}`,
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
+
   static async topicAction(id: number, action: 'favorite' | 'unfavorite' | 'thank' | 'up' | 'down'): Promise<boolean> {
     const html: string = await V2exService.get(`/t/${id}`);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);

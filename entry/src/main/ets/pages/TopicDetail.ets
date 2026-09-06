@@ -105,6 +105,8 @@ struct TopicDetail {
                 Button(this.thanked ? '♥ 已感谢' : '♥ 感谢').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('thank'))
                 Button('▲ 赞').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('up'))
               }.width('100%').margin({ top: 16 })
+              Button('编辑主题').fontSize(13).fontColor('#4F7CAC').backgroundColor(Color.Transparent)
+                .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
               ForEach(detailParts(this.topic.content || '（无正文）'), (part: DetailPart) => {
                 if (part.kind === 'image') {
