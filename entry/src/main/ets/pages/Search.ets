@@ -35,6 +35,15 @@ struct SearchPage {
     finally { this.loading = false; }
   }
 
+  private visibleTopics(): V2exTopic[] {
+    let blocked: string[] = [];
+    try { blocked = JSON.parse(AppStorage.get<string>('v2exBlockedKeywords') ?? '[]') as string[]; } catch (_) { blocked = []; }
+    return this.topics.filter((topic: V2exTopic) => {
+      const text: string = `${topic.title} ${topic.content ?? ''}`.toLowerCase();
+      return !blocked.some((value: string) => value.length > 0 && text.includes(value.toLowerCase()));
+    });
+  }
+
   @Builder
   topicRow(topic: V2exTopic) {
     ListItem() {
@@ -73,7 +82,7 @@ struct SearchPage {
       }.height(48).width('100%').backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 46 })
-      else if (this.mode === 0) List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
+      else if (this.mode === 0) List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
       else List({ space: 1 }) { ForEach(this.members, (member: V2exMember) => this.memberRow(member), (member: V2exMember) => member.username) }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
   }
