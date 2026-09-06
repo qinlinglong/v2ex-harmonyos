@@ -378,6 +378,7 @@ export class V2exService {
       const parsed: Object = JSON.parse(await V2exService.get(`/api/topics/show.json?id=${id}`)) as Object;
       if (Array.isArray(parsed) && (parsed as V2exTopic[]).length > 0) {
         const topic: V2exTopic = (parsed as V2exTopic[])[0];
+        V2exService.normalizeTopic(topic);
         try {
           const html: string = await V2exService.get(`/t/${id}`, true);
           topic.editable = html.indexOf(`/edit/topic/${id}`) >= 0;
@@ -390,6 +391,7 @@ export class V2exService {
           if (stats.likes !== undefined) topic.likes = stats.likes;
           if (stats.thanks !== undefined) topic.thanks = stats.thanks;
         } catch (_) { /* public JSON is still usable when HTML metadata is unavailable */ }
+        V2exService.normalizeTopic(topic);
         return topic;
       }
     } catch (_) { /* fall back to the HTML page */ }
@@ -401,7 +403,7 @@ export class V2exService {
     const bodyMatch: RegExpMatchArray | null = html.match(/class=["'][^"']*topic_content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
     if (!titleMatch) throw new Error('主题不存在');
     const stats = V2exService.parseTopicStats(html);
-    return {
+    const fallbackTopic: V2exTopic = {
       id, title: V2exService.cleanHtml(titleMatch[1]), content: V2exService.htmlContentToMarkdown(bodyMatch?.[1] ?? ''), replies: 0,
       last_modified: 0, last_touched: 0,
       views: stats.views, likes: stats.likes, thanks: stats.thanks,
@@ -411,12 +413,18 @@ export class V2exService {
       thanked: /topic_thanked/i.test(html),
       ignored: html.indexOf('/unignore/topic/') >= 0
     } as V2exTopic;
+    V2exService.normalizeTopic(fallbackTopic);
+    return fallbackTopic;
   }
 
   static async replies(id: number): Promise<V2exReply[]> {
     try {
       const parsed: Object = JSON.parse(await V2exService.get(`/api/replies/show.json?topic_id=${id}&page_size=100`)) as Object;
-      if (Array.isArray(parsed) && (parsed as V2exReply[]).length > 0) return parsed as V2exReply[];
+      if (Array.isArray(parsed) && (parsed as V2exReply[]).length > 0) {
+        const replies: V2exReply[] = parsed as V2exReply[];
+        replies.forEach((reply: V2exReply) => V2exService.normalizeMember(reply.member));
+        return replies;
+      }
     } catch (_) { /* fall back to the HTML page */ }
     const html: string = await V2exService.get(`/t/${id}`);
     const result: V2exReply[] = [];
