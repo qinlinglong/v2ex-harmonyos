@@ -180,7 +180,12 @@ struct Index {
           .onClick(() => this.drawerOpen = true)
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
+        Text('✉').fontSize(22).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
+          .onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
+        Text('✎').fontSize(23).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
+          .onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
         Text(this.loading ? '…' : '↻').fontSize(24).fontColor(this.themeColor)
+          .width(42).textAlign(TextAlign.Center)
           .onClick(() => this.loadTopics(this.selectedTab === 1 ? 'hot' : 'latest'))
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
