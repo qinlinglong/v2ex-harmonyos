@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
-import { V2exTopic } from '../model/V2exModels';
+import { V2exNode, V2exTopic } from '../model/V2exModels';
 
 function relativeTime(unix: number): string {
   if (!unix) return '';
@@ -18,6 +18,7 @@ struct Index {
   @State loading: boolean = false;
   @State errorText: string = '';
   @State topics: V2exTopic[] = [];
+  @State nodes: V2exNode[] = [];
   private readonly tabs: string[] = ['首页', '最新', '节点', '我的'];
 
   aboutToAppear(): void { this.loadTopics('latest'); }
@@ -35,6 +36,15 @@ struct Index {
     this.selectedTab = index;
     if (index === 0) this.loadTopics('hot');
     if (index === 1) this.loadTopics('latest');
+    if (index === 2 && this.nodes.length === 0) this.loadNodes();
+  }
+
+  private async loadNodes(): Promise<void> {
+    this.loading = true;
+    this.errorText = '';
+    try { this.nodes = await V2exService.nodes(); }
+    catch (_) { this.errorText = '节点加载失败，请稍后重试'; }
+    finally { this.loading = false; }
   }
 
   @Builder
@@ -77,10 +87,20 @@ struct Index {
       } else if (this.errorText.length > 0 && this.topics.length === 0) {
         Column() { Text(this.errorText).fontSize(15).fontColor('#7B8794'); Text('点击重试').fontSize(14).fontColor('#4F7CAC').margin({ top: 14 }).onClick(() => this.loadTopics('latest')); }
           .margin({ top: 42 }).alignItems(HorizontalAlign.Center)
-      } else if (this.selectedTab > 1) {
+      } else if (this.selectedTab === 2) {
         Column() {
-          Text(this.selectedTab === 2 ? '节点浏览' : '我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium)
-          Text(this.selectedTab === 2 ? '节点与主题将在下一步接入' : '登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
+          Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).margin({ top: 18, bottom: 12 })
+          List({ space: 1 }) {
+            ForEach(this.nodes, (node: V2exNode) => ListItem() {
+              Row() { Text(node.title).fontSize(16).fontColor('#202124'); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
+                .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(Color.White)
+            }, (node: V2exNode) => node.name)
+          }.layoutWeight(1).width('100%')
+        }.layoutWeight(1).width('100%')
+      } else if (this.selectedTab === 3) {
+        Column() {
+          Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium)
+          Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
         }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
       } else {
         List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }

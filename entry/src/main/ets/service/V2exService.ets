@@ -1,5 +1,5 @@
 import { http } from '@kit.NetworkKit';
-import { V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exNode, V2exReply, V2exTopic } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
 
@@ -34,6 +34,11 @@ export class V2exService {
       if (item.content === undefined) item.content = '';
     });
     return parsed;
+  }
+
+  static async nodes(): Promise<V2exNode[]> {
+    const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
+    return data ?? [];
   }
 
   static async topic(id: number): Promise<V2exTopic> {
