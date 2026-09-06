@@ -365,6 +365,7 @@ struct Index {
               this.drawerItem('我的主题', 'MyTopics')
               this.drawerItem('我的收藏', 'Favorites')
               this.drawerItem('节点导航', 'NavNodes')
+              this.drawerItem('首页板块', 'HomeTabs')
               this.drawerItem('设置', 'Settings')
             }.width('100%')
             Blank()
@@ -386,8 +387,9 @@ struct Index {
 
   private openDrawerPage(page: string): void {
     this.drawerOpen = false;
-    if (page === 'Profile' && this.currentMember) {
-      router.pushUrl({ url: 'pages/Profile', params: { username: this.currentMember.username } });
+    if (page === 'Profile') {
+      if (this.currentMember) router.pushUrl({ url: 'pages/Profile', params: { username: this.currentMember.username } });
+      else router.pushUrl({ url: 'pages/Login' });
     } else {
       router.pushUrl({ url: `pages/${page}` });
     }
