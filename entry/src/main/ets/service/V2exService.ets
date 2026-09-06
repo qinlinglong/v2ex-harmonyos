@@ -196,8 +196,8 @@ export class V2exService {
     return V2exService.parseTopicItems(html);
   }
 
-  static async myFavorites(): Promise<V2exTopic[]> {
-    const html: string = await V2exService.get('/my/favorites', true);
+  static async myFavorites(page: number = 1): Promise<V2exTopic[]> {
+    const html: string = await V2exService.get(`/my/favorites?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     return V2exService.parseTopicItems(html);
   }
