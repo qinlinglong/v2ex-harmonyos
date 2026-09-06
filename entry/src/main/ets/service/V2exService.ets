@@ -1,9 +1,18 @@
 import { http } from '@kit.NetworkKit';
+import { webview } from '@kit.ArkWeb';
 import { V2exNode, V2exReply, V2exTopic } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
 
 export class V2exService {
+  private static cookie(): string {
+    try { return webview.WebCookieManager.fetchCookieSync(API_BASE) || ''; } catch (_) { return ''; }
+  }
+
+  private static formValue(value: string): string {
+    return encodeURIComponent(value).replace(/%20/g, '+');
+  }
+
   private static cleanHtml(value: string): string {
     return value.replace(/<br\s*\/?>(\r?\n)?/gi, '\n').replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
@@ -71,5 +80,41 @@ export class V2exService {
       match = pattern.exec(html);
     }
     return result;
+  }
+
+  static async reply(topicId: number, content: string): Promise<boolean> {
+    const html: string = await V2exService.get(`/t/${topicId}`);
+    const onceMatch: RegExpMatchArray | null = html.match(/(?:name|value)=["']once["'][^>]*value=["']([^"']+)["']/i) || html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/t/${topicId}`, {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${topicId}` },
+        extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(onceMatch[1])}`,
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
+
+  static async writeTopic(title: string, content: string, nodeName: string): Promise<boolean> {
+    const html: string = await V2exService.get('/write');
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/write`, {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/write` },
+        extraData: `title=${V2exService.formValue(title)}&content=${V2exService.formValue(content)}&node_name=${V2exService.formValue(nodeName)}&syntax=default&once=${V2exService.formValue(onceMatch[1])}`,
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
   }
 }

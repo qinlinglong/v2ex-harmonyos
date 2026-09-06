@@ -9,6 +9,9 @@ struct TopicDetail {
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
   @State errorText: string = '';
+  @State replyText: string = '';
+  @State replyStatus: string = '';
+  @State replying: boolean = false;
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -23,6 +26,17 @@ struct TopicDetail {
       this.replies = await V2exService.replies(this.topicId);
     } catch (_) { this.errorText = '主题加载失败，请稍后重试'; }
     finally { this.loading = false; }
+  }
+
+  private async submitReply(): Promise<void> {
+    if (this.replyText.trim().length === 0 || this.replying) return;
+    this.replying = true; this.replyStatus = '发送中…';
+    try {
+      const ok: boolean = await V2exService.reply(this.topicId, this.replyText.trim());
+      if (ok) { this.replyText = ''; this.replyStatus = '回复成功'; await this.load(); }
+      else this.replyStatus = '回复失败，请先登录';
+    } catch (_) { this.replyStatus = '回复失败，请先登录'; }
+    finally { this.replying = false; }
   }
 
   build() {
@@ -60,6 +74,15 @@ struct TopicDetail {
                 Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
               }.width('100%').padding(16).backgroundColor(Color.White).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
+            Column() {
+              TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15)
+                .onChange((value: string) => this.replyText = value)
+              Row() {
+                if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor('#4F7CAC')
+                Blank()
+                Button(this.replying ? '发送中' : '回复').onClick(() => this.submitReply())
+              }.width('100%').margin({ top: 10 })
+            }.width('100%').padding(16).backgroundColor(Color.White).margin({ top: 10, bottom: 20 })
           }.width('100%')
         }.layoutWeight(1).width('100%')
       }
