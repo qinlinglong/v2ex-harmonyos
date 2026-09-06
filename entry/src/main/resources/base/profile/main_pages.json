@@ -28,6 +28,7 @@
     "pages/SearchNode",
     "pages/SearchOptions",
     "pages/SearchReplyMember",
-    "pages/SortTabs"
+    "pages/SortTabs",
+    "pages/HomeTabs"
   ]
 }

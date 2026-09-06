@@ -11,6 +11,20 @@ function relativeTime(unix: number): string {
   return `${Math.floor(seconds / 86400)}天前`;
 }
 
+interface HomeTabItem {
+  title: string;
+  key: string;
+  type: string;
+}
+
+const DEFAULT_HOME_TABS: HomeTabItem[] = [
+  { title: '最近', key: 'latest', type: 'latest' },
+  { title: '最热', key: 'hot', type: 'hot' },
+  { title: '节点', key: 'nodes', type: 'nodes' },
+  { title: '我的', key: 'mine', type: 'mine' },
+  { title: 'XNA', key: 'xna', type: 'xna' }
+];
+
 @Entry
 @Component
 struct Index {
@@ -18,6 +32,7 @@ struct Index {
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
   @StorageLink('v2exLastCheckinDate') lastCheckinDate: string = '';
+  @StorageLink('v2exHomeTabs') homeTabsJson: string = JSON.stringify(DEFAULT_HOME_TABS);
   @State selectedTab: number = 0;
   @State loading: boolean = false;
   @State errorText: string = '';
@@ -29,16 +44,18 @@ struct Index {
   @State drawerOpen: boolean = false;
   @State searchText: string = '';
   @State nodeQuery: string = '';
-  private readonly tabs: string[] = ['最近', '最热', '节点', '我的', 'XNA'];
+  @State tabs: HomeTabItem[] = DEFAULT_HOME_TABS.slice();
 
   aboutToAppear(): void {
+    this.readHomeTabs();
     try {
       if (this.cachedMemberJson.trim().length > 0) this.currentMember = JSON.parse(this.cachedMemberJson) as V2exMember;
     } catch (_) { this.currentMember = undefined; }
-    this.loadTopics('latest');
+    this.selectTab(0);
   }
 
   onPageShow(): void {
+    this.readHomeTabs();
     if (this.cachedMemberJson.trim().length === 0) {
       this.currentMember = undefined;
       return;
@@ -46,6 +63,24 @@ struct Index {
     try {
       this.currentMember = JSON.parse(this.cachedMemberJson) as V2exMember;
     } catch (_) { this.currentMember = undefined; }
+  }
+
+  private readHomeTabs(): void {
+    try {
+      const parsed: HomeTabItem[] = JSON.parse(this.homeTabsJson) as HomeTabItem[];
+      const valid: HomeTabItem[] = parsed.filter((item: HomeTabItem) => item && item.key && item.title);
+      this.tabs = valid.length > 0 ? valid : DEFAULT_HOME_TABS.slice();
+      if (this.selectedTab >= this.tabs.length) this.selectedTab = 0;
+    } catch (_) { this.tabs = DEFAULT_HOME_TABS.slice(); this.selectedTab = 0; }
+  }
+
+  private activeTab(): HomeTabItem {
+    return this.tabs[this.selectedTab] ?? DEFAULT_HOME_TABS[0];
+  }
+
+  private isTopicTab(): boolean {
+    const type: string = this.activeTab().type;
+    return type === 'latest' || type === 'hot' || type === 'node';
   }
 
   private async loadTopics(kind: 'latest' | 'hot'): Promise<void> {
@@ -59,16 +94,27 @@ struct Index {
 
   private selectTab(index: number): void {
     this.selectedTab = index;
-    if (index === 0) this.loadTopics('latest');
-    if (index === 1) this.loadTopics('hot');
-    if (index === 2 && this.nodes.length === 0) this.loadNodes();
-    if (index === 3 && !this.currentMember && !this.memberLoading) this.loadCurrentMember();
-    if (index === 4 && this.xnaTopics.length === 0) this.loadXna();
+    const tab: HomeTabItem = this.activeTab();
+    if (tab.type === 'latest') this.loadTopics('latest');
+    else if (tab.type === 'hot') this.loadTopics('hot');
+    else if (tab.type === 'nodes' && this.nodes.length === 0) this.loadNodes();
+    else if (tab.type === 'mine' && !this.currentMember && !this.memberLoading) this.loadCurrentMember();
+    else if (tab.type === 'xna' && this.xnaTopics.length === 0) this.loadXna();
+    else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
   }
 
   private shiftTab(delta: number): void {
     const next: number = Math.max(0, Math.min(this.tabs.length - 1, this.selectedTab + delta));
     if (next !== this.selectedTab) this.selectTab(next);
+  }
+
+  private async loadTopicsForNode(name: string): Promise<void> {
+    if (this.loading) return;
+    this.loading = true;
+    this.errorText = '';
+    try { this.topics = await V2exService.topicsForNode(name); }
+    catch (_) { this.errorText = '节点内容加载失败，请稍后重试'; }
+    finally { this.loading = false; }
   }
 
   private visibleTopics(): V2exTopic[] {
@@ -186,7 +232,15 @@ struct Index {
           .onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
         Text(this.loading ? '…' : '↻').fontSize(24).fontColor(this.themeColor)
           .width(42).textAlign(TextAlign.Center)
-          .onClick(() => this.loadTopics(this.selectedTab === 1 ? 'hot' : 'latest'))
+          .onClick(() => {
+            const tab: HomeTabItem = this.activeTab();
+            if (tab.type === 'hot') this.loadTopics('hot');
+            else if (tab.type === 'latest') this.loadTopics('latest');
+            else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
+            else if (tab.type === 'nodes') this.loadNodes();
+            else if (tab.type === 'xna') this.loadXna();
+            else if (tab.type === 'mine') this.loadCurrentMember();
+          })
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
@@ -197,20 +251,25 @@ struct Index {
           .onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
       Row() {
-        ForEach(this.tabs, (tab: string, index: number) => {
+        ForEach(this.tabs, (tab: HomeTabItem, index: number) => {
           Column() {
-            Text(tab).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : '#7B8794')
+            Text(tab.title).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : '#7B8794')
             Row().height(3).width(28).backgroundColor(this.selectedTab === index ? this.themeColor : Color.Transparent)
               .borderRadius(2).margin({ top: 7 })
           }.layoutWeight(1).alignItems(HorizontalAlign.Center).onClick(() => this.selectTab(index))
-        }, (tab: string) => tab)
+        }, (tab: HomeTabItem) => tab.key)
       }.width('100%').height(52).backgroundColor(Color.White)
-      if ((this.selectedTab === 0 || this.selectedTab === 1) && this.loading && this.topics.length === 0) {
+      if (this.isTopicTab() && this.loading && this.topics.length === 0) {
         LoadingProgress().width(28).height(28).color('#4F7CAC').margin({ top: 36 })
-      } else if ((this.selectedTab === 0 || this.selectedTab === 1) && this.errorText.length > 0 && this.topics.length === 0) {
-        Column() { Text(this.errorText).fontSize(15).fontColor('#7B8794'); Text('点击重试').fontSize(14).fontColor('#4F7CAC').margin({ top: 14 }).onClick(() => this.loadTopics('latest')); }
+      } else if (this.isTopicTab() && this.errorText.length > 0 && this.topics.length === 0) {
+        Column() { Text(this.errorText).fontSize(15).fontColor('#7B8794'); Text('点击重试').fontSize(14).fontColor('#4F7CAC').margin({ top: 14 }).onClick(() => {
+          const tab: HomeTabItem = this.activeTab();
+          if (tab.type === 'hot') this.loadTopics('hot');
+          else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
+          else this.loadTopics('latest');
+        }); }
           .margin({ top: 42 }).alignItems(HorizontalAlign.Center)
-      } else if (this.selectedTab === 2) {
+      } else if (this.activeTab().type === 'nodes') {
         Column() {
           Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).margin({ top: 18, bottom: 12 })
           TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14)
@@ -223,7 +282,7 @@ struct Index {
             }, (node: V2exNode) => node.name)
           }.layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%')
-      } else if (this.selectedTab === 3) {
+      } else if (this.activeTab().type === 'mine') {
         Scroll() {
           Column() {
           if (this.memberLoading) LoadingProgress().width(28).height(28).color(this.themeColor).margin({ top: 32 })
@@ -257,7 +316,7 @@ struct Index {
           Button('屏蔽列表').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
           }.margin({ top: 48, bottom: 32 }).alignItems(HorizontalAlign.Center)
         }.layoutWeight(1).width('100%')
-      } else if (this.selectedTab === 4) {
+      } else if (this.activeTab().type === 'xna') {
         if (this.xnaTopics.length === 0 && !this.loading) {
           Text('暂无 XNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
         } else {
@@ -271,7 +330,12 @@ struct Index {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
             .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
-          if (state === RefreshStatus.Refresh) this.loadTopics(this.selectedTab === 1 ? 'hot' : 'latest');
+          if (state === RefreshStatus.Refresh) {
+            const tab: HomeTabItem = this.activeTab();
+            if (tab.type === 'hot') this.loadTopics('hot');
+            else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
+            else this.loadTopics('latest');
+          }
         })
       }
       }.width('100%').height('100%').backgroundColor('#F5F7FA')

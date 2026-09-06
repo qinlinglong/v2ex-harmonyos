@@ -74,6 +74,9 @@ struct Settings {
         Row() { Text('回复排序').fontSize(16).layoutWeight(1); Text('详情页回复顺序').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/SortTabs' }))
+        Row() { Text('首页板块').fontSize(16).layoutWeight(1); Text('显示与顺序').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
         Row() { Text('清除最近浏览').fontSize(16).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.status = '最近浏览已清除'; }) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
         Row() { Text('清除缓存').fontSize(16).layoutWeight(1); Button('清除').fontSize(13).onClick(() => this.clearCache()) }
