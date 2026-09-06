@@ -4,7 +4,7 @@ V2EX 的 HarmonyOS 原生客户端项目，使用 ArkTS、ArkUI 和 DevEco CLI �
 
 ## 当前状态
 
-当前为可运行的原生首页基础版本，包含首页、最新、节点、我的导航，以及主题列表和刷新状态展示。网络接口、登录、主题详情和评论功能将在后续迭代中接入。
+当前为原生 ArkUI 客户端首个可运行版本，参考 `liaoliao666/v2ex` 的首页、最新、节点、我的信息架构，已接入 V2EX 公开 API，支持主题列表刷新、节点/作者元数据和主题详情/回复展示。
 
 ## 构建
 
@@ -18,6 +18,6 @@ devecocli build --modules entry@default --product default --build-mode debug
 
 ## 项目标识
 
-- Bundle：`io.github.qinlinglong.v2ex`
+- Bundle：`qinlinglong.github.io`
 - 初始版本：`1.0.0`
 - 项目目录：`code/v2ex-harmonyos`
