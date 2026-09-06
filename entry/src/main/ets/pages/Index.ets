@@ -346,8 +346,13 @@ struct Index {
       if (this.drawerOpen) {
         Row() {
           Column() {
-            Row() { Text('V2EX').fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.themeColor); Blank(); Text('×').fontSize(28).fontColor(this.themeColor).onClick(() => this.drawerOpen = false) }
-              .width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
+            Row() {
+              Text('V2EX').fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.themeColor)
+              Blank()
+              Text('关闭').fontSize(14).fontColor(this.themeColor).padding({ left: 12, right: 12, top: 8, bottom: 8 })
+                .backgroundColor('#EEF4FA').borderRadius(16).onClick(() => this.drawerOpen = false)
+            }
+              .width('100%').height(64).padding({ left: 20, right: 16 }).backgroundColor(Color.White)
             if (this.currentMember) {
               Row() {
                 Stack() {
@@ -371,8 +376,8 @@ struct Index {
               this.drawerItem('设置', 'Settings')
             }.width('100%')
             Blank()
-          }.width('80%').height('100%').backgroundColor('#F5F7FA')
-          Blank().layoutWeight(1).height('100%').backgroundColor('#00000055').onClick(() => this.drawerOpen = false)
+          }.width('78%').height('100%').padding({ top: this.safeAreaTop }).backgroundColor('#F5F7FA')
+          Blank().layoutWeight(1).height('100%').backgroundColor('#88000000').onClick(() => this.drawerOpen = false)
         }.width('100%').height('100%')
       }
     }.width('100%').height('100%')
