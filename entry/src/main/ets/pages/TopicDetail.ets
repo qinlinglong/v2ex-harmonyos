@@ -93,8 +93,13 @@ struct TopicDetail {
           Column() {
             Column() {
               Text(this.topic.title).fontSize(23).fontWeight(FontWeight.Bold).fontColor('#202124')
-              Text(`${this.topic.node?.title ?? 'V2EX'} · ${this.topic.member?.username ?? '匿名'} · ${this.topic.replies} 条回复`)
-                .fontSize(13).fontColor('#7B8794').margin({ top: 10 })
+              Row() {
+                Text(this.topic.node?.title ?? 'V2EX').fontSize(13).fontColor('#7B8794')
+                Text(' · ').fontSize(13).fontColor('#7B8794')
+                Text(this.topic.member?.username ?? '匿名').fontSize(13).fontColor('#4F7CAC')
+                  .onClick(() => { if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } }); })
+                Text(` · ${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
+              }.margin({ top: 10 })
               Row() {
                 Button(this.favorited ? '★ 已收藏' : '☆ 收藏').layoutWeight(1).onClick(() => this.action('favorite'))
                 Button(this.thanked ? '♥ 已感谢' : '♥ 感谢').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('thank'))
@@ -119,9 +124,11 @@ struct TopicDetail {
                     Text((reply.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
                       .width(28).height(28).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(14)
                     if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(28).height(28).borderRadius(14).objectFit(ImageFit.Cover)
-                  }
+                  }.onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   Text(`${index + 1}. ${reply.member?.username ?? '匿名'}`).fontSize(14).fontWeight(FontWeight.Medium).fontColor('#4F7CAC')
-                    .onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
+                    .onClick(() => {
+                      if (reply.member?.username) this.replyText = `@${reply.member.username} `;
+                    })
                   Blank()
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
                 }
