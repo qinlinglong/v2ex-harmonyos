@@ -175,11 +175,12 @@ struct TopicDetail {
 
   private replyDepth(reply: V2exReply, index: number): number {
     if (!reply.member?.username || index <= 0) return 0;
+    const source: V2exReply[] = this.orderedReplies();
     const explicit: RegExpMatchArray | null = reply.content.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g);
     if (!explicit || explicit.length === 0) return 0;
     const names: string[] = explicit.map((item: string) => item.substring(1).toLowerCase());
     for (let i: number = index - 1; i >= 0; i--) {
-      const previous: V2exReply = this.replies[i];
+      const previous: V2exReply = source[i];
       if (previous.member?.username && names.indexOf(previous.member.username.toLowerCase()) >= 0) {
         return Math.min(3, this.replyDepth(previous, i) + 1);
       }
