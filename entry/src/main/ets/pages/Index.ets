@@ -148,7 +148,7 @@ struct Index {
         })
       }
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
-      .gesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
+      .priorityGesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
         .onActionEnd((event: GestureEvent) => { if (event.offsetX > 80) this.shiftTab(-1); else if (event.offsetX < -80) this.shiftTab(1); }))
   }
 }
