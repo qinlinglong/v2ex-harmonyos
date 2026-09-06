@@ -46,7 +46,7 @@ struct SearchReplyMember {
         Text('选择回复对象').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124').layoutWeight(1)
         Text('确定').fontSize(15).fontColor(this.themeColor).onClick(() => this.confirm())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
-      TextInput({ placeholder: '搜索用户名或回复内容', text: this.query }).width('100%').height(48).margin({ top: 1 }).padding(14).fontColor('#202124')
+      TextInput({ placeholder: '搜索用户名或回复内容', text: this.query }).width('100%').height(48).margin({ top: 1 }).padding(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
         .onChange((value: string) => this.query = value).backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0 || this.visibleReplies().length === 0) Text(this.status || '暂无搜索结果').fontSize(15).fontColor('#8A97A6').margin({ top: 42 })

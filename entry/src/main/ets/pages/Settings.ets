@@ -54,7 +54,7 @@ struct Settings {
         }.margin({ top: 18 })
         Text('主题会保存在本机，下次启动继续使用。').fontSize(13).fontColor('#8A97A6').margin({ top: 18 })
         Row() {
-          TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(44).fontColor('#202124')
+          TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(44).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
             .onChange((value: string) => this.customColor = value)
           Button('应用').margin({ left: 10 }).onClick(() => {
             const value: string = this.customColor.trim();

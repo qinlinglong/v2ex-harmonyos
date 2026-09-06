@@ -19,7 +19,7 @@ struct ImgurConfig {
       Scroll() {
         Column() {
           Text('图片上传使用 Imgur API。请先创建 Imgur 应用并填写 Client ID。').fontSize(14).fontColor('#7B8794').width('100%').lineHeight(22)
-          TextInput({ placeholder: 'Imgur Client ID', text: this.input }).width('100%').height(50).fontSize(15).fontColor('#202124').margin({ top: 18 })
+          TextInput({ placeholder: 'Imgur Client ID', text: this.input }).width('100%').height(50).fontSize(15).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7').margin({ top: 18 })
             .onChange((value: string) => this.input = value)
           Button('保存配置').width('100%').margin({ top: 16 }).onClick(() => { this.clientId = this.input.trim(); this.status = this.clientId.length > 0 ? '配置已保存' : '请输入 Client ID'; })
           if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 14 })

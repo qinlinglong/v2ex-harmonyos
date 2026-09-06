@@ -16,7 +16,7 @@ struct SearchNode {
     Column() {
       Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('搜索节点').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124') }
         .height(60).width('100%').backgroundColor(Color.White)
-      TextInput({ placeholder: '搜索节点名称或英文标识', text: this.query }).width('100%').height(48).margin(16).fontColor('#202124').onChange((v: string) => this.query = v)
+      TextInput({ placeholder: '搜索节点名称或英文标识', text: this.query }).width('100%').height(48).margin(16).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7').onChange((v: string) => this.query = v)
       if (this.loading) LoadingProgress().width(32).height(32).color(this.themeColor).margin({ top: 32 })
       else List({ space: 1 }) { ForEach(this.filtered(), (node: V2exNode) => ListItem() {
         Row() { Text(node.title).fontSize(16).layoutWeight(1); Text(node.name).fontSize(13).fontColor('#8A97A6') }.width('100%').padding(16).backgroundColor(Color.White)

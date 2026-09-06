@@ -134,9 +134,9 @@ struct WriteTopic {
       Scroll() {
         Column({ space: 14 }) {
           if (!this.preview) {
-            TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor('#202124')
+            TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
               .onChange((value: string) => this.title = value)
-            TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor('#202124')
+            TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
               .onChange((value: string) => this.node = value)
             if (!this.editing && this.nodeSuggestions().length > 0) {
               Column() {

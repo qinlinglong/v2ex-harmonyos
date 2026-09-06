@@ -173,9 +173,18 @@ export class V2exService {
 
   static async topicsForNode(name: string): Promise<V2exTopic[]> {
     const path: string = `/api/topics/show.json?node_name=${encodeURIComponent(name)}&page_size=100`;
-    const data: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
-    (data ?? []).forEach((item: V2exTopic) => V2exService.normalizeTopic(item));
-    return data ?? [];
+    try {
+      const data: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
+      if (!Array.isArray(data)) throw new Error('节点主题响应格式错误');
+      data.forEach((item: V2exTopic) => V2exService.normalizeTopic(item));
+      return data;
+    } catch (_) {
+      // The public node API can be rate-limited independently of the home feed.
+      // Use the rendered node page as a resilient fallback so the native page
+      // remains useful instead of getting stuck on an error state.
+      const html: string = await V2exService.get(`/go/${encodeURIComponent(name)}`);
+      return V2exService.parseTopicItems(html);
+    }
   }
 
   static async topicsForNodePage(name: string, page: number): Promise<V2exTopic[]> {

@@ -26,7 +26,7 @@ struct CustomizeTheme {
           }.width('100%')
           Text('自定义颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').width('100%').margin({ top: 22, bottom: 12 })
           Row() {
-            TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(46).fontColor('#202124')
+            TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(46).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
               .onChange((value: string) => this.customColor = value)
             Button('应用').margin({ left: 10 }).onClick(() => {
               if (/^#[0-9A-Fa-f]{6}$/.test(this.customColor.trim())) this.themeColor = this.customColor.trim();

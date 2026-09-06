@@ -29,9 +29,9 @@ struct SearchOptions {
             .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
         }
         Text('发帖日期范围（可选）').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').width('100%').margin({ top: 22, bottom: 14 })
-        TextInput({ placeholder: '起始日期 YYYY-MM-DD', text: this.gte }).width('100%').height(46).fontColor('#202124')
+        TextInput({ placeholder: '起始日期 YYYY-MM-DD', text: this.gte }).width('100%').height(46).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
           .backgroundColor(Color.White).onChange((value: string) => this.gte = value)
-        TextInput({ placeholder: '结束日期 YYYY-MM-DD', text: this.lte }).width('100%').height(46).fontColor('#202124')
+        TextInput({ placeholder: '结束日期 YYYY-MM-DD', text: this.lte }).width('100%').height(46).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
           .backgroundColor(Color.White).margin({ top: 1 }).onChange((value: string) => this.lte = value)
         Text('搜索服务').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').width('100%').margin({ top: 22, bottom: 14 })
         Row() { Text('Sov2ex').layoutWeight(1); Button(this.source === 'sov2ex' ? '已选择' : '选择').fontSize(13).onClick(() => this.source = 'sov2ex') }

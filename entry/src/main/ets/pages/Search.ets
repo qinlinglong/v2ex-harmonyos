@@ -123,7 +123,7 @@ struct SearchPage {
         Text('搜索').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
       }.height(60).width('100%').backgroundColor(Color.White)
       Row() {
-        TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15).fontColor('#202124')
+        TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
           .fontColor('#30343B').placeholderColor('#8A97A6').backgroundColor('#F1F4F7').borderRadius(8)
           .onChange((value: string) => this.query = value).onSubmit(() => this.submit())
         Button('搜索').fontSize(14).margin({ left: 10 }).onClick(() => this.submit())

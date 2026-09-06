@@ -274,7 +274,7 @@ struct Index {
       } else if (this.activeTab().type === 'nodes') {
         Column() {
           Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).fontColor('#202124').margin({ top: 18, bottom: 12 })
-          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor('#202124')
+          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
             .onChange((value: string) => this.nodeQuery = value).margin({ bottom: 10 })
           List({ space: 1 }) {
             ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {

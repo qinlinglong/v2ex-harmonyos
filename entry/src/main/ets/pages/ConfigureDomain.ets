@@ -25,7 +25,7 @@ struct ConfigureDomain {
       }.height(60).width('100%').backgroundColor(Color.White)
       Column() {
         Text('默认使用 https://www.v2ex.com。自建镜像或代理可在这里配置。').fontSize(14).fontColor('#7B8794').lineHeight(22).width('100%')
-        TextInput({ placeholder: 'https://www.v2ex.com', text: this.input }).width('100%').height(50).fontSize(15).fontColor('#202124').margin({ top: 18 })
+        TextInput({ placeholder: 'https://www.v2ex.com', text: this.input }).width('100%').height(50).fontSize(15).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7').margin({ top: 18 })
           .onChange((value: string) => this.input = value)
         Button('保存').width('100%').margin({ top: 16 }).onClick(() => this.save())
         if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 14 })

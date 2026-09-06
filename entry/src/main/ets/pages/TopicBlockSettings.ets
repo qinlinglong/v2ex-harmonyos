@@ -39,7 +39,7 @@ struct TopicBlockSettings {
         Column() {
           Text('屏蔽标题或正文中包含关键词的主题').fontSize(14).fontColor('#7B8794').width('100%').margin({ bottom: 14 })
           Row() {
-            TextInput({ placeholder: '输入关键词', text: this.keyword }).layoutWeight(1).height(46).fontSize(15).fontColor('#202124')
+            TextInput({ placeholder: '输入关键词', text: this.keyword }).layoutWeight(1).height(46).fontSize(15).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
               .onChange((value: string) => this.keyword = value).onSubmit(() => this.add())
             Button('添加').fontSize(14).margin({ left: 10 }).onClick(() => this.add())
           }.width('100%')
