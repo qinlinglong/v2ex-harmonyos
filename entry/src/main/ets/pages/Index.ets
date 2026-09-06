@@ -22,6 +22,7 @@ struct Index {
   @State nodes: V2exNode[] = [];
   @State xnaTopics: V2exTopic[] = [];
   @State searchText: string = '';
+  @State nodeQuery: string = '';
   private readonly tabs: string[] = ['最近', '最热', '节点', '我的', 'XNA'];
 
   aboutToAppear(): void { this.loadTopics('latest'); }
@@ -75,6 +76,12 @@ struct Index {
     try { this.xnaTopics = await V2exService.xnaTopics(); }
     catch (_) { this.errorText = 'XNA 加载失败，请稍后重试'; }
     finally { this.loading = false; }
+  }
+
+  private visibleNodes(): V2exNode[] {
+    const query: string = this.nodeQuery.trim().toLowerCase();
+    if (query.length === 0) return this.nodes;
+    return this.nodes.filter((node: V2exNode) => node.title.toLowerCase().includes(query) || node.name.toLowerCase().includes(query));
   }
 
   private async searchRemote(): Promise<void> {
@@ -152,8 +159,10 @@ struct Index {
       } else if (this.selectedTab === 2) {
         Column() {
           Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).margin({ top: 18, bottom: 12 })
+          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14)
+            .onChange((value: string) => this.nodeQuery = value).margin({ bottom: 10 })
           List({ space: 1 }) {
-            ForEach(this.nodes, (node: V2exNode) => ListItem() {
+            ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
               Row() { Text(node.title).fontSize(16).fontColor('#202124'); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
                 .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(Color.White)
                 .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
