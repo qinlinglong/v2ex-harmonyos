@@ -262,8 +262,10 @@ export class V2exService {
   }
 
   static async topic(id: number): Promise<V2exTopic> {
-    const data: V2exTopic[] = JSON.parse(await V2exService.get(`/api/topics/show.json?id=${id}`)) as V2exTopic[];
-    if (data.length > 0) return data[0];
+    try {
+      const parsed: Object = JSON.parse(await V2exService.get(`/api/topics/show.json?id=${id}`)) as Object;
+      if (Array.isArray(parsed) && (parsed as V2exTopic[]).length > 0) return (parsed as V2exTopic[])[0];
+    } catch (_) { /* fall back to the HTML page */ }
     // The public JSON detail endpoint may return [] when the server applies
     // its anonymous rate limit. Fall back to the same HTML detail page used
     // by the reference client so a topic never opens as a blank screen.
@@ -275,8 +277,10 @@ export class V2exService {
   }
 
   static async replies(id: number): Promise<V2exReply[]> {
-    const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?topic_id=${id}&page_size=100`)) as V2exReply[];
-    if (data.length > 0) return data;
+    try {
+      const parsed: Object = JSON.parse(await V2exService.get(`/api/replies/show.json?topic_id=${id}&page_size=100`)) as Object;
+      if (Array.isArray(parsed) && (parsed as V2exReply[]).length > 0) return parsed as V2exReply[];
+    } catch (_) { /* fall back to the HTML page */ }
     const html: string = await V2exService.get(`/t/${id}`);
     const result: V2exReply[] = [];
     const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<div class=["']reply_content["']>([\s\S]*?)<\/div>/gi;
