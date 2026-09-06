@@ -264,7 +264,18 @@ export class V2exService {
   static async topic(id: number): Promise<V2exTopic> {
     try {
       const parsed: Object = JSON.parse(await V2exService.get(`/api/topics/show.json?id=${id}`)) as Object;
-      if (Array.isArray(parsed) && (parsed as V2exTopic[]).length > 0) return (parsed as V2exTopic[])[0];
+      if (Array.isArray(parsed) && (parsed as V2exTopic[]).length > 0) {
+        const topic: V2exTopic = (parsed as V2exTopic[])[0];
+        try {
+          const html: string = await V2exService.get(`/t/${id}`, true);
+          topic.editable = html.indexOf(`/edit/topic/${id}`) >= 0;
+          topic.appendable = html.indexOf(`/append/topic/${id}`) >= 0;
+          topic.favorited = html.indexOf('/unfavorite/topic/') >= 0;
+          topic.thanked = /topic_thanked/i.test(html);
+          topic.ignored = html.indexOf('/unignore/topic/') >= 0;
+        } catch (_) { /* public JSON is still usable when HTML metadata is unavailable */ }
+        return topic;
+      }
     } catch (_) { /* fall back to the HTML page */ }
     // The public JSON detail endpoint may return [] when the server applies
     // its anonymous rate limit. Fall back to the same HTML detail page used
