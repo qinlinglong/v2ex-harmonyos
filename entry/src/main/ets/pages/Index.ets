@@ -57,6 +57,9 @@ struct Index {
   }
 
   onPageShow(): void {
+    // A page opened from the drawer can be popped without recreating Index.
+    // Always restore the home screen with the drawer closed.
+    this.drawerOpen = false;
     this.readHomeTabs();
     if (this.cachedMemberJson.trim().length === 0) {
       this.currentMember = undefined;
