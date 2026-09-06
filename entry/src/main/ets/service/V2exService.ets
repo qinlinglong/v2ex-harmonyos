@@ -539,4 +539,32 @@ export class V2exService {
       return response.responseCode >= 200 && response.responseCode < 400;
     } finally { request.destroy(); }
   }
+
+  static async nodeFavorited(name: string): Promise<boolean> {
+    try {
+      const html: string = await V2exService.get(`/go/${encodeURIComponent(name)}`, true);
+      return /\/unfavorite\/node\//i.test(html);
+    } catch (_) { return false; }
+  }
+
+  private static async settingsOnce(): Promise<string> {
+    const html: string = await V2exService.get('/settings', true);
+    const match: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i)
+      ?? html.match(/value=["']([^"']+)["'][^>]*name=["']once["']/i);
+    return match?.[1] ?? '';
+  }
+
+  static async resetBlocked(): Promise<boolean> {
+    const once: string = await V2exService.settingsOnce();
+    if (once.length === 0) return false;
+    const html: string = await V2exService.get(`/settings/reset/blocked?once=${V2exService.formValue(once)}`, true);
+    return !/请先登录|登录后才能/i.test(html) && html.indexOf('/signin') < 0;
+  }
+
+  static async resetIgnoredTopics(): Promise<boolean> {
+    const once: string = await V2exService.settingsOnce();
+    if (once.length === 0) return false;
+    const html: string = await V2exService.get(`/settings/reset/ignored_topics?once=${V2exService.formValue(once)}`, true);
+    return !/请先登录|登录后才能/i.test(html) && html.indexOf('/signin') < 0;
+  }
 }

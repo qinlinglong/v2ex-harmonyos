@@ -1,4 +1,5 @@
 import { router } from '@kit.ArkUI';
+import { V2exService } from '../service/V2exService';
 
 @Entry
 @Component
@@ -9,6 +10,7 @@ struct BlackList {
   @State tab: number = 0;
   @State users: string[] = [];
   @State topics: number[] = [];
+  @State status: string = '';
 
   aboutToAppear(): void { this.read(); }
 
@@ -17,8 +19,22 @@ struct BlackList {
     try { this.topics = JSON.parse(this.ignoredTopicsJson) as number[]; } catch (_) { this.topics = []; }
   }
 
-  private clearUsers(): void { this.users = []; this.blockedUsersJson = '[]'; }
-  private clearTopics(): void { this.topics = []; this.ignoredTopicsJson = '[]'; }
+  private async clearUsers(): Promise<void> {
+    this.status = '清理中…';
+    try {
+      const ok: boolean = await V2exService.resetBlocked();
+      if (!ok) { this.status = '清理失败，请先登录'; return; }
+      this.users = []; this.blockedUsersJson = '[]'; this.status = '已清空屏蔽用户';
+    } catch (_) { this.status = '清理失败，请稍后重试'; }
+  }
+  private async clearTopics(): Promise<void> {
+    this.status = '清理中…';
+    try {
+      const ok: boolean = await V2exService.resetIgnoredTopics();
+      if (!ok) { this.status = '清理失败，请先登录'; return; }
+      this.topics = []; this.ignoredTopicsJson = '[]'; this.status = '已清空忽略主题';
+    } catch (_) { this.status = '清理失败，请稍后重试'; }
+  }
 
   build() {
     Column() {
@@ -26,7 +42,7 @@ struct BlackList {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('屏蔽列表').fontSize(20).fontWeight(FontWeight.Bold)
         Blank()
-        Text(this.tab === 0 ? '清空' : '清空').fontSize(14).fontColor(this.themeColor).onClick(() => this.tab === 0 ? this.clearUsers() : this.clearTopics())
+        Text('清空').fontSize(14).fontColor(this.themeColor).onClick(() => this.tab === 0 ? this.clearUsers() : this.clearTopics())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Row() {
         Text('屏蔽用户').fontSize(15).fontColor(this.tab === 0 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center)
@@ -47,6 +63,7 @@ struct BlackList {
             .width('100%').padding(16).backgroundColor(Color.White)
         }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id } })), (id: number) => `${id}`) }.layoutWeight(1).width('100%')
       }
+      if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ bottom: 12 })
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
   }
 }

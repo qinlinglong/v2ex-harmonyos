@@ -36,6 +36,7 @@ struct NodeTopics {
     this.page = 1;
     try {
       this.topics = await V2exService.topicsForNode(this.name);
+      this.nodeFavorited = await V2exService.nodeFavorited(this.name);
       if (this.topics.length === 0) this.status = '该节点暂无主题';
     } catch (_) {
       this.status = '节点主题加载失败';
