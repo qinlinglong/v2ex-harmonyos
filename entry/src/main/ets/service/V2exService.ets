@@ -128,6 +128,31 @@ export class V2exService {
     return result;
   }
 
+  static async followingTopics(): Promise<V2exTopic[]> {
+    const html: string = await V2exService.get('/my/following?p=1', true);
+    if (html.indexOf('/signin') >= 0 && html.indexOf('item_title') < 0) throw new Error('请先登录');
+    return V2exService.parseTopicItems(html);
+  }
+
+  static async hotestTopics(date: string): Promise<V2exTopic[]> {
+    const raw: Object = JSON.parse(await V2exService.get(`https://v2exday.com/api.php?date=${encodeURIComponent(date)}`)) as Object;
+    if (!Array.isArray(raw)) return [];
+    const allNodes: V2exNode[] = await V2exService.nodes();
+    return (raw as Object[]).map((item: Object) => {
+      const value: Record<string, Object> = item as Record<string, Object>;
+      const url: string = String(value['url'] ?? '');
+      const idMatch: RegExpMatchArray | null = url.match(/\/t\/(\d+)/);
+      const replyMatch: RegExpMatchArray | null = url.match(/reply(\d+)/);
+      const nodeTitle: string = String(value['node'] ?? '');
+      return {
+        id: Number(idMatch?.[1] ?? 0), title: String(value['title'] ?? ''), content: '',
+        replies: Number(replyMatch?.[1] ?? 0), last_modified: 0, last_touched: 0,
+        node: allNodes.find((node: V2exNode) => node.title === nodeTitle),
+        member: { username: String(value['user'] ?? '') }
+      } as V2exTopic;
+    }).filter((topic: V2exTopic) => topic.id > 0);
+  }
+
   static async myNodes(): Promise<V2exNode[]> {
     const html: string = await V2exService.get('/my/nodes', true);
     if (html.indexOf('/signin') >= 0 && html.indexOf('my-nodes') < 0) throw new Error('请先登录');

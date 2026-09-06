@@ -146,7 +146,8 @@ struct Index {
           }.layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%')
       } else if (this.selectedTab === 3) {
-        Column() {
+        Scroll() {
+          Column() {
           Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium)
           Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
           Button('打开登录页面').margin({ top: 22 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
@@ -155,8 +156,12 @@ struct Index {
           Button('我的主题').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyTopics' }))
           Button('我的节点').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyNodes' }))
           Button('我的收藏').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Favorites' }))
+          Button('我的关注').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyFollowing' }))
+          Button('最近浏览').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/RecentTopic' }))
+          Button('历史热议').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/HotestTopics' }))
           Button('设置').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Settings' }))
-        }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
+          }.margin({ top: 48, bottom: 32 }).alignItems(HorizontalAlign.Center)
+        }.layoutWeight(1).width('100%')
       } else {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }

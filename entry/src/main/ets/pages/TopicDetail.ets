@@ -25,6 +25,7 @@ function detailParts(markdown: string): DetailPart[] {
 @Entry
 @Component
 struct TopicDetail {
+  @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
   @State topic: V2exTopic | undefined = undefined;
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
@@ -41,7 +42,16 @@ struct TopicDetail {
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
     this.topicId = Number(params?.['id'] ?? 0);
+    this.rememberRecentTopic();
     this.load();
+  }
+
+  private rememberRecentTopic(): void {
+    try {
+      const ids: number[] = JSON.parse(this.recentJson) as number[];
+      const next: number[] = [this.topicId].concat(ids.filter((id: number) => id !== this.topicId)).slice(0, 30);
+      this.recentJson = JSON.stringify(next);
+    } catch (_) { this.recentJson = JSON.stringify([this.topicId]); }
   }
 
   private async load(): Promise<void> {
