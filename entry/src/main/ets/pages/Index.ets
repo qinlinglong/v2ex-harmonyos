@@ -67,15 +67,23 @@ struct Index {
     ListItem() {
       Column() {
         Row() {
+          Stack() {
+            Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(13).fontColor(Color.White)
+              .width(30).height(30).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(15)
+            if (topic.member?.avatar_large) {
+              Image(topic.member.avatar_large).width(30).height(30).borderRadius(15).objectFit(ImageFit.Cover)
+            }
+          }
+          Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6').margin({ left: 8 })
+          Blank()
+          Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
+        }.width('100%').margin({ bottom: 10 })
+        Row() {
           Text(topic.title).fontSize(17).fontColor('#202124').fontWeight(FontWeight.Medium)
             .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
           Text(`${topic.replies}`).fontSize(13).fontColor('#5B6B7A').margin({ left: 12 })
         }.width('100%').alignItems(VerticalAlign.Top)
-        Row() {
-          Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor('#4F7CAC')
-          Text(` · ${topic.member?.username ?? '匿名'} · ${relativeTime(topic.last_touched)}`)
-            .fontSize(12).fontColor('#8A97A6').margin({ left: 4 })
-        }.margin({ top: 10 })
+        Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 8 })
       }.width('100%').padding({ left: 18, right: 18, top: 16, bottom: 16 }).backgroundColor(Color.White)
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
   }
