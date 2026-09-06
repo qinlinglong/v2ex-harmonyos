@@ -15,6 +15,7 @@ function relativeTime(unix: number): string {
 @Component
 struct Index {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   @State selectedTab: number = 0;
   @State loading: boolean = false;
   @State errorText: string = '';
@@ -27,7 +28,12 @@ struct Index {
   @State nodeQuery: string = '';
   private readonly tabs: string[] = ['最近', '最热', '节点', '我的', 'XNA'];
 
-  aboutToAppear(): void { this.loadTopics('latest'); }
+  aboutToAppear(): void {
+    try {
+      if (this.cachedMemberJson.trim().length > 0) this.currentMember = JSON.parse(this.cachedMemberJson) as V2exMember;
+    } catch (_) { this.currentMember = undefined; }
+    this.loadTopics('latest');
+  }
 
   private async loadTopics(kind: 'latest' | 'hot'): Promise<void> {
     if (this.loading) return;
@@ -83,8 +89,15 @@ struct Index {
 
   private async loadCurrentMember(): Promise<void> {
     this.memberLoading = true;
-    try { this.currentMember = await V2exService.currentMember(); }
-    catch (_) { this.currentMember = undefined; }
+    try {
+      const member: V2exMember | undefined = await V2exService.currentMember();
+      this.currentMember = member;
+      this.cachedMemberJson = member ? JSON.stringify(member) : '';
+    }
+    catch (_) {
+      // Keep a cached profile visible during a transient network failure. A
+      // successful authenticated check above is the only event that clears it.
+    }
     finally { this.memberLoading = false; }
   }
 

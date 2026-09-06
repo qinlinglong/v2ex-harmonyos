@@ -50,7 +50,7 @@ struct WriteTopic {
     this.submitting = true; this.status = '正在发布…';
     try {
       const ok: boolean = this.editing
-        ? await V2exService.editTopic(this.topicId, this.title.trim(), this.content.trim())
+        ? await V2exService.editTopic(this.topicId, this.title.trim(), this.content.trim(), 'default', this.node.trim())
         : await V2exService.writeTopic(this.title.trim(), this.content.trim(), this.node.trim());
       this.status = ok ? (this.editing ? '保存成功' : '发布成功') : '操作失败，请先登录';
       if (ok) setTimeout(() => router.back(), 500);

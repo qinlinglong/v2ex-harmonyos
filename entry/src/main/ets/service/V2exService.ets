@@ -427,7 +427,7 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
-  static async editTopic(id: number, title: string, content: string, syntax: string = 'default'): Promise<boolean> {
+  static async editTopic(id: number, title: string, content: string, syntax: string = 'default', nodeName: string = ''): Promise<boolean> {
     const html: string = await V2exService.get(`/edit/topic/${id}`, true);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
@@ -441,7 +441,26 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      let ok: boolean = response.responseCode >= 200 && response.responseCode < 400;
+      // V2EX keeps node moves as a separate operation. Match the reference
+      // client by submitting it after the title/body update when the editor
+      // supplied a different node.
+      const nodeValue: string = nodeName.trim();
+      if (ok && nodeValue.length > 0 && html.indexOf(`value="${nodeValue}"`) < 0 && html.indexOf(`value='${nodeValue}'`) < 0) {
+        const moveRequest: http.HttpRequest = http.createHttp();
+        try {
+          const moveResponse: http.HttpResponse = await moveRequest.request(`${V2exService.base()}/move/topic/${id}`, {
+            method: http.RequestMethod.POST,
+            header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/edit/topic/${id}` },
+            extraData: `destination=${V2exService.formValue(nodeValue)}`,
+            connectTimeout: 8000,
+            readTimeout: 12000,
+            expectDataType: http.HttpDataType.STRING
+          });
+          ok = moveResponse.responseCode >= 200 && moveResponse.responseCode < 400;
+        } finally { moveRequest.destroy(); }
+      }
+      return ok;
     } finally { request.destroy(); }
   }
 
