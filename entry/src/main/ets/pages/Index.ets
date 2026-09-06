@@ -38,6 +38,16 @@ struct Index {
     this.loadTopics('latest');
   }
 
+  onPageShow(): void {
+    if (this.cachedMemberJson.trim().length === 0) {
+      this.currentMember = undefined;
+      return;
+    }
+    try {
+      this.currentMember = JSON.parse(this.cachedMemberJson) as V2exMember;
+    } catch (_) { this.currentMember = undefined; }
+  }
+
   private async loadTopics(kind: 'latest' | 'hot'): Promise<void> {
     if (this.loading) return;
     this.loading = true;
