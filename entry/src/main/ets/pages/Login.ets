@@ -13,6 +13,12 @@ struct Login {
       }.height(60).width('100%').backgroundColor(Color.White)
       Web({ src: 'https://www.v2ex.com/signin', controller: this.controller })
         .javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%')
+        .onPageEnd((event: OnPageEndEvent) => {
+          if (event.url.indexOf('www.v2ex.com') >= 0 && event.url.indexOf('/signin') < 0 &&
+            event.url.indexOf('/recover') < 0) {
+            setTimeout(() => router.back(), 300);
+          }
+        })
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
   }
 }
