@@ -339,7 +339,7 @@ export class V2exService {
   }
 
   static async reply(topicId: number, content: string): Promise<boolean> {
-    const html: string = await V2exService.get(`/t/${topicId}`);
+    const html: string = await V2exService.get(`/t/${topicId}`, true);
     const onceMatch: RegExpMatchArray | null = html.match(/(?:name|value)=["']once["'][^>]*value=["']([^"']+)["']/i) || html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
@@ -410,7 +410,7 @@ export class V2exService {
   }
 
   static async writeTopic(title: string, content: string, nodeName: string): Promise<boolean> {
-    const html: string = await V2exService.get('/write');
+    const html: string = await V2exService.get('/write', true);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
@@ -446,7 +446,7 @@ export class V2exService {
   }
 
   static async topicAction(id: number, action: 'favorite' | 'unfavorite' | 'thank' | 'up' | 'down' | 'ignore' | 'unignore' | 'report'): Promise<boolean> {
-    const html: string = await V2exService.get(`/t/${id}`);
+    const html: string = await V2exService.get(`/t/${id}`, true);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
@@ -464,7 +464,7 @@ export class V2exService {
   }
 
   static async memberAction(username: string, action: 'follow' | 'unfollow' | 'block' | 'unblock'): Promise<boolean> {
-    const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`);
+    const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`, true);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
