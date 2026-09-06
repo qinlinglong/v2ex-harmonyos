@@ -41,7 +41,7 @@ export class V2exService {
   }
 
   static async topics(kind: 'latest' | 'hot' = 'latest'): Promise<V2exTopic[]> {
-    const path: string = kind === 'hot' ? '/api/topics/hot.json' : '/api/topics/latest.json';
+    const path: string = kind === 'hot' ? '/api/topics/hot.json?limit=100' : '/api/topics/latest.json?limit=100';
     const parsed: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
     parsed.forEach((item: V2exTopic) => {
       if (item.replies === undefined) item.replies = 0;
