@@ -133,21 +133,23 @@ struct WriteTopic {
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Scroll() {
         Column({ space: 14 }) {
-          TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor('#202124')
-            .onChange((value: string) => this.title = value)
-          TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor('#202124')
-            .onChange((value: string) => this.node = value)
-          if (!this.editing && this.nodeSuggestions().length > 0) {
-            Column() {
-              Text('节点建议').fontSize(13).fontColor('#8A97A6').width('100%')
-              Scroll() {
-                Row() {
-                  ForEach(this.nodeSuggestions(), (item: V2exNode) => Text(`${item.title}  ${item.name}`).fontSize(13).fontColor(this.themeColor)
-                    .padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(Color.White).borderRadius(16).margin({ right: 8 })
-                    .onClick(() => this.node = item.name), (item: V2exNode) => item.name)
-                }
-              }.scrollable(ScrollDirection.Horizontal).width('100%').height(42).margin({ top: 8 })
-            }.width('100%')
+          if (!this.preview) {
+            TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor('#202124')
+              .onChange((value: string) => this.title = value)
+            TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor('#202124')
+              .onChange((value: string) => this.node = value)
+            if (!this.editing && this.nodeSuggestions().length > 0) {
+              Column() {
+                Text('节点建议').fontSize(13).fontColor('#8A97A6').width('100%')
+                Scroll() {
+                  Row() {
+                    ForEach(this.nodeSuggestions(), (item: V2exNode) => Text(`${item.title}  ${item.name}`).fontSize(13).fontColor(this.themeColor)
+                      .padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(Color.White).borderRadius(16).margin({ right: 8 })
+                      .onClick(() => this.node = item.name), (item: V2exNode) => item.name)
+                  }
+                }.scrollable(ScrollDirection.Horizontal).width('100%').height(42).margin({ top: 8 })
+              }.width('100%')
+            }
           }
           if (this.preview) {
             Column() {
