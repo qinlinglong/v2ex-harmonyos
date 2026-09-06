@@ -146,7 +146,7 @@ struct Index {
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
-          .layoutWeight(1).height(42).fontSize(14).backgroundColor('#F1F4F7')
+          .layoutWeight(1).height(42).fontSize(14).fontColor('#30343B').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
         Text('⌕').fontSize(22).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
@@ -205,10 +205,12 @@ struct Index {
           Button('通知').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
           Button('我的主题').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyTopics' }))
           Button('我的节点').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyNodes' }))
+          Button('节点导航').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/NavNodes' }))
           Button('我的关注').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyFollowing' }))
           Button('最近浏览').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/RecentTopic' }))
           Button('历史热议').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/HotestTopics' }))
           Button('设置').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Settings' }))
+          Button('屏蔽列表').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
           }.margin({ top: 48, bottom: 32 }).alignItems(HorizontalAlign.Center)
         }.layoutWeight(1).width('100%')
       } else if (this.selectedTab === 4) {

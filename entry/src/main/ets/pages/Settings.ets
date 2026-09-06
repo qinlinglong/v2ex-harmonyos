@@ -46,6 +46,9 @@ struct Settings {
         Row() { Text('节点搜索').fontSize(16).layoutWeight(1); Text('查找节点').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/SearchNode' }))
+        Row() { Text('节点导航').fontSize(16).layoutWeight(1); Text('分类浏览全部节点').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/NavNodes' }))
         Row() { Text('搜索选项').fontSize(16).layoutWeight(1); Text('默认搜索类型').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/SearchOptions' }))
@@ -63,6 +66,9 @@ struct Settings {
         Row() { Text('主题屏蔽').fontSize(16).layoutWeight(1); Text('管理').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/TopicBlockSettings' }))
+        Row() { Text('屏蔽列表').fontSize(16).layoutWeight(1); Text('用户与忽略主题').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
         Row() { Text('图片上传').fontSize(16).layoutWeight(1); Text('Imgur').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ImgurConfig' }))

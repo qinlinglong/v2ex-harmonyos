@@ -17,6 +17,8 @@
     "pages/Rank",
     "pages/Search",
     "pages/TopicBlockSettings",
+    "pages/BlackList",
+    "pages/NavNodes",
     "pages/RelatedReplies",
     "pages/ImgurConfig",
     "pages/ConfigureDomain",

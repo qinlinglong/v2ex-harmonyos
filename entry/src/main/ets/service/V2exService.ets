@@ -467,11 +467,17 @@ export class V2exService {
     const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`, true);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
+    let memberId: number = 0;
+    try {
+      const member: V2exMember = await V2exService.member(username);
+      memberId = Number(member.id ?? 0);
+    } catch (_) { memberId = 0; }
+    if (memberId <= 0) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/member/${encodeURIComponent(username)}?once=${V2exService.formValue(onceMatch[1])}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/member/${memberId}?once=${V2exService.formValue(onceMatch[1])}`, {
         method: http.RequestMethod.GET,
-        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/member/${username}` },
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/member/${encodeURIComponent(username)}` },
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING

@@ -42,6 +42,19 @@ export default class EntryAbility extends UIAbility {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
         return;
       }
+      // Keep the native pages visually continuous with the reference client: the
+      // system bars use the same light surface instead of the platform black default.
+      const mainWindow: window.Window = windowStage.getMainWindowSync();
+      mainWindow.setWindowSystemBarProperties({
+        statusBarColor: '#FFFFFF',
+        navigationBarColor: '#FFFFFF',
+        statusBarContentColor: '#202124',
+        navigationBarContentColor: '#202124',
+        isStatusBarLightIcon: false,
+        isNavigationBarLightIcon: false
+      }).catch((barError: Error) => {
+        hilog.warn(DOMAIN, 'testTag', 'Unable to style system bars: %{public}s', JSON.stringify(barError));
+      });
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
     });
   }

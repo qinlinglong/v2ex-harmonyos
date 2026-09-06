@@ -34,6 +34,7 @@ function plainMarkdown(value: string): string {
 struct TopicDetail {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
+  @StorageLink('v2exIgnoredTopicIds') ignoredTopicsJson: string = '[]';
   @StorageLink('v2exParseContent') parseContent: boolean = true;
   @State topic: V2exTopic | undefined = undefined;
   @State replies: V2exReply[] = [];
@@ -74,6 +75,13 @@ struct TopicDetail {
     } catch (_) { this.recentJson = JSON.stringify([this.topicId]); }
   }
 
+  private setIgnoredTopic(ignored: boolean): void {
+    let ids: number[] = [];
+    try { ids = JSON.parse(this.ignoredTopicsJson) as number[]; } catch (_) { ids = []; }
+    ids = ignored ? (ids.indexOf(this.topicId) >= 0 ? ids : ids.concat([this.topicId])) : ids.filter((id: number) => id !== this.topicId);
+    this.ignoredTopicsJson = JSON.stringify(ids);
+  }
+
   private async load(): Promise<void> {
     this.loading = true;
     this.errorText = '';
@@ -81,7 +89,9 @@ struct TopicDetail {
       this.topic = await V2exService.topic(this.topicId);
       this.favorited = this.topic.favorited === true;
       this.thanked = this.topic.thanked === true;
-      this.ignored = this.topic.ignored === true;
+      let locallyIgnored: number[] = [];
+      try { locallyIgnored = JSON.parse(this.ignoredTopicsJson) as number[]; } catch (_) { locallyIgnored = []; }
+      this.ignored = this.topic.ignored === true || locallyIgnored.indexOf(this.topicId) >= 0;
       if (this.topic.vote === 1 || this.topic.vote === -1) this.voteState = this.topic.vote;
       this.loading = false;
       try {
@@ -249,7 +259,7 @@ struct TopicDetail {
               }
               Row() {
                 Text(this.ignored ? '取消忽略' : '忽略主题').fontSize(13).fontColor('#7B8794').layoutWeight(1)
-                  .onClick(async () => { const ok: boolean = await this.action(this.ignored ? 'unignore' : 'ignore'); if (ok) this.ignored = !this.ignored; })
+                  .onClick(async () => { const nextIgnored: boolean = !this.ignored; const ok: boolean = await this.action(nextIgnored ? 'ignore' : 'unignore'); if (ok) { this.ignored = nextIgnored; this.setIgnoredTopic(nextIgnored); } })
                 Text('举报').fontSize(13).fontColor('#C05A73').onClick(() => this.action('report'))
               }.width('80%').margin({ top: 4 })
               if (this.appendOpen) {

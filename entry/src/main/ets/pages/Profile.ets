@@ -5,6 +5,8 @@ import { V2exService } from '../service/V2exService';
 @Entry
 @Component
 struct Profile {
+  @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exBlockedUsers') blockedUsersJson: string = '[]';
   @State member: V2exMember | undefined = undefined;
   @State topics: V2exTopic[] = [];
   @State replies: V2exReply[] = [];
@@ -34,6 +36,13 @@ struct Profile {
     }
   }
 
+  private setBlockedUser(username: string, blocked: boolean): void {
+    let users: string[] = [];
+    try { users = JSON.parse(this.blockedUsersJson) as string[]; } catch (_) { users = []; }
+    users = blocked ? (users.indexOf(username) >= 0 ? users : users.concat([username])) : users.filter((item: string) => item !== username);
+    this.blockedUsersJson = JSON.stringify(users);
+  }
+
   @Builder
   topicRow(topic: V2exTopic) {
     ListItem() {
@@ -52,7 +61,7 @@ struct Profile {
       Column() {
         Text(reply.content).fontSize(15).fontColor('#30343B').maxLines(4)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text('回复').fontSize(12).fontColor('#4F7CAC').margin({ top: 7 })
+        Text('回复').fontSize(12).fontColor(this.themeColor).margin({ top: 7 })
       }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
     }
   }
@@ -60,10 +69,10 @@ struct Profile {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.username || '个人资料').fontSize(20).fontWeight(FontWeight.Bold)
         Blank()
-        Text('↻').fontSize(24).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => this.load())
+        Text('↻').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.member) {
         Scroll() {
@@ -85,8 +94,9 @@ struct Profile {
                   else this.status = '请先登录';
                 })
                 Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(async () => {
-                  const ok: boolean = await V2exService.memberAction(this.username, this.blocked ? 'unblock' : 'block');
-                  if (ok) this.blocked = !this.blocked;
+                  const nextBlocked: boolean = !this.blocked;
+                  const ok: boolean = await V2exService.memberAction(this.username, nextBlocked ? 'block' : 'unblock');
+                  if (ok) { this.blocked = nextBlocked; this.setBlockedUser(this.username, nextBlocked); }
                   else this.status = '请先登录';
                 })
               }.width('80%').margin({ top: 16 })
