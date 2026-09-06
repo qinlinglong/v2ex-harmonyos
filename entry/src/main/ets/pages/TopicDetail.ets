@@ -221,6 +221,8 @@ struct TopicDetail {
             Row() {
               Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124')
               Blank()
+              Text('关联').fontSize(13).fontColor('#7B8794').margin({ right: 16 })
+                .onClick(() => router.pushUrl({ url: 'pages/RelatedReplies', params: { id: this.topicId } }))
               Text(this.replyOrder === 0 ? '默认排序' : '最新在前').fontSize(13).fontColor('#7B8794')
                 .onClick(() => this.replyOrder = this.replyOrder === 0 ? 1 : 0)
             }.width('100%').padding({ left: 18, right: 18, top: 20, bottom: 12 })

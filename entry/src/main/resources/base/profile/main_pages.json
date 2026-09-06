@@ -16,6 +16,7 @@
     "pages/MyFollowing",
     "pages/Rank",
     "pages/Search",
-    "pages/TopicBlockSettings"
+    "pages/TopicBlockSettings",
+    "pages/RelatedReplies"
   ]
 }
