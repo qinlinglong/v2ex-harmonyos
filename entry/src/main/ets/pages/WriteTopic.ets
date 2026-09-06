@@ -1,16 +1,19 @@
 import { router } from '@kit.ArkUI';
 import { picker } from '@kit.CoreFileKit';
+import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
 
 @Entry
 @Component
 struct WriteTopic {
+  @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @State title: string = '';
   @State node: string = 'v2ex';
   @State content: string = '';
   @State status: string = '';
   @State submitting: boolean = false;
   @State preview: boolean = false;
+  @State nodes: V2exNode[] = [];
   @State editing: boolean = false;
   @StorageLink('v2exImgurClientId') imgurClientId: string = '';
   private topicId: number = 0;
@@ -19,7 +22,18 @@ struct WriteTopic {
     const params = router.getParams() as Record<string, Object> | undefined;
     this.topicId = Number(params?.['topicId'] ?? 0);
     this.editing = this.topicId > 0;
+    this.loadNodes();
     if (this.editing) this.loadDraft();
+  }
+
+  private async loadNodes(): Promise<void> {
+    try { this.nodes = await V2exService.nodes(); } catch (_) { this.nodes = []; }
+  }
+
+  private nodeSuggestions(): V2exNode[] {
+    const query: string = this.node.trim().toLowerCase();
+    const filtered: V2exNode[] = query.length === 0 ? this.nodes : this.nodes.filter((item: V2exNode) => `${item.title} ${item.name}`.toLowerCase().includes(query));
+    return filtered.slice(0, 8);
   }
 
   private async loadDraft(): Promise<void> {
@@ -59,13 +73,13 @@ struct WriteTopic {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor('#4F7CAC').width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold)
         Blank()
-        Text(this.preview ? '返回编辑' : '预览').fontSize(14).fontColor('#4F7CAC').margin({ right: 16 })
+        Text(this.preview ? '返回编辑' : '预览').fontSize(14).fontColor(this.themeColor).margin({ right: 16 })
           .onClick(() => this.preview = !this.preview)
-        Text('图片').fontSize(14).fontColor('#4F7CAC').margin({ right: 16 }).onClick(() => this.insertImage())
-        Text(this.submitting ? '保存中' : (this.editing ? '保存' : '发布')).fontSize(15).fontColor('#4F7CAC').onClick(() => this.submit())
+        Text('图片').fontSize(14).fontColor(this.themeColor).margin({ right: 16 }).onClick(() => this.insertImage())
+        Text(this.submitting ? '保存中' : (this.editing ? '保存' : '发布')).fontSize(15).fontColor(this.themeColor).onClick(() => this.submit())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Scroll() {
         Column({ space: 14 }) {
@@ -73,6 +87,18 @@ struct WriteTopic {
             .onChange((value: string) => this.title = value)
           TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15)
             .onChange((value: string) => this.node = value)
+          if (!this.editing && this.nodeSuggestions().length > 0) {
+            Column() {
+              Text('节点建议').fontSize(13).fontColor('#8A97A6').width('100%')
+              Scroll() {
+                Row() {
+                  ForEach(this.nodeSuggestions(), (item: V2exNode) => Text(`${item.title}  ${item.name}`).fontSize(13).fontColor(this.themeColor)
+                    .padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(Color.White).borderRadius(16).margin({ right: 8 })
+                    .onClick(() => this.node = item.name), (item: V2exNode) => item.name)
+                }
+              }.scrollable(ScrollDirection.Horizontal).width('100%').height(42).margin({ top: 8 })
+            }.width('100%')
+          }
           if (this.preview) {
             Column() {
               Text(this.title || '（无标题）').fontSize(22).fontWeight(FontWeight.Bold).fontColor('#202124')
