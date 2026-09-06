@@ -170,7 +170,7 @@ struct Index {
           .onClick(() => this.drawerOpen = true)
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text(this.loading ? '加载中…' : '刷新').fontSize(14).fontColor(this.themeColor)
+        Text(this.loading ? '…' : '↻').fontSize(24).fontColor(this.themeColor)
           .onClick(() => this.loadTopics(this.selectedTab === 1 ? 'hot' : 'latest'))
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
@@ -289,7 +289,7 @@ struct Index {
               this.drawerItem('设置', 'Settings')
             }.width('100%')
             Blank()
-          }.width(310).height('100%').backgroundColor('#F5F7FA')
+          }.width('80%').height('100%').backgroundColor('#F5F7FA')
           Blank().layoutWeight(1).height('100%').backgroundColor('#00000055').onClick(() => this.drawerOpen = false)
         }.width('100%').height('100%')
       }
