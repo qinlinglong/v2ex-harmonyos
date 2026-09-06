@@ -37,6 +37,14 @@ export class V2exService {
   private static signedInHtml(html: string): boolean {
     return html.indexOf('/logout') >= 0 || html.indexOf('/member/') >= 0;
   }
+  private static mutationSucceeded(response: http.HttpResponse): boolean {
+    if (response.responseCode < 200 || response.responseCode >= 400) return false;
+    const body: string = typeof response.result === 'string' ? response.result : '';
+    if (body.length === 0) return true;
+    if (/class=["'][^"']*problem|操作失败|请先登录|登录失败|验证码错误/i.test(body)) return false;
+    if (body.indexOf('/signin') >= 0 && !V2exService.signedInHtml(body)) return false;
+    return true;
+  }
   private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
@@ -377,7 +385,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -394,7 +402,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -412,7 +420,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -430,7 +438,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -448,7 +456,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -466,7 +474,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      let ok: boolean = response.responseCode >= 200 && response.responseCode < 400;
+      let ok: boolean = V2exService.mutationSucceeded(response);
       // V2EX keeps node moves as a separate operation. Match the reference
       // client by submitting it after the title/body update when the editor
       // supplied a different node.
@@ -482,7 +490,7 @@ export class V2exService {
             readTimeout: 12000,
             expectDataType: http.HttpDataType.STRING
           });
-          ok = moveResponse.responseCode >= 200 && moveResponse.responseCode < 400;
+          ok = V2exService.mutationSucceeded(moveResponse);
         } finally { moveRequest.destroy(); }
       }
       return ok;
@@ -503,7 +511,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -526,7 +534,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -543,7 +551,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
@@ -561,7 +569,7 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return response.responseCode >= 200 && response.responseCode < 400;
+      return V2exService.mutationSucceeded(response);
     } finally { request.destroy(); }
   }
 
