@@ -6,7 +6,7 @@ interface DetailPart { kind: string; value: string; label?: string; }
 
 function detailParts(markdown: string): DetailPart[] {
   const parts: DetailPart[] = [];
-  const pattern: RegExp = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/gi;
+  const pattern: RegExp = /!\[[^\]]*\]\(\s*(https?:\/\/[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*(https?:\/\/[^)\s]+)\s*\)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
@@ -21,6 +21,12 @@ function detailParts(markdown: string): DetailPart[] {
   if (tail.length > 0) parts.push({ kind: 'text', value: tail });
   if (parts.length === 0 && markdown.trim().length > 0) parts.push({ kind: 'text', value: markdown.trim() });
   return parts;
+}
+
+function plainMarkdown(value: string): string {
+  return value.replace(/^#{1,6}\s+/gm, '').replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1').replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1').replace(/`([^`]+)`/g, '$1');
 }
 
 @Entry
@@ -175,12 +181,13 @@ struct TopicDetail {
   private openLink(url: string): void {
     const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
     const topicMatch: RegExpMatchArray | null = url.match(/\/t\/(\d+)/);
-    if (url.indexOf(configured.replace(/\/$/, '')) === 0 && topicMatch) {
+    const isV2ex: boolean = url.indexOf(configured.replace(/\/$/, '')) === 0 || /https?:\/\/([^/]*\.)?v2ex\.com(?:\/|$)/i.test(url);
+    if (isV2ex && topicMatch) {
       router.pushUrl({ url: 'pages/TopicDetail', params: { id: Number(topicMatch[1]) } });
       return;
     }
     const memberMatch: RegExpMatchArray | null = url.match(/\/member\/([^/?#]+)/);
-    if (url.indexOf(configured.replace(/\/$/, '')) === 0 && memberMatch) {
+    if (isV2ex && memberMatch) {
       router.pushUrl({ url: 'pages/Profile', params: { username: decodeURIComponent(memberMatch[1]) } });
       return;
     }
@@ -191,7 +198,7 @@ struct TopicDetail {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor('#4F7CAC').width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text(this.topic?.title ?? '主题详情').fontSize(19).fontWeight(FontWeight.Bold).maxLines(1)
+        Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
         Text('↻').fontSize(24).fontColor('#4F7CAC').width(42).textAlign(TextAlign.Center)
           .onClick(() => { this.loading = true; this.load(); })
@@ -252,7 +259,7 @@ struct TopicDetail {
                     .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).margin({ top: 20 })
                     .onClick(() => this.openLink(part.value))
                 } else {
-                  Text(part.value).fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
+                  Text(plainMarkdown(part.value)).fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
             }.width('100%').padding(20).backgroundColor(Color.White)
@@ -296,7 +303,7 @@ struct TopicDetail {
                       Text(part.label ?? part.value).fontSize(15).fontColor('#4F7CAC').lineHeight(23).margin({ top: 8 })
                         .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).onClick(() => this.openLink(part.value))
                     } else {
-                      Text(part.value).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
+                      Text(plainMarkdown(part.value)).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
                     }
                   }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
                   Row() {
