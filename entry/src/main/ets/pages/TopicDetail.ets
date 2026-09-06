@@ -5,6 +5,23 @@ import { V2exReply, V2exTopic } from '../model/V2exModels';
 interface DetailPart { kind: string; value: string; label?: string; }
 interface ReplyTextPart { kind: string; value: string; }
 
+function appendTextWithLinks(parts: DetailPart[], value: string): void {
+  const pattern: RegExp = /https?:\/\/[^\s<>()]+/gi;
+  let cursor: number = 0;
+  let match: RegExpExecArray | null = pattern.exec(value);
+  while (match !== null) {
+    const url: string = match[0].replace(/[.,!?;:，。！？；：）)]+$/g, '');
+    const punctuation: string = match[0].substring(url.length);
+    if (match.index > cursor) parts.push({ kind: 'text', value: value.substring(cursor, match.index) });
+    parts.push({ kind: 'link', value: url, label: url });
+    if (punctuation.length > 0) parts.push({ kind: 'text', value: punctuation });
+    cursor = match.index + match[0].length;
+    match = pattern.exec(value);
+  }
+  const tail: string = value.substring(cursor);
+  if (tail.length > 0) parts.push({ kind: 'text', value: tail });
+}
+
 function detailParts(markdown: string): DetailPart[] {
   const parts: DetailPart[] = [];
   const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
@@ -12,15 +29,15 @@ function detailParts(markdown: string): DetailPart[] {
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
     const before: string = markdown.substring(cursor, match.index).trim();
-    if (before.length > 0) parts.push({ kind: 'text', value: before });
+    if (before.length > 0) appendTextWithLinks(parts, before);
     if (match[1]) parts.push({ kind: 'image', value: match[1] });
     else parts.push({ kind: 'link', value: match[3], label: match[2] });
     cursor = match.index + match[0].length;
     match = pattern.exec(markdown);
   }
   const tail: string = markdown.substring(cursor).trim();
-  if (tail.length > 0) parts.push({ kind: 'text', value: tail });
-  if (parts.length === 0 && markdown.trim().length > 0) parts.push({ kind: 'text', value: markdown.trim() });
+  if (tail.length > 0) appendTextWithLinks(parts, tail);
+  if (parts.length === 0 && markdown.trim().length > 0) appendTextWithLinks(parts, markdown.trim());
   return parts;
 }
 
