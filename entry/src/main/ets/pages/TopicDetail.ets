@@ -92,7 +92,13 @@ struct TopicDetail {
     this.load();
   }
 
-  onPageShow(): void { this.applyReplyMention(); }
+  onPageShow(): void {
+    this.applyReplyMention();
+    // A topic edit page returns to this page without recreating the route.
+    // Refresh the existing detail in place so the edited title/body is visible
+    // immediately while the cached content remains on screen during the request.
+    if (this.topicId > 0 && this.topic !== undefined) this.load();
+  }
 
   private applyReplyMention(): void {
     const value: string = this.replyMention.trim();
@@ -279,6 +285,7 @@ struct TopicDetail {
         if (item.id !== id) return item;
         return { id: item.id, content, created: item.created, member: item.member, thanks: item.thanks, thanked: item.thanked } as V2exReply;
       });
+      this.saveRepliesCache(this.topicId, this.replies);
       this.editingReplyId = 0;
       this.editingReplyText = '';
       this.editingReplyStatus = '保存成功';
