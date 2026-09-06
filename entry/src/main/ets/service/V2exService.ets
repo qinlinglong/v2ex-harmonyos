@@ -18,16 +18,18 @@ export class V2exService {
       .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
       .replace(/&gt;/gi, '>').replace(/&#39;/gi, "'").trim();
   }
-  private static async get(path: string): Promise<string> {
+  private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
       const url: string = path.startsWith('http') ? path : `${API_BASE}${path}`;
+      const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'User-Agent': 'V2EX-HarmonyOS/1.0'
+      };
+      if (authenticated) headers['Cookie'] = V2exService.cookie();
       const response: http.HttpResponse = await request.request(url, {
         method: http.RequestMethod.GET,
-        header: {
-          'Accept': 'application/json',
-          'User-Agent': 'V2EX-HarmonyOS/1.0'
-        },
+        header: headers,
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
@@ -99,6 +101,38 @@ export class V2exService {
   static async memberReplies(username: string): Promise<V2exReply[]> {
     const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exReply[];
     return data ?? [];
+  }
+
+  static async myTopics(): Promise<V2exTopic[]> {
+    const html: string = await V2exService.get('/my/topics', true);
+    if (html.indexOf('/signin') >= 0 && html.indexOf('item_title') < 0) throw new Error('请先登录');
+    return V2exService.parseTopicItems(html);
+  }
+
+  static async myNodes(): Promise<V2exNode[]> {
+    const html: string = await V2exService.get('/my/nodes', true);
+    if (html.indexOf('/signin') >= 0 && html.indexOf('my-nodes') < 0) throw new Error('请先登录');
+    const all: V2exNode[] = await V2exService.nodes();
+    const result: V2exNode[] = [];
+    const pattern: RegExp = /href=["']\/go\/([^"']+)["'][\s\S]*?<\/a>/gi;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      const found: V2exNode | undefined = all.find((node: V2exNode) => node.name === match![1]);
+      if (found && result.findIndex((node: V2exNode) => node.name === found.name) < 0) result.push(found);
+      match = pattern.exec(html);
+    }
+    return result;
+  }
+
+  private static parseTopicItems(html: string): V2exTopic[] {
+    const result: V2exTopic[] = [];
+    const pattern: RegExp = /<a[^>]*(?:class=["'][^"']*item_title[^"']*["'][^>]*href=["']\/t\/(\d+)["']|href=["']\/t\/(\d+)["'][^>]*class=["'][^"']*item_title[^"']*["'])[^>]*>([\s\S]*?)<\/a>/gi;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      result.push({ id: Number(match[1] ?? match[2]), title: V2exService.cleanHtml(match[3]), content: '', replies: 0, last_modified: 0, last_touched: 0 });
+      match = pattern.exec(html);
+    }
+    return result;
   }
 
   static async topic(id: number): Promise<V2exTopic> {
