@@ -7,7 +7,7 @@ interface ReplyTextPart { kind: string; value: string; }
 
 function detailParts(markdown: string): DetailPart[] {
   const parts: DetailPart[] = [];
-  const pattern: RegExp = /!\[[^\]]*\]\(\s*(https?:\/\/[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*(https?:\/\/[^)\s]+)\s*\)/gi;
+  const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
@@ -258,18 +258,25 @@ struct TopicDetail {
 
   private openLink(url: string): void {
     const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
-    const topicMatch: RegExpMatchArray | null = url.match(/\/t\/(\d+)/);
-    const isV2ex: boolean = url.indexOf(configured.replace(/\/$/, '')) === 0 || /https?:\/\/([^/]*\.)?v2ex\.com(?:\/|$)/i.test(url);
+    const absolute: string = url.startsWith('/') ? `${configured.replace(/\/$/, '')}${url}` : url;
+    const topicMatch: RegExpMatchArray | null = absolute.match(/\/t\/(\d+)/);
+    const isV2ex: boolean = absolute.indexOf(configured.replace(/\/$/, '')) === 0 || /https?:\/\/([^/]*\.)?v2ex\.com(?:\/|$)/i.test(absolute);
     if (isV2ex && topicMatch) {
       router.pushUrl({ url: 'pages/TopicDetail', params: { id: Number(topicMatch[1]) } });
       return;
     }
-    const memberMatch: RegExpMatchArray | null = url.match(/\/member\/([^/?#]+)/);
+    const memberMatch: RegExpMatchArray | null = absolute.match(/\/member\/([^/?#]+)/);
     if (isV2ex && memberMatch) {
       router.pushUrl({ url: 'pages/Profile', params: { username: decodeURIComponent(memberMatch[1]) } });
       return;
     }
-    router.pushUrl({ url: 'pages/WebViewPage', params: { title: '网页', url } });
+    router.pushUrl({ url: 'pages/WebViewPage', params: { title: '网页', url: absolute } });
+  }
+
+  private contentUrl(url: string): string {
+    if (!url.startsWith('/')) return url;
+    const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
+    return `${configured.replace(/\/$/, '')}${url}`;
   }
 
   build() {
@@ -334,7 +341,7 @@ struct TopicDetail {
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
               ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
                 if (part.kind === 'image') {
-                  Image(part.value).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
+                  Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
                     .margin({ top: 14, bottom: 4 })
                 } else if (part.kind === 'link') {
                   Text(part.label ?? part.value).fontSize(16).fontColor(this.themeColor).lineHeight(26)
@@ -380,7 +387,7 @@ struct TopicDetail {
                 } else {
                   ForEach(detailParts(reply.content), (part: DetailPart) => {
                     if (part.kind === 'image') {
-                      Image(part.value).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
+                      Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
                     } else if (part.kind === 'link') {
                       Text(part.label ?? part.value).fontSize(15).fontColor(this.themeColor).lineHeight(23).margin({ top: 8 })
                         .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).onClick(() => this.openLink(part.value))
