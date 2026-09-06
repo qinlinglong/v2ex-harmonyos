@@ -117,4 +117,22 @@ export class V2exService {
       return response.responseCode >= 200 && response.responseCode < 400;
     } finally { request.destroy(); }
   }
+
+  static async topicAction(id: number, action: 'favorite' | 'unfavorite' | 'thank' | 'up' | 'down'): Promise<boolean> {
+    const html: string = await V2exService.get(`/t/${id}`);
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const method: http.RequestMethod = action === 'thank' || action === 'up' || action === 'down' ? http.RequestMethod.POST : http.RequestMethod.GET;
+      const response: http.HttpResponse = await request.request(`${API_BASE}/${action}/topic/${id}?once=${V2exService.formValue(onceMatch[1])}`, {
+        method,
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${id}` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
 }

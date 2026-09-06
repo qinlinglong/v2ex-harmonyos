@@ -12,6 +12,9 @@ struct TopicDetail {
   @State replyText: string = '';
   @State replyStatus: string = '';
   @State replying: boolean = false;
+  @State favorited: boolean = false;
+  @State thanked: boolean = false;
+  @State actionStatus: string = '';
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -39,6 +42,19 @@ struct TopicDetail {
     finally { this.replying = false; }
   }
 
+  private async action(kind: 'favorite' | 'thank' | 'up'): Promise<void> {
+    this.actionStatus = '处理中…';
+    const action = kind === 'favorite' ? (this.favorited ? 'unfavorite' : 'favorite') : kind;
+    try {
+      const ok: boolean = await V2exService.topicAction(this.topicId, action);
+      if (ok) {
+        if (kind === 'favorite') this.favorited = !this.favorited;
+        if (kind === 'thank') this.thanked = true;
+        this.actionStatus = kind === 'favorite' ? (this.favorited ? '已收藏' : '已取消收藏') : '已完成';
+      } else this.actionStatus = '请先登录';
+    } catch (_) { this.actionStatus = '操作失败'; }
+  }
+
   build() {
     Column() {
       Row() {
@@ -59,6 +75,12 @@ struct TopicDetail {
               Text(this.topic.title).fontSize(23).fontWeight(FontWeight.Bold).fontColor('#202124')
               Text(`${this.topic.node?.title ?? 'V2EX'} · ${this.topic.member?.username ?? '匿名'} · ${this.topic.replies} 条回复`)
                 .fontSize(13).fontColor('#7B8794').margin({ top: 10 })
+              Row() {
+                Button(this.favorited ? '★ 已收藏' : '☆ 收藏').layoutWeight(1).onClick(() => this.action('favorite'))
+                Button(this.thanked ? '♥ 已感谢' : '♥ 感谢').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('thank'))
+                Button('▲ 赞').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('up'))
+              }.width('100%').margin({ top: 16 })
+              if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
               Text(this.topic.content || '（无正文）').fontSize(16).fontColor('#30343B').lineHeight(26)
                 .margin({ top: 20 }).textAlign(TextAlign.Start)
             }.width('100%').padding(20).backgroundColor(Color.White)
