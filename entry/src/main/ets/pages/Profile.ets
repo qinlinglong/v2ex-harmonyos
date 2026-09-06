@@ -93,6 +93,21 @@ struct Profile {
     this.blockedUsersJson = JSON.stringify(users);
   }
 
+  private async toggleMemberAction(action: 'follow' | 'unfollow' | 'block' | 'unblock'): Promise<void> {
+    this.status = '处理中…';
+    try {
+      const ok: boolean = await V2exService.memberAction(this.username, action);
+      if (!ok) { this.status = '请先登录'; return; }
+      if (action === 'follow' || action === 'unfollow') this.followed = action === 'follow';
+      else {
+        this.blocked = action === 'block';
+        this.setBlockedUser(this.username, this.blocked);
+      }
+      this.saveCache();
+      this.status = '操作成功';
+    } catch (_) { this.status = '操作失败，请稍后重试'; }
+  }
+
   @Builder
   topicRow(topic: V2exTopic) {
     ListItem() {
@@ -143,18 +158,10 @@ struct Profile {
               if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor('#4F7CAC').margin({ top: 6 })
                 .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
               Row() {
-                Button(this.followed ? '已关注' : '关注').layoutWeight(1).onClick(async () => {
-                  const ok: boolean = await V2exService.memberAction(this.username, this.followed ? 'unfollow' : 'follow');
-                  if (ok) this.followed = !this.followed;
-                  else this.status = '请先登录';
-                })
-                Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(async () => {
-                  const nextBlocked: boolean = !this.blocked;
-                  const ok: boolean = await V2exService.memberAction(this.username, nextBlocked ? 'block' : 'unblock');
-                  if (ok) { this.blocked = nextBlocked; this.setBlockedUser(this.username, nextBlocked); }
-                  else this.status = '请先登录';
-                })
+                Button(this.followed ? '已关注' : '关注').layoutWeight(1).onClick(() => this.toggleMemberAction(this.followed ? 'unfollow' : 'follow'))
+                Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(() => this.toggleMemberAction(this.blocked ? 'unblock' : 'block'))
               }.width('80%').margin({ top: 16 })
+              if (this.status.length > 0 && this.status !== '加载中…') Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })
             }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(Color.White)
             Row() {
               Text('主题').fontColor(this.tab === 0 ? this.themeColor : '#7B8794').fontSize(15)
