@@ -17,6 +17,7 @@
     "pages/Rank",
     "pages/Search",
     "pages/TopicBlockSettings",
-    "pages/RelatedReplies"
+    "pages/RelatedReplies",
+    "pages/ImgurConfig"
   ]
 }

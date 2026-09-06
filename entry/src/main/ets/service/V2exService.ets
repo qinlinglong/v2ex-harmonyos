@@ -1,5 +1,7 @@
 import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
+import { fileIo } from '@kit.CoreFileKit';
+import { util } from '@kit.ArkTS';
 import { V2exMember, V2exNode, V2exNotification, V2exReply, V2exTopic } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
@@ -85,6 +87,35 @@ export class V2exService {
       }
     });
     return result;
+  }
+
+  static async uploadImage(uri: string, clientId: string): Promise<string> {
+    if (clientId.trim().length === 0) throw new Error('请先配置 Imgur Client ID');
+    const file = fileIo.openSync(uri, fileIo.OpenMode.READ_ONLY);
+    try {
+      const size: number = fileIo.statSync(file.fd).size;
+      if (size <= 0 || size > 15 * 1024 * 1024) throw new Error('图片大小需在 15MB 以内');
+      const buffer: ArrayBuffer = new ArrayBuffer(size);
+      fileIo.readSync(file.fd, buffer);
+      const encoded: string = new util.Base64Helper().encodeToStringSync(new Uint8Array(buffer));
+      const request: http.HttpRequest = http.createHttp();
+      try {
+        const response: http.HttpResponse = await request.request('https://api.imgur.com/3/image', {
+          method: http.RequestMethod.POST,
+          header: { 'Authorization': `Client-ID ${clientId}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+          extraData: `type=base64&image=${V2exService.formValue(encoded)}`,
+          connectTimeout: 12000,
+          readTimeout: 30000,
+          expectDataType: http.HttpDataType.STRING
+        });
+        if (response.responseCode < 200 || response.responseCode >= 300) throw new Error(`上传失败 ${response.responseCode}`);
+        const payload: Record<string, Object> = JSON.parse(response.result as string) as Record<string, Object>;
+        const data: Record<string, Object> = payload['data'] as Record<string, Object>;
+        const link: string = String(data?.['link'] ?? '');
+        if (link.length === 0) throw new Error('图床没有返回图片地址');
+        return link;
+      } finally { request.destroy(); }
+    } finally { fileIo.closeSync(file.fd); }
   }
 
   static async nodes(): Promise<V2exNode[]> {

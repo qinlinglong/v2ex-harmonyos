@@ -1,4 +1,5 @@
 import { router } from '@kit.ArkUI';
+import { picker } from '@kit.CoreFileKit';
 import { V2exService } from '../service/V2exService';
 
 @Entry
@@ -11,6 +12,7 @@ struct WriteTopic {
   @State submitting: boolean = false;
   @State preview: boolean = false;
   @State editing: boolean = false;
+  @StorageLink('v2exImgurClientId') imgurClientId: string = '';
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -42,6 +44,18 @@ struct WriteTopic {
     finally { this.submitting = false; }
   }
 
+  private async insertImage(): Promise<void> {
+    if (this.imgurClientId.trim().length === 0) { this.status = '请先在设置中配置 Imgur Client ID'; return; }
+    try {
+      const result = await new picker.PhotoViewPicker().select({ maxSelectNumber: 1 });
+      if (!result.photoUris || result.photoUris.length === 0) return;
+      this.status = '正在上传图片…';
+      const link: string = await V2exService.uploadImage(result.photoUris[0], this.imgurClientId);
+      this.content = `${this.content}${this.content.length > 0 && !this.content.endsWith('\n') ? '\n' : ''}![图片](${link})\n`;
+      this.status = '图片已插入';
+    } catch (_) { this.status = '图片上传失败，请检查配置和网络'; }
+  }
+
   build() {
     Column() {
       Row() {
@@ -50,6 +64,7 @@ struct WriteTopic {
         Blank()
         Text(this.preview ? '返回编辑' : '预览').fontSize(14).fontColor('#4F7CAC').margin({ right: 16 })
           .onClick(() => this.preview = !this.preview)
+        Text('图片').fontSize(14).fontColor('#4F7CAC').margin({ right: 16 }).onClick(() => this.insertImage())
         Text(this.submitting ? '保存中' : (this.editing ? '保存' : '发布')).fontSize(15).fontColor('#4F7CAC').onClick(() => this.submit())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Scroll() {
