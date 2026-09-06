@@ -9,6 +9,7 @@ struct Rank {
   @State members: V2exMember[] = [];
   @State loading: boolean = true;
   @State status: string = '';
+  @State mode: number = 0;
 
   aboutToAppear(): void { this.load(); }
 
@@ -16,7 +17,7 @@ struct Rank {
     this.loading = true;
     this.status = '';
     try {
-      this.members = await V2exService.topMembers();
+      this.members = await V2exService.topMembers(this.mode === 0 ? 'rich' : 'player');
       if (this.members.length === 0) this.status = '暂时没有排行数据';
     } catch (_) { this.status = '排行加载失败，请稍后重试'; }
     finally { this.loading = false; }
@@ -30,6 +31,12 @@ struct Rank {
         Blank()
         Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(60).width('100%').backgroundColor(Color.White)
+      Row() {
+        Text('财富排行').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : '#7B8794')
+          .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => { if (this.mode !== 0) { this.mode = 0; this.load(); } })
+        Text('消费排行').fontSize(15).fontColor(this.mode === 1 ? this.themeColor : '#7B8794')
+          .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => { if (this.mode !== 1) { this.mode = 1; this.load(); } })
+      }.height(48).width('100%').backgroundColor(Color.White)
       if (this.loading) {
         LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       } else if (this.status.length > 0) {

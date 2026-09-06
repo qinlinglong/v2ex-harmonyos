@@ -271,8 +271,8 @@ export class V2exService {
     }).filter((topic: V2exTopic) => topic.id > 0);
   }
 
-  static async topMembers(): Promise<V2exMember[]> {
-    const html: string = await V2exService.get('/top');
+  static async topMembers(kind: 'rich' | 'player' = 'rich'): Promise<V2exMember[]> {
+    const html: string = await V2exService.get(`/top/${kind}`);
     const result: V2exMember[] = [];
     const seen: string[] = [];
     const pattern: RegExp = /href=["']\/member\/([^"']+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][\s\S]*?class=["'][^"']*top_name[^"']*["'][^>]*>([^<]*)</gi;
