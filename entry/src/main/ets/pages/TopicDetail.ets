@@ -439,6 +439,7 @@ struct TopicDetail {
                 if (part.kind === 'image') {
                   Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
                     .margin({ top: 14, bottom: 4 })
+                    .onClick(() => this.openLink(part.value))
                 } else if (part.kind === 'link') {
                   Text(part.label ?? part.value).fontSize(16).fontColor(this.themeColor).lineHeight(26)
                     .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).margin({ top: 20 })
@@ -484,6 +485,7 @@ struct TopicDetail {
                   ForEach(detailParts(reply.content), (part: DetailPart) => {
                     if (part.kind === 'image') {
                       Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
+                        .onClick(() => this.openLink(part.value))
                     } else if (part.kind === 'link') {
                       Text(part.label ?? part.value).fontSize(15).fontColor(this.themeColor).lineHeight(23).margin({ top: 8 })
                         .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).onClick(() => this.openLink(part.value))
