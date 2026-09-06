@@ -109,6 +109,12 @@ export class V2exService {
     return V2exService.parseTopicItems(html);
   }
 
+  static async myFavorites(): Promise<V2exTopic[]> {
+    const html: string = await V2exService.get('/my/favorites', true);
+    if (html.indexOf('/signin') >= 0 && html.indexOf('item_title') < 0) throw new Error('请先登录');
+    return V2exService.parseTopicItems(html);
+  }
+
   static async myNodes(): Promise<V2exNode[]> {
     const html: string = await V2exService.get('/my/nodes', true);
     if (html.indexOf('/signin') >= 0 && html.indexOf('my-nodes') < 0) throw new Error('请先登录');
