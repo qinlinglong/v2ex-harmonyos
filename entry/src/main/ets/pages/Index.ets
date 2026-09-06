@@ -26,6 +26,7 @@ struct Index {
   @State xnaTopics: V2exTopic[] = [];
   @State currentMember: V2exMember | undefined = undefined;
   @State memberLoading: boolean = false;
+  @State drawerOpen: boolean = false;
   @State searchText: string = '';
   @State nodeQuery: string = '';
   private readonly tabs: string[] = ['最近', '最热', '节点', '我的', 'XNA'];
@@ -162,8 +163,11 @@ struct Index {
   }
 
   build() {
-    Column() {
+    Stack() {
+      Column() {
       Row() {
+        Text('☰').fontSize(22).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
+          .onClick(() => this.drawerOpen = true)
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text(this.loading ? '加载中…' : '刷新').fontSize(14).fontColor(this.themeColor)
@@ -255,8 +259,58 @@ struct Index {
           if (state === RefreshStatus.Refresh) this.loadTopics(this.selectedTab === 1 ? 'hot' : 'latest');
         })
       }
-    }.width('100%').height('100%').backgroundColor('#F5F7FA')
+      }.width('100%').height('100%').backgroundColor('#F5F7FA')
       .parallelGesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
         .onActionEnd((event: GestureEvent) => { if (event.offsetX > 80) this.shiftTab(-1); else if (event.offsetX < -80) this.shiftTab(1); }))
+      if (this.drawerOpen) {
+        Row() {
+          Column() {
+            Row() { Text('V2EX').fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.themeColor); Blank(); Text('×').fontSize(28).fontColor(this.themeColor).onClick(() => this.drawerOpen = false) }
+              .width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
+            if (this.currentMember) {
+              Row() {
+                Stack() {
+                  Text(this.currentMember.username.substring(0, 1).toUpperCase()).fontSize(16).fontColor(Color.White)
+                    .width(42).height(42).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(21)
+                  if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(42).height(42).borderRadius(21).objectFit(ImageFit.Cover)
+                }
+                Text(this.currentMember.username).fontSize(16).fontColor('#202124').margin({ left: 12 })
+              }.width('100%').padding(18).backgroundColor(Color.White)
+            } else {
+              Text('登录 V2EX').fontSize(16).fontColor(this.themeColor).width('100%').padding(18).backgroundColor(Color.White)
+                .onClick(() => { this.drawerOpen = false; router.pushUrl({ url: 'pages/Login' }); })
+            }
+            Column() {
+              this.drawerItem('个人资料', 'Profile')
+              this.drawerItem('通知', 'Notifications')
+              this.drawerItem('我的主题', 'MyTopics')
+              this.drawerItem('我的收藏', 'Favorites')
+              this.drawerItem('节点导航', 'NavNodes')
+              this.drawerItem('设置', 'Settings')
+            }.width('100%')
+            Blank()
+          }.width(310).height('100%').backgroundColor('#F5F7FA')
+          Blank().layoutWeight(1).height('100%').backgroundColor('#00000055').onClick(() => this.drawerOpen = false)
+        }.width('100%').height('100%')
+      }
+    }.width('100%').height('100%')
+  }
+
+  @Builder
+  drawerItem(label: string, page: string) {
+    Row() {
+      Text(label).fontSize(16).fontColor('#202124').layoutWeight(1)
+      Text('›').fontSize(22).fontColor('#9AA0A6')
+    }.width('100%').padding({ left: 20, right: 20, top: 16, bottom: 16 }).backgroundColor(Color.White).margin({ top: 1 })
+      .onClick(() => this.openDrawerPage(page))
+  }
+
+  private openDrawerPage(page: string): void {
+    this.drawerOpen = false;
+    if (page === 'Profile' && this.currentMember) {
+      router.pushUrl({ url: 'pages/Profile', params: { username: this.currentMember.username } });
+    } else {
+      router.pushUrl({ url: `pages/${page}` });
+    }
   }
 }
