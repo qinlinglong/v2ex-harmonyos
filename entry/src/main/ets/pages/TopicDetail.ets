@@ -3,6 +3,7 @@ import { V2exService } from '../service/V2exService';
 import { V2exReply, V2exTopic } from '../model/V2exModels';
 
 interface DetailPart { kind: string; value: string; label?: string; }
+interface ReplyTextPart { kind: string; value: string; }
 
 function detailParts(markdown: string): DetailPart[] {
   const parts: DetailPart[] = [];
@@ -27,6 +28,22 @@ function plainMarkdown(value: string): string {
   return value.replace(/^#{1,6}\s+/gm, '').replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/__([^_]+)__/g, '$1').replace(/\*([^*]+)\*/g, '$1')
     .replace(/_([^_]+)_/g, '$1').replace(/`([^`]+)`/g, '$1');
+}
+
+function replyTextParts(value: string): ReplyTextPart[] {
+  const parts: ReplyTextPart[] = [];
+  const pattern: RegExp = /@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g;
+  let cursor: number = 0;
+  let match: RegExpExecArray | null = pattern.exec(value);
+  while (match !== null) {
+    if (match.index > cursor) parts.push({ kind: 'text', value: value.substring(cursor, match.index) });
+    parts.push({ kind: 'mention', value: match[1] });
+    cursor = match.index + match[0].length;
+    match = pattern.exec(value);
+  }
+  if (cursor < value.length) parts.push({ kind: 'text', value: value.substring(cursor) });
+  if (parts.length === 0 && value.length > 0) parts.push({ kind: 'text', value });
+  return parts;
 }
 
 @Entry
@@ -368,7 +385,16 @@ struct TopicDetail {
                       Text(part.label ?? part.value).fontSize(15).fontColor(this.themeColor).lineHeight(23).margin({ top: 8 })
                         .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).onClick(() => this.openLink(part.value))
                     } else {
-                      Text(plainMarkdown(part.value)).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
+                      Flex({ wrap: FlexWrap.Wrap }) {
+                        ForEach(replyTextParts(plainMarkdown(part.value)), (fragment: ReplyTextPart) => {
+                          Text(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value)
+                            .fontSize(15).fontColor(fragment.kind === 'mention' ? this.themeColor : '#30343B').lineHeight(23)
+                            .decoration({ type: fragment.kind === 'mention' ? TextDecorationType.Underline : TextDecorationType.None, color: this.themeColor })
+                            .onClick(() => {
+                              if (fragment.kind === 'mention') router.pushUrl({ url: 'pages/Profile', params: { username: fragment.value } });
+                            });
+                        }, (fragment: ReplyTextPart, fragmentIndex: number) => `reply-text-${reply.id}-${fragmentIndex}`)
+                      }.width('100%').margin({ top: 8 })
                     }
                   }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
                   Row() {
