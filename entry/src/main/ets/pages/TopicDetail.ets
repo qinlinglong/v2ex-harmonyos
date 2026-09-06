@@ -68,11 +68,20 @@ struct TopicDetail {
   }
 
   private async load(): Promise<void> {
+    this.loading = true;
+    this.errorText = '';
     try {
       this.topic = await V2exService.topic(this.topicId);
-      this.replies = await V2exService.replies(this.topicId);
-    } catch (_) { this.errorText = '主题加载失败，请稍后重试'; }
-    finally { this.loading = false; }
+      this.loading = false;
+      try {
+        this.replies = await V2exService.replies(this.topicId);
+      } catch (_) {
+        this.replyStatus = '回复暂时无法加载，可稍后重试';
+      }
+    } catch (_) {
+      this.errorText = '主题加载失败，请稍后重试';
+      this.loading = false;
+    }
   }
 
   private async submitReply(): Promise<void> {
