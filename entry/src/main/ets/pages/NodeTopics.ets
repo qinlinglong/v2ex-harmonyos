@@ -13,6 +13,7 @@ function age(unix: number): string {
 @Entry
 @Component
 struct NodeTopics {
+  @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @State name: string = '';
   @State title: string = '';
   @State topics: V2exTopic[] = [];
@@ -87,24 +88,24 @@ struct NodeTopics {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center)
+        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
           .onClick(() => router.back())
         Column() {
           Text(titleOrName(this.title, this.name)).fontSize(19).fontWeight(FontWeight.Bold)
           Text(this.name).fontSize(12).fontColor('#8A97A6').margin({ top: 2 })
         }.alignItems(HorizontalAlign.Start)
         Blank()
-        Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor('#D07A3A').width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
-        Text('↻').fontSize(24).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center)
+        Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
+        Text('↻').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
           .onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
-      if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
+      if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
       if (this.loading) {
-        LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 36 })
+        LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 36 })
       } else if (this.status.length > 0) {
         Column() {
           Text(this.status).fontSize(15).fontColor('#7B8794')
-          Text('点击重试').fontSize(14).fontColor('#4F7CAC').margin({ top: 12 }).onClick(() => this.load())
+          Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 12 }).onClick(() => this.load())
         }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       } else {
         Refresh({ refreshing: this.loading }) {
