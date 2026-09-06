@@ -3,6 +3,8 @@
     "pages/Index",
     "pages/TopicDetail",
     "pages/Login",
-    "pages/WriteTopic"
+    "pages/WriteTopic",
+    "pages/Profile",
+    "pages/Notifications"
   ]
 }

@@ -118,6 +118,7 @@ struct Index {
           Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
           Button('打开登录页面').margin({ top: 22 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
           Button('发布主题').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
+          Button('通知').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
         }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
       } else {
         List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }

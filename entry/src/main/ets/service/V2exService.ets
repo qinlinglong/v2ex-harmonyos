@@ -1,6 +1,6 @@
 import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
-import { V2exNode, V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exNode, V2exReply, V2exTopic } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
 
@@ -53,6 +53,12 @@ export class V2exService {
   static async nodes(): Promise<V2exNode[]> {
     const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
     return data ?? [];
+  }
+
+  static async member(username: string): Promise<V2exMember> {
+    const data: V2exMember[] = JSON.parse(await V2exService.get(`/api/members/show.json?username=${encodeURIComponent(username)}`)) as V2exMember[];
+    if (!data.length) throw new Error('用户不存在');
+    return data[0];
   }
 
   static async topic(id: number): Promise<V2exTopic> {
