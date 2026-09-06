@@ -21,7 +21,8 @@ export class V2exService {
   private static async get(path: string): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}${path}`, {
+      const url: string = path.startsWith('http') ? path : `${API_BASE}${path}`;
+      const response: http.HttpResponse = await request.request(url, {
         method: http.RequestMethod.GET,
         header: {
           'Accept': 'application/json',
@@ -50,15 +51,54 @@ export class V2exService {
     return parsed;
   }
 
+  static async searchTopics(query: string): Promise<V2exTopic[]> {
+    const raw: Object = JSON.parse(await V2exService.get(`https://www.sov2ex.com/api/search?q=${encodeURIComponent(query)}&size=50&from=0&sort=created&order=0`)) as Object;
+    const payload: Record<string, Object> = raw as Record<string, Object>;
+    const hits: Object[] = (payload['hits'] as Object[] | undefined) ?? [];
+    const allNodes: V2exNode[] = await V2exService.nodes();
+    const nodeMap: Map<number, V2exNode> = new Map<number, V2exNode>();
+    allNodes.forEach((node: V2exNode) => { if (node.id !== undefined) nodeMap.set(node.id, node); });
+    return hits.map((hit: Object) => {
+      const source: Record<string, Object> = (hit as Record<string, Object>)['_source'] as Record<string, Object>;
+      const nodeId: number = Number(source['node'] ?? 0);
+      return {
+        id: Number(source['id'] ?? 0), title: String(source['title'] ?? ''), content: String(source['content'] ?? ''),
+        replies: Number(source['replies'] ?? 0), last_modified: 0,
+        last_touched: Math.floor(new Date(String(source['created'] ?? '')).getTime() / 1000),
+        node: nodeMap.get(nodeId), member: { username: String(source['member'] ?? '') }
+      } as V2exTopic;
+    });
+  }
+
   static async nodes(): Promise<V2exNode[]> {
     const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
     return data ?? [];
   }
 
+  static async topicsForNode(name: string): Promise<V2exTopic[]> {
+    const path: string = `/api/topics/show.json?node_name=${encodeURIComponent(name)}&page_size=100`;
+    const data: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
+    return data ?? [];
+  }
+
   static async member(username: string): Promise<V2exMember> {
-    const data: V2exMember[] = JSON.parse(await V2exService.get(`/api/members/show.json?username=${encodeURIComponent(username)}`)) as V2exMember[];
-    if (!data.length) throw new Error('用户不存在');
-    return data[0];
+    const parsed: Object = JSON.parse(await V2exService.get(`/api/members/show.json?username=${encodeURIComponent(username)}`)) as Object;
+    if (Array.isArray(parsed)) {
+      const list: V2exMember[] = parsed as V2exMember[];
+      if (list.length === 0) throw new Error('用户不存在');
+      return list[0];
+    }
+    return parsed as V2exMember;
+  }
+
+  static async memberTopics(username: string): Promise<V2exTopic[]> {
+    const data: V2exTopic[] = JSON.parse(await V2exService.get(`/api/topics/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exTopic[];
+    return data ?? [];
+  }
+
+  static async memberReplies(username: string): Promise<V2exReply[]> {
+    const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exReply[];
+    return data ?? [];
   }
 
   static async topic(id: number): Promise<V2exTopic> {

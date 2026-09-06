@@ -2,6 +2,7 @@
   "src": [
     "pages/Index",
     "pages/TopicDetail",
+    "pages/NodeTopics",
     "pages/Login",
     "pages/WriteTopic",
     "pages/Profile",

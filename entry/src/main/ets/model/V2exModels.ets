@@ -1,13 +1,20 @@
 export interface V2exNode {
+  id?: number;
   name: string;
   title: string;
   avatar_large?: string;
 }
 
 export interface V2exMember {
+  id?: number;
   username: string;
   tagline?: string;
   avatar_large?: string;
+  website?: string;
+  bio?: string;
+  created?: number;
+  level?: number;
+  reputation?: number;
 }
 
 export interface V2exTopic {

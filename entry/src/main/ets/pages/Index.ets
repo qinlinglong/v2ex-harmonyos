@@ -62,6 +62,21 @@ struct Index {
     finally { this.loading = false; }
   }
 
+  private async searchRemote(): Promise<void> {
+    const query: string = this.searchText.trim();
+    if (query.length === 0) return;
+    this.loading = true;
+    this.errorText = '';
+    try {
+      this.topics = await V2exService.searchTopics(query);
+      if (this.topics.length === 0) this.errorText = '没有找到匹配主题';
+    } catch (_) {
+      this.errorText = '搜索失败，请稍后重试';
+    } finally {
+      this.loading = false;
+    }
+  }
+
   @Builder
   topicCard(topic: V2exTopic) {
     ListItem() {
@@ -75,6 +90,7 @@ struct Index {
             }
           }
           Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6').margin({ left: 8 })
+            .onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
           Blank()
           Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
         }.width('100%').margin({ bottom: 10 })
@@ -101,6 +117,7 @@ struct Index {
           .layoutWeight(1).height(42).fontSize(14).backgroundColor('#F1F4F7')
           .onChange((value: string) => this.searchText = value)
         Text('⌕').fontSize(22).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
+          .onClick(() => this.searchRemote())
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
       Row() {
         ForEach(this.tabs, (tab: string, index: number) => {
@@ -123,7 +140,7 @@ struct Index {
             ForEach(this.nodes, (node: V2exNode) => ListItem() {
               Row() { Text(node.title).fontSize(16).fontColor('#202124'); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
                 .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(Color.White)
-                .onClick(() => { this.searchText = node.name; this.selectTab(1); })
+                .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
             }, (node: V2exNode) => node.name)
           }.layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%')
