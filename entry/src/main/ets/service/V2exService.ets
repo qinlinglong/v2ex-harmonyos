@@ -79,10 +79,10 @@ export class V2exService {
     if (data.length > 0) return data;
     const html: string = await V2exService.get(`/t/${id}`);
     const result: V2exReply[] = [];
-    const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<a href=["']\/member\/([^"']+)["'][^>]*>[\s\S]*?<\/a>[\s\S]*?<div class=["']reply_content["']>([\s\S]*?)<\/div>/gi;
+    const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<div class=["']reply_content["']>([\s\S]*?)<\/div>/gi;
     let match: RegExpExecArray | null = pattern.exec(html);
     while (match !== null) {
-      result.push({ id: Number(match[1]), content: V2exService.cleanHtml(match[3]), created: 0, member: { username: match[2] } });
+      result.push({ id: Number(match[1]), content: V2exService.cleanHtml(match[4]), created: 0, member: { username: match[3], avatar_large: match[2] } });
       match = pattern.exec(html);
     }
     return result;

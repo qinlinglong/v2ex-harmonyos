@@ -115,6 +115,11 @@ struct TopicDetail {
             ForEach(this.replies, (reply: V2exReply, index: number) => {
               Column() {
                 Row() {
+                  Stack() {
+                    Text((reply.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
+                      .width(28).height(28).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(14)
+                    if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(28).height(28).borderRadius(14).objectFit(ImageFit.Cover)
+                  }
                   Text(`${index + 1}. ${reply.member?.username ?? '匿名'}`).fontSize(14).fontWeight(FontWeight.Medium).fontColor('#4F7CAC')
                     .onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   Blank()
