@@ -9,6 +9,7 @@ struct SearchOptions {
   @StorageLink('v2exSearchOrder') order: string = '0';
   @StorageLink('v2exSearchGte') gte: string = '';
   @StorageLink('v2exSearchLte') lte: string = '';
+  @StorageLink('v2exSearchSource') source: string = 'sov2ex';
   build() {
     Column() {
       Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('搜索选项').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124') }
@@ -32,6 +33,11 @@ struct SearchOptions {
           .backgroundColor(Color.White).onChange((value: string) => this.gte = value)
         TextInput({ placeholder: '结束日期 YYYY-MM-DD', text: this.lte }).width('100%').height(46).fontColor('#202124')
           .backgroundColor(Color.White).margin({ top: 1 }).onChange((value: string) => this.lte = value)
+        Text('搜索服务').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').width('100%').margin({ top: 22, bottom: 14 })
+        Row() { Text('Sov2ex').layoutWeight(1); Button(this.source === 'sov2ex' ? '已选择' : '选择').fontSize(13).onClick(() => this.source = 'sov2ex') }
+          .width('100%').padding(18).backgroundColor(Color.White)
+        Row() { Text('Google').layoutWeight(1); Button(this.source === 'google' ? '已选择' : '选择').fontSize(13).onClick(() => this.source = 'google') }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
       }.width('100%').padding(18)
       Blank()
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')

@@ -7,6 +7,7 @@ import { V2exService } from '../service/V2exService';
 struct SearchPage {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exSearchHistory') historyJson: string = '[]';
+  @StorageLink('v2exSearchSource') searchSource: string = 'sov2ex';
   @State query: string = '';
   @State mode: number = 0;
   @State topics: V2exTopic[] = [];
@@ -42,6 +43,14 @@ struct SearchPage {
     this.status = '';
     try {
       if (this.mode === 0) {
+        if (this.searchSource === 'google') {
+          router.pushUrl({ url: 'pages/WebViewPage', params: {
+            title: 'Google 搜索',
+            url: `https://www.google.com/search?q=${encodeURIComponent(`site:v2ex.com ${this.query.trim()}`)}`
+          } });
+          this.loading = false;
+          return;
+        }
         this.topics = await V2exService.searchTopics(this.query.trim());
         if (this.topics.length === 0) this.status = '没有找到匹配主题';
       } else if (this.mode === 1) {
