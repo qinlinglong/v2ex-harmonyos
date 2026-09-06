@@ -16,6 +16,8 @@ function relativeTime(unix: number): string {
 struct Index {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
+  @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
+  @StorageLink('v2exLastCheckinDate') lastCheckinDate: string = '';
   @State selectedTab: number = 0;
   @State loading: boolean = false;
   @State errorText: string = '';
@@ -93,12 +95,22 @@ struct Index {
       const member: V2exMember | undefined = await V2exService.currentMember();
       this.currentMember = member;
       this.cachedMemberJson = member ? JSON.stringify(member) : '';
+      if (member) this.maybeCheckin();
     }
     catch (_) {
       // Keep a cached profile visible during a transient network failure. A
       // successful authenticated check above is the only event that clears it.
     }
     finally { this.memberLoading = false; }
+  }
+
+  private async maybeCheckin(): Promise<void> {
+    const today: string = new Date().toISOString().substring(0, 10);
+    if (!this.autoCheckin || this.lastCheckinDate === today) return;
+    try {
+      const ok: boolean = await V2exService.checkin();
+      if (ok) this.lastCheckinDate = today;
+    } catch (_) { /* automatic check-in must not block the home screen */ }
   }
 
   private visibleNodes(): V2exNode[] {

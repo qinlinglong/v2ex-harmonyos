@@ -7,6 +7,7 @@ struct Settings {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exParseContent') parseContent: boolean = true;
   @StorageLink('v2exBuiltinBrowser') builtinBrowser: boolean = true;
+  @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
   @State customColor: string = '#4F7CAC';
   @State status: string = '';
@@ -21,6 +22,8 @@ struct Settings {
         Row() { Text('内容解析').fontSize(16).layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).onClick(() => this.parseContent = !this.parseContent) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
         Row() { Text('内置浏览器').fontSize(16).layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('自动签到').fontSize(16).layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).onClick(() => this.autoCheckin = !this.autoCheckin) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
         Text('主题颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').width('100%')
         Row() {

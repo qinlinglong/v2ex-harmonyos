@@ -181,6 +181,15 @@ export class V2exService {
     catch (_) { return { username }; }
   }
 
+  static async checkin(): Promise<boolean> {
+    const html: string = await V2exService.get('/mission/daily', true);
+    if (!V2exService.signedInHtml(html)) return false;
+    const redeem: RegExpMatchArray | null = html.match(/\/mission\/daily\/redeem\?once=\d+/i);
+    if (!redeem) return true;
+    const result: string = await V2exService.get(redeem[0], true);
+    return /ok-sign|fa-check|每日登录|领取成功/i.test(result);
+  }
+
   static async myTopics(page: number = 1): Promise<V2exTopic[]> {
     const html: string = await V2exService.get(`/my/topics?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
