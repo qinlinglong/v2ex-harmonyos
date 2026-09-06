@@ -51,6 +51,9 @@ struct Settings {
         Row() { Text('图片上传').fontSize(16).layoutWeight(1); Text('Imgur').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ImgurConfig' }))
+        Row() { Text('域名配置').fontSize(16).layoutWeight(1); Text('V2EX').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/ConfigureDomain' }))
         Row() { Text('退出登录').fontSize(16).layoutWeight(1); Button('退出').fontSize(13).onClick(() => { try { webview.WebCookieManager.clearAllCookiesSync(); this.status = '已退出登录'; } catch (_) { this.status = '退出失败'; } }) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
         if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 16 })

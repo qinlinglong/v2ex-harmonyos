@@ -18,6 +18,7 @@
     "pages/Search",
     "pages/TopicBlockSettings",
     "pages/RelatedReplies",
-    "pages/ImgurConfig"
+    "pages/ImgurConfig",
+    "pages/ConfigureDomain"
   ]
 }

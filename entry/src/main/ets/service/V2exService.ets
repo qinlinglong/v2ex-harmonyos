@@ -7,8 +7,16 @@ import { V2exMember, V2exNode, V2exNotification, V2exReply, V2exTopic } from '..
 const API_BASE: string = 'https://www.v2ex.com';
 
 export class V2exService {
+  private static base(): string {
+    try {
+      const configured: string = (AppStorage.get<string>('v2exDomain') ?? '').trim().replace(/\/$/, '');
+      if (/^https?:\/\//i.test(configured)) return configured;
+    } catch (_) { /* use default domain */ }
+    return API_BASE;
+  }
+
   private static cookie(): string {
-    try { return webview.WebCookieManager.fetchCookieSync(API_BASE) || ''; } catch (_) { return ''; }
+    try { return webview.WebCookieManager.fetchCookieSync(V2exService.base()) || ''; } catch (_) { return ''; }
   }
 
   private static formValue(value: string): string {
@@ -23,7 +31,7 @@ export class V2exService {
   private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
-      const url: string = path.startsWith('http') ? path : `${API_BASE}${path}`;
+      const url: string = path.startsWith('http') ? path : `${V2exService.base()}${path}`;
       const headers: Record<string, string> = {
         'Accept': 'application/json',
         'User-Agent': 'V2EX-HarmonyOS/1.0'
@@ -286,9 +294,9 @@ export class V2exService {
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/t/${topicId}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/t/${topicId}`, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${topicId}` },
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${topicId}` },
         extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(onceMatch[1])}`,
         connectTimeout: 8000,
         readTimeout: 12000,
@@ -304,9 +312,9 @@ export class V2exService {
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/${action}/reply/${replyId}?once=${V2exService.formValue(onceMatch[1])}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/reply/${replyId}?once=${V2exService.formValue(onceMatch[1])}`, {
         method: http.RequestMethod.POST,
-        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${topicId}` },
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${topicId}` },
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
@@ -321,9 +329,9 @@ export class V2exService {
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/edit/reply/${replyId}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/edit/reply/${replyId}`, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/edit/reply/${replyId}` },
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/edit/reply/${replyId}` },
         extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(onceMatch[1])}`,
         connectTimeout: 8000,
         readTimeout: 12000,
@@ -339,9 +347,9 @@ export class V2exService {
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/append/topic/${topicId}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/append/topic/${topicId}`, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${topicId}` },
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${topicId}` },
         extraData: `content=${V2exService.formValue(content)}&syntax=default&once=${V2exService.formValue(onceMatch[1])}`,
         connectTimeout: 8000,
         readTimeout: 12000,
@@ -357,9 +365,9 @@ export class V2exService {
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/write`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/write`, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/write` },
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/write` },
         extraData: `title=${V2exService.formValue(title)}&content=${V2exService.formValue(content)}&node_name=${V2exService.formValue(nodeName)}&syntax=default&once=${V2exService.formValue(onceMatch[1])}`,
         connectTimeout: 8000,
         readTimeout: 12000,
@@ -375,9 +383,9 @@ export class V2exService {
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/edit/topic/${id}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/edit/topic/${id}`, {
         method: http.RequestMethod.POST,
-        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/edit/topic/${id}` },
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/edit/topic/${id}` },
         extraData: `title=${V2exService.formValue(title)}&content=${V2exService.formValue(content)}&syntax=${V2exService.formValue(syntax)}&once=${V2exService.formValue(onceMatch[1])}`,
         connectTimeout: 8000,
         readTimeout: 12000,
@@ -394,9 +402,9 @@ export class V2exService {
     const request: http.HttpRequest = http.createHttp();
     try {
       const method: http.RequestMethod = action === 'thank' || action === 'up' || action === 'down' ? http.RequestMethod.POST : http.RequestMethod.GET;
-      const response: http.HttpResponse = await request.request(`${API_BASE}/${action}/topic/${id}?once=${V2exService.formValue(onceMatch[1])}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/topic/${id}?once=${V2exService.formValue(onceMatch[1])}`, {
         method,
-        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${id}` },
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${id}` },
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
@@ -411,9 +419,9 @@ export class V2exService {
     if (!onceMatch) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/${action}/member/${encodeURIComponent(username)}?once=${V2exService.formValue(onceMatch[1])}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/member/${encodeURIComponent(username)}?once=${V2exService.formValue(onceMatch[1])}`, {
         method: http.RequestMethod.GET,
-        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/member/${username}` },
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/member/${username}` },
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
@@ -429,9 +437,9 @@ export class V2exService {
     const target: string = linkPattern[1].replace(/^(?:un)?favorite/, action);
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${API_BASE}/${target}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${target}`, {
         method: http.RequestMethod.GET,
-        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/go/${name}` },
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/go/${name}` },
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
