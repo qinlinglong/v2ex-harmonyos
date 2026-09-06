@@ -19,6 +19,7 @@ struct Index {
   @State errorText: string = '';
   @State topics: V2exTopic[] = [];
   @State nodes: V2exNode[] = [];
+  @State searchText: string = '';
   private readonly tabs: string[] = ['首页', '最新', '节点', '我的'];
 
   aboutToAppear(): void { this.loadTopics('latest'); }
@@ -37,6 +38,14 @@ struct Index {
     if (index === 0) this.loadTopics('hot');
     if (index === 1) this.loadTopics('latest');
     if (index === 2 && this.nodes.length === 0) this.loadNodes();
+  }
+
+  private visibleTopics(): V2exTopic[] {
+    const query: string = this.searchText.trim().toLowerCase();
+    if (query.length === 0) return this.topics;
+    return this.topics.filter((topic: V2exTopic) =>
+      topic.title.toLowerCase().includes(query) || (topic.content ?? '').toLowerCase().includes(query) ||
+      (topic.member?.username ?? '').toLowerCase().includes(query) || (topic.node?.title ?? '').toLowerCase().includes(query));
   }
 
   private async loadNodes(): Promise<void> {
@@ -74,6 +83,12 @@ struct Index {
           .onClick(() => this.loadTopics(this.selectedTab === 0 ? 'hot' : 'latest'))
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
+        TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
+          .layoutWeight(1).height(42).fontSize(14).backgroundColor('#F1F4F7')
+          .onChange((value: string) => this.searchText = value)
+        Text('⌕').fontSize(22).fontColor('#4F7CAC').width(44).textAlign(TextAlign.Center)
+      }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
+      Row() {
         ForEach(this.tabs, (tab: string, index: number) => {
           Column() {
             Text(tab).fontSize(15).fontColor(this.selectedTab === index ? '#4F7CAC' : '#7B8794')
@@ -104,7 +119,7 @@ struct Index {
           Button('打开登录页面').margin({ top: 22 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
         }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
       } else {
-        List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+        List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
           .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
       }
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
