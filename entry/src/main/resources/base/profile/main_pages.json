@@ -19,6 +19,7 @@
     "pages/TopicBlockSettings",
     "pages/RelatedReplies",
     "pages/ImgurConfig",
-    "pages/ConfigureDomain"
+    "pages/ConfigureDomain",
+    "pages/WebViewPage"
   ]
 }

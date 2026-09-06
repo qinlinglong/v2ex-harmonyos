@@ -76,6 +76,8 @@ struct Profile {
               }
               Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124').margin({ top: 12 })
               Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor('#7B8794').margin({ top: 6 })
+              if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor('#4F7CAC').margin({ top: 6 })
+                .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
               Row() {
                 Button(this.followed ? '已关注' : '关注').layoutWeight(1).onClick(async () => {
                   const ok: boolean = await V2exService.memberAction(this.username, this.followed ? 'unfollow' : 'follow');

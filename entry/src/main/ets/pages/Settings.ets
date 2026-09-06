@@ -41,7 +41,7 @@ struct Settings {
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
         Row() { Text('问题反馈').fontSize(16).layoutWeight(1); Text('GitHub').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
-          .onClick(() => this.status = '请在浏览器打开项目反馈页')
+          .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '问题反馈', url: 'https://github.com/liaoliao666/v2ex/issues' } }))
         Row() { Text('社区排行').fontSize(16).layoutWeight(1); Text('查看').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/Rank' }))
