@@ -37,6 +37,7 @@ struct TopicDetail {
   @StorageLink('v2exIgnoredTopicIds') ignoredTopicsJson: string = '[]';
   @StorageLink('v2exParseContent') parseContent: boolean = true;
   @StorageLink('v2exReplyMention') replyMention: string = '';
+  @StorageLink('v2exIgnoredReplyIds') ignoredReplyIdsJson: string = '[]';
   @State topic: V2exTopic | undefined = undefined;
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
@@ -157,8 +158,38 @@ struct TopicDetail {
     } catch (_) { this.replyStatus = '操作失败'; }
   }
 
+  private async ignoreReply(replyId: number): Promise<void> {
+    try {
+      const ok: boolean = await V2exService.replyAction(this.topicId, replyId, 'ignore');
+      if (!ok) { this.replyStatus = '请先登录'; return; }
+      let ids: number[] = [];
+      try { ids = JSON.parse(this.ignoredReplyIdsJson) as number[]; } catch (_) { ids = []; }
+      if (ids.indexOf(replyId) < 0) this.ignoredReplyIdsJson = JSON.stringify(ids.concat([replyId]));
+      this.replyStatus = '回复已忽略';
+    } catch (_) { this.replyStatus = '操作失败'; }
+  }
+
+  private ignoredReplyIds(): number[] {
+    try { return JSON.parse(this.ignoredReplyIdsJson) as number[]; } catch (_) { return []; }
+  }
+
+  private replyDepth(reply: V2exReply, index: number): number {
+    if (!reply.member?.username || index <= 0) return 0;
+    const explicit: RegExpMatchArray | null = reply.content.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g);
+    if (!explicit || explicit.length === 0) return 0;
+    const names: string[] = explicit.map((item: string) => item.substring(1).toLowerCase());
+    for (let i: number = index - 1; i >= 0; i--) {
+      const previous: V2exReply = this.replies[i];
+      if (previous.member?.username && names.indexOf(previous.member.username.toLowerCase()) >= 0) {
+        return Math.min(3, this.replyDepth(previous, i) + 1);
+      }
+    }
+    return 0;
+  }
+
   private orderedReplies(): V2exReply[] {
-    const list: V2exReply[] = this.replies.slice();
+    const ignored: number[] = this.ignoredReplyIds();
+    const list: V2exReply[] = this.replies.filter((reply: V2exReply) => ignored.indexOf(reply.id) < 0);
     if (this.replyOrder === 1) list.reverse();
     return list;
   }
@@ -343,10 +374,12 @@ struct TopicDetail {
                     Text(this.thankedReplies.indexOf(reply.id) >= 0 ? `♥ 已感谢 ${reply.thanks ?? 0}` : `♡ 感谢 ${reply.thanks ?? 0}`)
                       .fontSize(13).fontColor(this.themeColor).onClick(() => this.thankReply(reply.id))
                     Blank()
+                    Text('忽略').fontSize(13).fontColor('#9AA0A6').margin({ right: 16 }).onClick(() => this.ignoreReply(reply.id))
                     Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
                   }.width('100%').margin({ top: 10 })
                 }
-              }.width('100%').padding(16).backgroundColor(Color.White).margin({ bottom: 1 })
+              }.width('100%').padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
+                .backgroundColor(Color.White).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
             Column() {
               TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15)
