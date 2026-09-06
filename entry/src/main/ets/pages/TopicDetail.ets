@@ -35,6 +35,7 @@ struct TopicDetail {
   @State favorited: boolean = false;
   @State thanked: boolean = false;
   @State actionStatus: string = '';
+  @State thankedReplies: number[] = [];
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -73,6 +74,15 @@ struct TopicDetail {
         this.actionStatus = kind === 'favorite' ? (this.favorited ? '已收藏' : '已取消收藏') : '已完成';
       } else this.actionStatus = '请先登录';
     } catch (_) { this.actionStatus = '操作失败'; }
+  }
+
+  private async thankReply(replyId: number): Promise<void> {
+    if (this.thankedReplies.indexOf(replyId) >= 0) return;
+    try {
+      const ok: boolean = await V2exService.replyAction(this.topicId, replyId, 'thank');
+      if (ok) this.thankedReplies = this.thankedReplies.concat([replyId]);
+      else this.replyStatus = '请先登录';
+    } catch (_) { this.replyStatus = '操作失败'; }
   }
 
   build() {
@@ -135,6 +145,10 @@ struct TopicDetail {
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
                 }
                 Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
+                Row() {
+                  Text(this.thankedReplies.indexOf(reply.id) >= 0 ? '♥ 已感谢' : '♡ 感谢')
+                    .fontSize(13).fontColor('#4F7CAC').onClick(() => this.thankReply(reply.id))
+                }.width('100%').margin({ top: 10 })
               }.width('100%').padding(16).backgroundColor(Color.White).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
             Column() {

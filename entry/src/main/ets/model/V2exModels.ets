@@ -34,6 +34,8 @@ export interface V2exReply {
   content: string;
   created: number;
   member?: V2exMember;
+  thanks?: number;
+  thanked?: boolean;
 }
 
 export interface V2exNotification {

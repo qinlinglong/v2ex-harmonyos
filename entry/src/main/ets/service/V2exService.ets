@@ -199,6 +199,23 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
+  static async replyAction(topicId: number, replyId: number, action: 'thank' | 'ignore'): Promise<boolean> {
+    const html: string = await V2exService.get(`/t/${topicId}`, true);
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/${action}/reply/${replyId}?once=${V2exService.formValue(onceMatch[1])}`, {
+        method: http.RequestMethod.POST,
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${topicId}` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
+
   static async writeTopic(title: string, content: string, nodeName: string): Promise<boolean> {
     const html: string = await V2exService.get('/write');
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
