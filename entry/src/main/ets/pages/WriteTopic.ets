@@ -3,6 +3,33 @@ import { picker } from '@kit.CoreFileKit';
 import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
 
+interface PreviewPart { kind: string; value: string; label?: string; }
+
+function previewParts(markdown: string): PreviewPart[] {
+  const parts: PreviewPart[] = [];
+  const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
+  let cursor: number = 0;
+  let match: RegExpExecArray | null = pattern.exec(markdown);
+  while (match !== null) {
+    const before: string = markdown.substring(cursor, match.index).trim();
+    if (before.length > 0) parts.push({ kind: 'text', value: before });
+    if (match[1]) parts.push({ kind: 'image', value: match[1] });
+    else parts.push({ kind: 'link', value: match[3], label: match[2] });
+    cursor = match.index + match[0].length;
+    match = pattern.exec(markdown);
+  }
+  const tail: string = markdown.substring(cursor).trim();
+  if (tail.length > 0) parts.push({ kind: 'text', value: tail });
+  if (parts.length === 0 && markdown.trim().length > 0) parts.push({ kind: 'text', value: markdown.trim() });
+  return parts;
+}
+
+function previewText(value: string): string {
+  return value.replace(/^#{1,6}\s+/gm, '').replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1').replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1').replace(/`([^`]+)`/g, '$1');
+}
+
 @Entry
 @Component
 struct WriteTopic {
@@ -70,6 +97,29 @@ struct WriteTopic {
     } catch (_) { this.status = '图片上传失败，请检查配置和网络'; }
   }
 
+  private contentUrl(url: string): string {
+    if (!url.startsWith('/')) return url;
+    const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
+    return `${configured.replace(/\/$/, '')}${url}`;
+  }
+
+  private openPreviewLink(url: string): void {
+    const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
+    const absolute: string = url.startsWith('/') ? `${configured.replace(/\/$/, '')}${url}` : url;
+    const topicMatch: RegExpMatchArray | null = absolute.match(/\/t\/(\d+)/);
+    const isV2ex: boolean = absolute.indexOf(configured.replace(/\/$/, '')) === 0 || /https?:\/\/([^/]*\.)?v2ex\.com(?:\/|$)/i.test(absolute);
+    if (isV2ex && topicMatch) {
+      router.pushUrl({ url: 'pages/TopicDetail', params: { id: Number(topicMatch[1]) } });
+      return;
+    }
+    const memberMatch: RegExpMatchArray | null = absolute.match(/\/member\/([^/?#]+)/);
+    if (isV2ex && memberMatch) {
+      router.pushUrl({ url: 'pages/Profile', params: { username: decodeURIComponent(memberMatch[1]) } });
+      return;
+    }
+    router.pushUrl({ url: 'pages/WebViewPage', params: { title: '网页', url: absolute } });
+  }
+
   build() {
     Column() {
       Row() {
@@ -102,7 +152,19 @@ struct WriteTopic {
           if (this.preview) {
             Column() {
               Text(this.title || '（无标题）').fontSize(22).fontWeight(FontWeight.Bold).fontColor('#202124')
-              Text(this.content || '（无正文）').fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 })
+              ForEach(previewParts(this.content || '（无正文）'), (part: PreviewPart) => {
+                if (part.kind === 'image') {
+                  Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 })
+                    .objectFit(ImageFit.Contain).margin({ top: 14, bottom: 4 })
+                } else if (part.kind === 'link') {
+                  Text(part.label ?? part.value).fontSize(16).fontColor(this.themeColor).lineHeight(26)
+                    .decoration({ type: TextDecorationType.Underline, color: this.themeColor }).margin({ top: 20 })
+                    .onClick(() => this.openPreviewLink(part.value))
+                } else {
+                  Text(previewText(part.value)).fontSize(16).fontColor('#30343B').lineHeight(26)
+                    .margin({ top: 20 }).textAlign(TextAlign.Start)
+                }
+              }, (part: PreviewPart, index: number) => `preview-${part.kind}-${index}-${part.value.substring(0, 12)}`)
             }.width('100%').padding(18).backgroundColor(Color.White)
           } else {
             TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16).fontColor('#202124')
