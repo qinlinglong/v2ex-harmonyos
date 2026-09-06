@@ -26,6 +26,7 @@ function detailParts(markdown: string): DetailPart[] {
 @Component
 struct TopicDetail {
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
+  @StorageLink('v2exParseContent') parseContent: boolean = true;
   @State topic: V2exTopic | undefined = undefined;
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
@@ -215,7 +216,7 @@ struct TopicDetail {
                 }.width('100%').margin({ top: 8 })
               }
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
-              ForEach(detailParts(this.topic.content || '（无正文）'), (part: DetailPart) => {
+              ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
                 if (part.kind === 'image') {
                   Image(part.value).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
                     .margin({ top: 14, bottom: 4 })
