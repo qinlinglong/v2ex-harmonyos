@@ -72,6 +72,21 @@ export class V2exService {
     });
   }
 
+  static async searchMembers(query: string): Promise<V2exMember[]> {
+    const raw: Object = JSON.parse(await V2exService.get(`https://www.sov2ex.com/api/search?username=${encodeURIComponent(query)}&size=50&from=0&sort=created&order=0`)) as Object;
+    const payload: Record<string, Object> = raw as Record<string, Object>;
+    const hits: Object[] = (payload['hits'] as Object[] | undefined) ?? [];
+    const result: V2exMember[] = [];
+    hits.forEach((hit: Object) => {
+      const source: Record<string, Object> = (hit as Record<string, Object>)['_source'] as Record<string, Object>;
+      const username: string = String(source['member'] ?? source['username'] ?? '');
+      if (username.length > 0 && result.findIndex((item: V2exMember) => item.username === username) < 0) {
+        result.push({ username });
+      }
+    });
+    return result;
+  }
+
   static async nodes(): Promise<V2exNode[]> {
     const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
     return data ?? [];

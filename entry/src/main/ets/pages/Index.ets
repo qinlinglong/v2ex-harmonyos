@@ -128,7 +128,7 @@ struct Index {
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
         Text('⌕').fontSize(22).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
-          .onClick(() => this.searchRemote())
+          .onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
       Row() {
         ForEach(this.tabs, (tab: string, index: number) => {
