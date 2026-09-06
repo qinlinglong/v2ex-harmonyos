@@ -114,6 +114,7 @@ struct Index {
             ForEach(this.nodes, (node: V2exNode) => ListItem() {
               Row() { Text(node.title).fontSize(16).fontColor('#202124'); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
                 .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(Color.White)
+                .onClick(() => { this.searchText = node.name; this.selectTab(1); })
             }, (node: V2exNode) => node.name)
           }.layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%')
