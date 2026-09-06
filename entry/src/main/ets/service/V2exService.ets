@@ -273,7 +273,15 @@ export class V2exService {
     const titleMatch: RegExpMatchArray | null = html.match(/<title>([\s\S]*?)\s+-\s+V2EX<\/title>/i);
     const bodyMatch: RegExpMatchArray | null = html.match(/class=["'][^"']*topic_content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
     if (!titleMatch) throw new Error('主题不存在');
-    return { id, title: V2exService.cleanHtml(titleMatch[1]), content: V2exService.cleanHtml(bodyMatch?.[1] ?? ''), replies: 0, last_modified: 0, last_touched: 0 };
+    return {
+      id, title: V2exService.cleanHtml(titleMatch[1]), content: V2exService.cleanHtml(bodyMatch?.[1] ?? ''), replies: 0,
+      last_modified: 0, last_touched: 0,
+      editable: html.indexOf(`/edit/topic/${id}`) >= 0,
+      appendable: html.indexOf(`/append/topic/${id}`) >= 0,
+      favorited: html.indexOf('/unfavorite/topic/') >= 0,
+      thanked: /topic_thanked/i.test(html),
+      ignored: html.indexOf('/unignore/topic/') >= 0
+    } as V2exTopic;
   }
 
   static async replies(id: number): Promise<V2exReply[]> {

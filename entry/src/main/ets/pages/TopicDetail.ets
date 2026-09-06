@@ -79,6 +79,10 @@ struct TopicDetail {
     this.errorText = '';
     try {
       this.topic = await V2exService.topic(this.topicId);
+      this.favorited = this.topic.favorited === true;
+      this.thanked = this.topic.thanked === true;
+      this.ignored = this.topic.ignored === true;
+      if (this.topic.vote === 1 || this.topic.vote === -1) this.voteState = this.topic.vote;
       this.loading = false;
       try {
         this.replies = await V2exService.replies(this.topicId);
@@ -172,7 +176,10 @@ struct TopicDetail {
       if (this.topic) this.topic = {
         id: this.topic.id, title: this.topic.title, content: `${this.topic.content}\n\n${this.appendText.trim()}`,
         replies: this.topic.replies, last_modified: this.topic.last_modified, last_touched: this.topic.last_touched,
-        node: this.topic.node, member: this.topic.member, url: this.topic.url
+        node: this.topic.node, member: this.topic.member, url: this.topic.url,
+        editable: this.topic.editable, appendable: this.topic.appendable,
+        favorited: this.topic.favorited, thanked: this.topic.thanked,
+        ignored: this.topic.ignored, vote: this.topic.vote
       } as V2exTopic;
       this.appendText = '';
       this.appendStatus = '追加成功';
@@ -232,10 +239,14 @@ struct TopicDetail {
                   if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
                 }).backgroundColor(this.themeColor).fontColor(Color.White)
               }.width('100%').margin({ top: 16 })
-              Button('编辑主题').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
-                .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
-              Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
-                .margin({ top: 4 }).onClick(() => this.appendOpen = !this.appendOpen)
+              if (this.topic.editable === true) {
+                Button('编辑主题').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
+                  .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
+              }
+              if (this.topic.appendable === true) {
+                Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
+                  .margin({ top: 4 }).onClick(() => this.appendOpen = !this.appendOpen)
+              }
               Row() {
                 Text(this.ignored ? '取消忽略' : '忽略主题').fontSize(13).fontColor('#7B8794').layoutWeight(1)
                   .onClick(async () => { const ok: boolean = await this.action(this.ignored ? 'unignore' : 'ignore'); if (ok) this.ignored = !this.ignored; })

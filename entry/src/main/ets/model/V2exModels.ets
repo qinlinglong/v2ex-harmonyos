@@ -27,6 +27,12 @@ export interface V2exTopic {
   last_touched: number;
   node?: V2exNode;
   member?: V2exMember;
+  editable?: boolean;
+  appendable?: boolean;
+  favorited?: boolean;
+  thanked?: boolean;
+  ignored?: boolean;
+  vote?: number;
 }
 
 export interface V2exReply {
