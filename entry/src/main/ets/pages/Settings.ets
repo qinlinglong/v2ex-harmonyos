@@ -9,10 +9,26 @@ struct Settings {
   @StorageLink('v2exBuiltinBrowser') builtinBrowser: boolean = true;
   @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
+  @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
+  @StorageLink('v2exIgnoredTopicIds') ignoredTopicsJson: string = '[]';
+  @StorageLink('v2exIgnoredReplyIds') ignoredRepliesJson: string = '[]';
+  @StorageLink('v2exBlockedKeywords') blockedKeywordsJson: string = '[]';
+  @StorageLink('v2exBlockedUsers') blockedUsersJson: string = '[]';
+  @StorageLink('v2exReplyMention') replyMention: string = '';
   @State customColor: string = '#4F7CAC';
   @State status: string = '';
   private readonly colors: string[] = ['#4F7CAC', '#5B8C5A', '#C05A73', '#8B6FB0', '#D07A3A'];
   aboutToAppear(): void { this.customColor = this.themeColor; }
+  private clearCache(): void {
+    this.cachedMemberJson = '';
+    this.recentJson = '[]';
+    this.ignoredTopicsJson = '[]';
+    this.ignoredRepliesJson = '[]';
+    this.blockedKeywordsJson = '[]';
+    this.blockedUsersJson = '[]';
+    this.replyMention = '';
+    this.status = '缓存已清除';
+  }
   build() {
     Column() {
       Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('设置').fontSize(20).fontWeight(FontWeight.Bold) }
@@ -60,6 +76,8 @@ struct Settings {
           .onClick(() => router.pushUrl({ url: 'pages/SortTabs' }))
         Row() { Text('清除最近浏览').fontSize(16).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.status = '最近浏览已清除'; }) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+        Row() { Text('清除缓存').fontSize(16).layoutWeight(1); Button('清除').fontSize(13).onClick(() => this.clearCache()) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
         Row() { Text('问题反馈').fontSize(16).layoutWeight(1); Text('GitHub').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '问题反馈', url: 'https://github.com/liaoliao666/v2ex/issues' } }))
@@ -78,6 +96,8 @@ struct Settings {
         Row() { Text('域名配置').fontSize(16).layoutWeight(1); Text('V2EX').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ConfigureDomain' }))
+        Row() { Text('当前版本').fontSize(16).layoutWeight(1); Text('1.0.0').fontSize(14).fontColor('#8A97A6') }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
         Row() { Text('退出登录').fontSize(16).layoutWeight(1); Button('退出').fontSize(13).onClick(() => { try { webview.WebCookieManager.clearAllCookiesSync(); this.status = '已退出登录'; } catch (_) { this.status = '退出失败'; } }) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
         if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 16 })
