@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exMemberRelations, V2exReply, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
 
 @Entry
@@ -25,11 +25,13 @@ struct Profile {
   private async load(): Promise<void> {
     try {
       this.member = await V2exService.member(this.username);
-      const results: [V2exTopic[], V2exReply[]] = await Promise.all([
-        V2exService.memberTopics(this.username), V2exService.memberReplies(this.username)
+      const results: [V2exTopic[], V2exReply[], V2exMemberRelations] = await Promise.all([
+        V2exService.memberTopics(this.username), V2exService.memberReplies(this.username), V2exService.memberRelations(this.username)
       ]);
       this.topics = results[0];
       this.replies = results[1];
+      this.followed = results[2].followed;
+      this.blocked = results[2].blocked;
       this.status = '';
     } catch (_) {
       this.status = '用户资料暂时不可用';

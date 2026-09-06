@@ -53,3 +53,8 @@ export interface V2exNotification {
   content?: string;
   created?: string;
 }
+
+export interface V2exMemberRelations {
+  followed: boolean;
+  blocked: boolean;
+}

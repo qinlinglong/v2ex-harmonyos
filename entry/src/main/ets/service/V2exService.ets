@@ -2,7 +2,7 @@ import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
 import { fileIo } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
-import { V2exMember, V2exNode, V2exNotification, V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply, V2exTopic } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
 
@@ -27,6 +27,12 @@ export class V2exService {
     return value.replace(/<br\s*\/?>(\r?\n)?/gi, '\n').replace(/<[^>]+>/g, '')
       .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
       .replace(/&gt;/gi, '>').replace(/&#39;/gi, "'").trim();
+  }
+  private static htmlContentToMarkdown(value: string): string {
+    return V2exService.cleanHtml(value
+      .replace(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi, '\n![图片]($1)\n')
+      .replace(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
+      .replace(/<\/p>|<br\s*\/?>(\r?\n)?/gi, '\n'));
   }
   private static signedInHtml(html: string): boolean {
     return html.indexOf('/logout') >= 0 || html.indexOf('/member/') >= 0;
@@ -169,6 +175,16 @@ export class V2exService {
   static async memberReplies(username: string): Promise<V2exReply[]> {
     const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exReply[];
     return data ?? [];
+  }
+
+  static async memberRelations(username: string): Promise<V2exMemberRelations> {
+    try {
+      const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`, true);
+      return {
+        followed: /\/unfollow\/member\//i.test(html),
+        blocked: /\/unblock\/member\//i.test(html)
+      };
+    } catch (_) { return { followed: false, blocked: false }; }
   }
 
   static async currentMember(): Promise<V2exMember | undefined> {
@@ -321,7 +337,7 @@ export class V2exService {
     const bodyMatch: RegExpMatchArray | null = html.match(/class=["'][^"']*topic_content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
     if (!titleMatch) throw new Error('主题不存在');
     return {
-      id, title: V2exService.cleanHtml(titleMatch[1]), content: V2exService.cleanHtml(bodyMatch?.[1] ?? ''), replies: 0,
+      id, title: V2exService.cleanHtml(titleMatch[1]), content: V2exService.htmlContentToMarkdown(bodyMatch?.[1] ?? ''), replies: 0,
       last_modified: 0, last_touched: 0,
       editable: html.indexOf(`/edit/topic/${id}`) >= 0,
       appendable: html.indexOf(`/append/topic/${id}`) >= 0,
