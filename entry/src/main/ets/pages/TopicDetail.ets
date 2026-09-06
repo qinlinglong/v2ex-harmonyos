@@ -32,6 +32,7 @@ function plainMarkdown(value: string): string {
 @Entry
 @Component
 struct TopicDetail {
+  @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
   @StorageLink('v2exParseContent') parseContent: boolean = true;
   @State topic: V2exTopic | undefined = undefined;
@@ -197,10 +198,10 @@ struct TopicDetail {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor('#4F7CAC').width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
-        Text('↻').fontSize(24).fontColor('#4F7CAC').width(42).textAlign(TextAlign.Center)
+        Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
           .onClick(() => { this.loading = true; this.load(); })
       }.height(60).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.loading) {
@@ -215,25 +216,25 @@ struct TopicDetail {
               Row() {
                 Text(this.topic.node?.title ?? 'V2EX').fontSize(13).fontColor('#7B8794')
                 Text(' · ').fontSize(13).fontColor('#7B8794')
-                Text(this.topic.member?.username ?? '匿名').fontSize(13).fontColor('#4F7CAC')
+                Text(this.topic.member?.username ?? '匿名').fontSize(13).fontColor(this.themeColor)
                   .onClick(() => { if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } }); })
                 Text(` · ${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
               }.margin({ top: 10 })
               Row() {
-                Button(this.favorited ? '★ 已收藏' : '☆ 收藏').layoutWeight(1).onClick(() => this.action('favorite'))
-                Button(this.thanked ? '♥ 已感谢' : '♥ 感谢').layoutWeight(1).margin({ left: 8 }).onClick(() => this.action('thank'))
+                Button(this.favorited ? '★ 已收藏' : '☆ 收藏').layoutWeight(1).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.action('favorite'))
+                Button(this.thanked ? '♥ 已感谢' : '♥ 感谢').layoutWeight(1).margin({ left: 8 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.action('thank'))
                 Button(this.voteState === 1 ? '▲ 已赞' : '▲ 赞').layoutWeight(1).margin({ left: 8 }).onClick(async () => {
                   const ok: boolean = await this.action('up');
                   if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
-                })
+                }).backgroundColor(this.themeColor).fontColor(Color.White)
                 Button(this.voteState === -1 ? '▼ 已踩' : '▼ 踩').layoutWeight(1).margin({ left: 8 }).onClick(async () => {
                   const ok: boolean = await this.action('down');
                   if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
-                })
+                }).backgroundColor(this.themeColor).fontColor(Color.White)
               }.width('100%').margin({ top: 16 })
-              Button('编辑主题').fontSize(13).fontColor('#4F7CAC').backgroundColor(Color.Transparent)
+              Button('编辑主题').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
                 .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
-              Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor('#4F7CAC').backgroundColor(Color.Transparent)
+              Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
                 .margin({ top: 4 }).onClick(() => this.appendOpen = !this.appendOpen)
               Row() {
                 Text(this.ignored ? '取消忽略' : '忽略主题').fontSize(13).fontColor('#7B8794').layoutWeight(1)
@@ -244,18 +245,18 @@ struct TopicDetail {
                 TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15)
                   .onChange((value: string) => this.appendText = value)
                 Row() {
-                  if (this.appendStatus.length > 0) Text(this.appendStatus).fontSize(12).fontColor('#4F7CAC')
+                  if (this.appendStatus.length > 0) Text(this.appendStatus).fontSize(12).fontColor(this.themeColor)
                   Blank()
-                  Button('保存追加').fontSize(13).onClick(() => this.submitAppend())
+                  Button('保存追加').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitAppend())
                 }.width('100%').margin({ top: 8 })
               }
-              if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
+              if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
               ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
                 if (part.kind === 'image') {
                   Image(part.value).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
                     .margin({ top: 14, bottom: 4 })
                 } else if (part.kind === 'link') {
-                  Text(part.label ?? part.value).fontSize(16).fontColor('#4F7CAC').lineHeight(26)
+                  Text(part.label ?? part.value).fontSize(16).fontColor(this.themeColor).lineHeight(26)
                     .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).margin({ top: 20 })
                     .onClick(() => this.openLink(part.value))
                 } else {
@@ -279,7 +280,7 @@ struct TopicDetail {
                       .width(28).height(28).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(14)
                     if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(28).height(28).borderRadius(14).objectFit(ImageFit.Cover)
                   }.onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
-                  Text(`${index + 1}. ${reply.member?.username ?? '匿名'}`).fontSize(14).fontWeight(FontWeight.Medium).fontColor('#4F7CAC')
+                  Text(`${index + 1}. ${reply.member?.username ?? '匿名'}`).fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
                     .onClick(() => {
                       if (reply.member?.username) this.replyText = `@${reply.member.username} `;
                     })
@@ -290,17 +291,17 @@ struct TopicDetail {
                   TextArea({ placeholder: '编辑回复', text: this.editingReplyText }).width('100%').height(130).fontSize(15)
                     .onChange((value: string) => this.editingReplyText = value)
                   Row() {
-                    if (this.editingReplyStatus.length > 0) Text(this.editingReplyStatus).fontSize(12).fontColor('#4F7CAC')
+                    if (this.editingReplyStatus.length > 0) Text(this.editingReplyStatus).fontSize(12).fontColor(this.themeColor)
                     Blank()
                     Text('取消').fontSize(13).fontColor('#7B8794').margin({ right: 16 }).onClick(() => this.editingReplyId = 0)
-                    Button('保存').fontSize(13).onClick(() => this.saveReplyEdit())
+                    Button('保存').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.saveReplyEdit())
                   }.width('100%').margin({ top: 8 })
                 } else {
                   ForEach(detailParts(reply.content), (part: DetailPart) => {
                     if (part.kind === 'image') {
                       Image(part.value).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
                     } else if (part.kind === 'link') {
-                      Text(part.label ?? part.value).fontSize(15).fontColor('#4F7CAC').lineHeight(23).margin({ top: 8 })
+                      Text(part.label ?? part.value).fontSize(15).fontColor(this.themeColor).lineHeight(23).margin({ top: 8 })
                         .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).onClick(() => this.openLink(part.value))
                     } else {
                       Text(plainMarkdown(part.value)).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
@@ -308,7 +309,7 @@ struct TopicDetail {
                   }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
                   Row() {
                     Text(this.thankedReplies.indexOf(reply.id) >= 0 ? `♥ 已感谢 ${reply.thanks ?? 0}` : `♡ 感谢 ${reply.thanks ?? 0}`)
-                      .fontSize(13).fontColor('#4F7CAC').onClick(() => this.thankReply(reply.id))
+                      .fontSize(13).fontColor(this.themeColor).onClick(() => this.thankReply(reply.id))
                     Blank()
                     Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
                   }.width('100%').margin({ top: 10 })
@@ -319,9 +320,9 @@ struct TopicDetail {
               TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15)
                 .onChange((value: string) => this.replyText = value)
               Row() {
-                if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor('#4F7CAC')
+                if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor)
                 Blank()
-                Button(this.replying ? '发送中' : '回复').onClick(() => this.submitReply())
+                Button(this.replying ? '发送中' : '回复').backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitReply())
               }.width('100%').margin({ top: 10 })
             }.width('100%').padding(16).backgroundColor(Color.White).margin({ top: 10, bottom: 20 })
           }.width('100%')
