@@ -37,6 +37,25 @@ export default class EntryAbility extends UIAbility {
     // Main window is created, set main page for this ability
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onWindowStageCreate');
 
+    // Render the native client edge-to-edge so the gesture area uses the same
+    // surface as the page instead of falling back to the platform black bar.
+    // Keep the system-bar icons enabled and light-on-dark handling explicit;
+    // page roots still apply their own content spacing where needed.
+    windowStage.getMainWindow().then((mainWindow: window.Window) => {
+      mainWindow.setWindowLayoutFullScreen(true);
+      mainWindow.setWindowSystemBarEnable(['status', 'navigation']);
+      return mainWindow.setWindowSystemBarProperties({
+        statusBarColor: '#FFFFFF',
+        navigationBarColor: '#FFFFFF',
+        statusBarContentColor: '#202124',
+        navigationBarContentColor: '#202124',
+        isStatusBarLightIcon: false,
+        isNavigationBarLightIcon: false
+      });
+    }).catch((barError: Error) => {
+      hilog.warn(DOMAIN, 'testTag', 'Unable to configure immersive bars: %{public}s', JSON.stringify(barError));
+    });
+
     windowStage.loadContent('pages/Index', (err) => {
       if (err.code) {
         hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
@@ -44,17 +63,6 @@ export default class EntryAbility extends UIAbility {
       }
       // Keep the native pages visually continuous with the reference client: the
       // system bars use the same light surface instead of the platform black default.
-      const mainWindow: window.Window = windowStage.getMainWindowSync();
-      mainWindow.setWindowSystemBarProperties({
-        statusBarColor: '#FFFFFF',
-        navigationBarColor: '#FFFFFF',
-        statusBarContentColor: '#202124',
-        navigationBarContentColor: '#202124',
-        isStatusBarLightIcon: false,
-        isNavigationBarLightIcon: false
-      }).catch((barError: Error) => {
-        hilog.warn(DOMAIN, 'testTag', 'Unable to style system bars: %{public}s', JSON.stringify(barError));
-      });
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
     });
   }
