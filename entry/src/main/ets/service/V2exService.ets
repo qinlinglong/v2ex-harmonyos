@@ -395,7 +395,7 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
-  static async topicAction(id: number, action: 'favorite' | 'unfavorite' | 'thank' | 'up' | 'down'): Promise<boolean> {
+  static async topicAction(id: number, action: 'favorite' | 'unfavorite' | 'thank' | 'up' | 'down' | 'ignore' | 'unignore' | 'report'): Promise<boolean> {
     const html: string = await V2exService.get(`/t/${id}`);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;

@@ -45,6 +45,7 @@ struct TopicDetail {
   @State appendStatus: string = '';
   @State voteState: number = 0;
   @State replyOrder: number = 0;
+  @State ignored: boolean = false;
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -81,7 +82,7 @@ struct TopicDetail {
     finally { this.replying = false; }
   }
 
-  private async action(kind: 'favorite' | 'thank' | 'up' | 'down'): Promise<boolean> {
+  private async action(kind: 'favorite' | 'thank' | 'up' | 'down' | 'ignore' | 'unignore' | 'report'): Promise<boolean> {
     this.actionStatus = '处理中…';
     const action = kind === 'favorite' ? (this.favorited ? 'unfavorite' : 'favorite') : kind;
     try {
@@ -199,6 +200,11 @@ struct TopicDetail {
                 .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
               Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor('#4F7CAC').backgroundColor(Color.Transparent)
                 .margin({ top: 4 }).onClick(() => this.appendOpen = !this.appendOpen)
+              Row() {
+                Text(this.ignored ? '取消忽略' : '忽略主题').fontSize(13).fontColor('#7B8794').layoutWeight(1)
+                  .onClick(async () => { const ok: boolean = await this.action(this.ignored ? 'unignore' : 'ignore'); if (ok) this.ignored = !this.ignored; })
+                Text('举报').fontSize(13).fontColor('#C05A73').onClick(() => this.action('report'))
+              }.width('80%').margin({ top: 4 })
               if (this.appendOpen) {
                 TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15)
                   .onChange((value: string) => this.appendText = value)
