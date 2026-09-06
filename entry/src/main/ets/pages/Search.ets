@@ -6,6 +6,7 @@ import { V2exService } from '../service/V2exService';
 @Component
 struct SearchPage {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exSearchHistory') historyJson: string = '[]';
   @State query: string = '';
   @State mode: number = 0;
   @State topics: V2exTopic[] = [];
@@ -23,8 +24,20 @@ struct SearchPage {
     if (this.query.length > 0) this.submit();
   }
 
+  private history(): string[] {
+    try { return JSON.parse(this.historyJson) as string[]; } catch (_) { return []; }
+  }
+
+  private rememberQuery(value: string): void {
+    const query: string = value.trim();
+    if (query.length === 0) return;
+    const next: string[] = [query].concat(this.history().filter((item: string) => item !== query)).slice(0, 20);
+    this.historyJson = JSON.stringify(next);
+  }
+
   private async submit(): Promise<void> {
     if (this.query.trim().length === 0 || this.loading) return;
+    this.rememberQuery(this.query);
     this.loading = true;
     this.status = '';
     try {
@@ -82,6 +95,18 @@ struct SearchPage {
     }.onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
   }
 
+  @Builder
+  historyRow(value: string) {
+    ListItem() {
+      Row() {
+        Text('⌕').fontSize(18).fontColor('#8A97A6')
+        Text(value).fontSize(15).fontColor('#30343B').margin({ left: 12 })
+        Blank()
+        Text('›').fontSize(22).fontColor('#9AA0A6')
+      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
+    }.onClick(() => { this.query = value; this.submit(); })
+  }
+
   build() {
     Column() {
       Row() {
@@ -90,6 +115,7 @@ struct SearchPage {
       }.height(60).width('100%').backgroundColor(Color.White)
       Row() {
         TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15)
+          .fontColor('#30343B').placeholderColor('#8A97A6').backgroundColor('#F1F4F7').borderRadius(8)
           .onChange((value: string) => this.query = value).onSubmit(() => this.submit())
         Button('搜索').fontSize(14).margin({ left: 10 }).onClick(() => this.submit())
       }.width('100%').padding(16).backgroundColor(Color.White)
@@ -99,7 +125,16 @@ struct SearchPage {
         Text('节点').fontSize(15).fontColor(this.mode === 2 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 2)
       }.height(48).width('100%').backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
-      else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 46 })
+      else if (this.status.length > 0 && this.query.trim().length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 46 })
+      else if (this.query.trim().length === 0 && this.history().length > 0) {
+        Column() {
+          Row() {
+            Text('搜索历史').fontSize(17).fontWeight(FontWeight.Medium).layoutWeight(1)
+            Text('清除').fontSize(13).fontColor(this.themeColor).onClick(() => this.historyJson = '[]')
+          }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 10 })
+          List({ space: 1 }) { ForEach(this.history(), (item: string) => this.historyRow(item), (item: string) => item) }.layoutWeight(1).width('100%')
+        }.layoutWeight(1).width('100%')
+      }
       else if (this.mode === 0) List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
       else if (this.mode === 1) List({ space: 1 }) { ForEach(this.members, (member: V2exMember) => this.memberRow(member), (member: V2exMember) => member.username) }.layoutWeight(1).width('100%')
       else List({ space: 1 }) { ForEach(this.nodes, (node: V2exNode) => this.nodeRow(node), (node: V2exNode) => node.name) }.layoutWeight(1).width('100%')
