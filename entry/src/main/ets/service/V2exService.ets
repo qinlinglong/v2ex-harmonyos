@@ -4,6 +4,11 @@ import { V2exNode, V2exReply, V2exTopic } from '../model/V2exModels';
 const API_BASE: string = 'https://www.v2ex.com';
 
 export class V2exService {
+  private static cleanHtml(value: string): string {
+    return value.replace(/<br\s*\/?>(\r?\n)?/gi, '\n').replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>').replace(/&#39;/gi, "'").trim();
+  }
   private static async get(path: string): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
@@ -51,14 +56,20 @@ export class V2exService {
     const titleMatch: RegExpMatchArray | null = html.match(/<title>([\s\S]*?)\s+-\s+V2EX<\/title>/i);
     const bodyMatch: RegExpMatchArray | null = html.match(/class=["'][^"']*topic_content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
     if (!titleMatch) throw new Error('主题不存在');
-    const clean = (value: string): string => value.replace(/<br\s*\/?>(\r?\n)?/gi, '\n')
-      .replace(/<[^>]+>/g, '').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
-      .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').trim();
-    return { id, title: clean(titleMatch[1]), content: clean(bodyMatch?.[1] ?? ''), replies: 0, last_modified: 0, last_touched: 0 };
+    return { id, title: V2exService.cleanHtml(titleMatch[1]), content: V2exService.cleanHtml(bodyMatch?.[1] ?? ''), replies: 0, last_modified: 0, last_touched: 0 };
   }
 
   static async replies(id: number): Promise<V2exReply[]> {
     const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?topic_id=${id}&page_size=100`)) as V2exReply[];
-    return data ?? [];
+    if (data.length > 0) return data;
+    const html: string = await V2exService.get(`/t/${id}`);
+    const result: V2exReply[] = [];
+    const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<a href=["']\/member\/([^"']+)["'][^>]*>[\s\S]*?<\/a>[\s\S]*?<div class=["']reply_content["']>([\s\S]*?)<\/div>/gi;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      result.push({ id: Number(match[1]), content: V2exService.cleanHtml(match[3]), created: 0, member: { username: match[2] } });
+      match = pattern.exec(html);
+    }
+    return result;
   }
 }
