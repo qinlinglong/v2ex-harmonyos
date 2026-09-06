@@ -33,6 +33,16 @@ export interface V2exTopic {
   thanked?: boolean;
   ignored?: boolean;
   vote?: number;
+  views?: number;
+  likes?: number;
+  thanks?: number;
+  last_reply_by?: string;
+}
+
+export interface V2exTopicStats {
+  views?: number;
+  likes?: number;
+  thanks?: number;
 }
 
 export interface V2exReply {

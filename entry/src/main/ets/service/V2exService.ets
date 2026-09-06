@@ -2,7 +2,7 @@ import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
 import { fileIo } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
-import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply, V2exTopic, V2exTopicStats } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
 
@@ -328,6 +328,20 @@ export class V2exService {
     return result;
   }
 
+  private static parseTopicStats(html: string): V2exTopicStats {
+    const statsMatch: RegExpMatchArray | null = html.match(/class=["'][^"']*topic_stats[^"']*["'][^>]*>([\s\S]*?)<\/[^>]+>/i);
+    if (!statsMatch) return { views: undefined, likes: undefined, thanks: undefined } as V2exTopicStats;
+    const text: string = V2exService.cleanHtml(statsMatch[1]);
+    const views: RegExpMatchArray | null = text.match(/([\d,]+)\s*点击/);
+    const likes: RegExpMatchArray | null = text.match(/([\d,]+)\s*收藏/);
+    const thanks: RegExpMatchArray | null = text.match(/([\d,]+)\s*感谢/);
+    return {
+      views: views ? Number(views[1].replace(/,/g, '')) : undefined,
+      likes: likes ? Number(likes[1].replace(/,/g, '')) : undefined,
+      thanks: thanks ? Number(thanks[1].replace(/,/g, '')) : undefined
+    };
+  }
+
   static async topic(id: number): Promise<V2exTopic> {
     try {
       const parsed: Object = JSON.parse(await V2exService.get(`/api/topics/show.json?id=${id}`)) as Object;
@@ -340,6 +354,10 @@ export class V2exService {
           topic.favorited = html.indexOf('/unfavorite/topic/') >= 0;
           topic.thanked = /topic_thanked/i.test(html);
           topic.ignored = html.indexOf('/unignore/topic/') >= 0;
+          const stats = V2exService.parseTopicStats(html);
+          if (stats.views !== undefined) topic.views = stats.views;
+          if (stats.likes !== undefined) topic.likes = stats.likes;
+          if (stats.thanks !== undefined) topic.thanks = stats.thanks;
         } catch (_) { /* public JSON is still usable when HTML metadata is unavailable */ }
         return topic;
       }
@@ -351,9 +369,11 @@ export class V2exService {
     const titleMatch: RegExpMatchArray | null = html.match(/<title>([\s\S]*?)\s+-\s+V2EX<\/title>/i);
     const bodyMatch: RegExpMatchArray | null = html.match(/class=["'][^"']*topic_content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
     if (!titleMatch) throw new Error('主题不存在');
+    const stats = V2exService.parseTopicStats(html);
     return {
       id, title: V2exService.cleanHtml(titleMatch[1]), content: V2exService.htmlContentToMarkdown(bodyMatch?.[1] ?? ''), replies: 0,
       last_modified: 0, last_touched: 0,
+      views: stats.views, likes: stats.likes, thanks: stats.thanks,
       editable: html.indexOf(`/edit/topic/${id}`) >= 0,
       appendable: html.indexOf(`/append/topic/${id}`) >= 0,
       favorited: html.indexOf('/unfavorite/topic/') >= 0,

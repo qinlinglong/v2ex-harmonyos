@@ -360,6 +360,13 @@ struct TopicDetail {
                   .onClick(() => { if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } }); })
                 Text(` · ${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
               }.margin({ top: 10 })
+              if (this.topic.views !== undefined || this.topic.likes !== undefined || this.topic.thanks !== undefined) {
+                Row() {
+                  if (this.topic.views !== undefined) Text(`${this.topic.views} 点击`).fontSize(12).fontColor('#8A97A6')
+                  if (this.topic.likes !== undefined) Text(`${this.topic.views !== undefined ? ' · ' : ''}${this.topic.likes} 收藏`).fontSize(12).fontColor('#8A97A6')
+                  if (this.topic.thanks !== undefined) Text(`${this.topic.views !== undefined || this.topic.likes !== undefined ? ' · ' : ''}${this.topic.thanks} 感谢`).fontSize(12).fontColor('#8A97A6')
+                }.margin({ top: 8 })
+              }
               Row() {
                 Column() {
                   Text(this.favorited ? '★' : '☆').fontSize(19).fontColor(this.favorited ? '#D69E00' : this.themeColor)
