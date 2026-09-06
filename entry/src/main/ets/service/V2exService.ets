@@ -1,6 +1,6 @@
 import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
-import { V2exMember, V2exNode, V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exNode, V2exNotification, V2exReply, V2exTopic } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
 
@@ -113,6 +113,19 @@ export class V2exService {
     const html: string = await V2exService.get('/my/favorites', true);
     if (html.indexOf('/signin') >= 0 && html.indexOf('item_title') < 0) throw new Error('请先登录');
     return V2exService.parseTopicItems(html);
+  }
+
+  static async notifications(): Promise<V2exNotification[]> {
+    const html: string = await V2exService.get('/notifications', true);
+    if (html.indexOf('/signin') >= 0 && html.indexOf('id="n_') < 0) throw new Error('请先登录');
+    const result: V2exNotification[] = [];
+    const pattern: RegExp = /id=["']n_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      result.push({ id: Number(match[1]), avatar: match[2], username: match[3], topicId: Number(match[4]), topicTitle: V2exService.cleanHtml(match[5]) });
+      match = pattern.exec(html);
+    }
+    return result;
   }
 
   static async myNodes(): Promise<V2exNode[]> {

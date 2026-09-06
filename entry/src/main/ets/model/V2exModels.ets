@@ -35,3 +35,13 @@ export interface V2exReply {
   created: number;
   member?: V2exMember;
 }
+
+export interface V2exNotification {
+  id: number;
+  username: string;
+  avatar?: string;
+  topicId: number;
+  topicTitle: string;
+  content?: string;
+  created?: string;
+}
