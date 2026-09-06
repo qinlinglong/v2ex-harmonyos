@@ -58,6 +58,7 @@ struct Index {
     this.readHomeTabs();
     if (this.cachedMemberJson.trim().length === 0) {
       this.currentMember = undefined;
+      if (!this.memberLoading) this.loadCurrentMember();
       return;
     }
     try {
