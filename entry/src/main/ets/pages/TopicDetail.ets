@@ -2,17 +2,18 @@ import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exReply, V2exTopic } from '../model/V2exModels';
 
-interface DetailPart { kind: string; value: string; }
+interface DetailPart { kind: string; value: string; label?: string; }
 
 function detailParts(markdown: string): DetailPart[] {
   const parts: DetailPart[] = [];
-  const pattern: RegExp = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/gi;
+  const pattern: RegExp = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)|\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
     const before: string = markdown.substring(cursor, match.index).trim();
     if (before.length > 0) parts.push({ kind: 'text', value: before });
-    parts.push({ kind: 'image', value: match[1] });
+    if (match[1]) parts.push({ kind: 'image', value: match[1] });
+    else parts.push({ kind: 'link', value: match[3], label: match[2] });
     cursor = match.index + match[0].length;
     match = pattern.exec(markdown);
   }
@@ -162,6 +163,21 @@ struct TopicDetail {
     } catch (_) { this.appendStatus = '保存失败，请稍后重试'; }
   }
 
+  private openLink(url: string): void {
+    const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
+    const topicMatch: RegExpMatchArray | null = url.match(/\/t\/(\d+)/);
+    if (url.indexOf(configured.replace(/\/$/, '')) === 0 && topicMatch) {
+      router.pushUrl({ url: 'pages/TopicDetail', params: { id: Number(topicMatch[1]) } });
+      return;
+    }
+    const memberMatch: RegExpMatchArray | null = url.match(/\/member\/([^/?#]+)/);
+    if (url.indexOf(configured.replace(/\/$/, '')) === 0 && memberMatch) {
+      router.pushUrl({ url: 'pages/Profile', params: { username: decodeURIComponent(memberMatch[1]) } });
+      return;
+    }
+    router.pushUrl({ url: 'pages/WebViewPage', params: { title: '网页', url } });
+  }
+
   build() {
     Column() {
       Row() {
@@ -222,6 +238,10 @@ struct TopicDetail {
                 if (part.kind === 'image') {
                   Image(part.value).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
                     .margin({ top: 14, bottom: 4 })
+                } else if (part.kind === 'link') {
+                  Text(part.label ?? part.value).fontSize(16).fontColor('#4F7CAC').lineHeight(26)
+                    .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).margin({ top: 20 })
+                    .onClick(() => this.openLink(part.value))
                 } else {
                   Text(part.value).fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
                 }
@@ -260,7 +280,16 @@ struct TopicDetail {
                     Button('保存').fontSize(13).onClick(() => this.saveReplyEdit())
                   }.width('100%').margin({ top: 8 })
                 } else {
-                  Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
+                  ForEach(detailParts(reply.content), (part: DetailPart) => {
+                    if (part.kind === 'image') {
+                      Image(part.value).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
+                    } else if (part.kind === 'link') {
+                      Text(part.label ?? part.value).fontSize(15).fontColor('#4F7CAC').lineHeight(23).margin({ top: 8 })
+                        .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).onClick(() => this.openLink(part.value))
+                    } else {
+                      Text(part.value).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
+                    }
+                  }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
                   Row() {
                     Text(this.thankedReplies.indexOf(reply.id) >= 0 ? `♥ 已感谢 ${reply.thanks ?? 0}` : `♡ 感谢 ${reply.thanks ?? 0}`)
                       .fontSize(13).fontColor('#4F7CAC').onClick(() => this.thankReply(reply.id))
