@@ -101,6 +101,7 @@ struct Index {
         Column() {
           Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium)
           Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
+          Button('打开登录页面').margin({ top: 22 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
         }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
       } else {
         List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
