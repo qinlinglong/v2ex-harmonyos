@@ -22,6 +22,15 @@ export class V2exService {
     return raw;
   }
 
+  private static normalizeMember(member: V2exMember | undefined): void {
+    if (member?.avatar_large) member.avatar_large = V2exService.assetUrl(member.avatar_large);
+  }
+
+  private static normalizeTopic(topic: V2exTopic): void {
+    V2exService.normalizeMember(topic.member);
+    if (topic.node?.avatar_large) topic.node.avatar_large = V2exService.assetUrl(topic.node.avatar_large);
+  }
+
   private static cookie(): string {
     try { return webview.WebCookieManager.fetchCookieSync(V2exService.base()) || ''; } catch (_) { return ''; }
   }
@@ -83,6 +92,7 @@ export class V2exService {
     parsed.forEach((item: V2exTopic) => {
       if (item.replies === undefined) item.replies = 0;
       if (item.content === undefined) item.content = '';
+      V2exService.normalizeTopic(item);
     });
     return parsed;
   }
@@ -157,12 +167,14 @@ export class V2exService {
 
   static async nodes(): Promise<V2exNode[]> {
     const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
+    (data ?? []).forEach((item: V2exNode) => { if (item.avatar_large) item.avatar_large = V2exService.assetUrl(item.avatar_large); });
     return data ?? [];
   }
 
   static async topicsForNode(name: string): Promise<V2exTopic[]> {
     const path: string = `/api/topics/show.json?node_name=${encodeURIComponent(name)}&page_size=100`;
     const data: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
+    (data ?? []).forEach((item: V2exTopic) => V2exService.normalizeTopic(item));
     return data ?? [];
   }
 
@@ -182,18 +194,23 @@ export class V2exService {
     if (Array.isArray(parsed)) {
       const list: V2exMember[] = parsed as V2exMember[];
       if (list.length === 0) throw new Error('用户不存在');
+      V2exService.normalizeMember(list[0]);
       return list[0];
     }
-    return parsed as V2exMember;
+    const member: V2exMember = parsed as V2exMember;
+    V2exService.normalizeMember(member);
+    return member;
   }
 
   static async memberTopics(username: string): Promise<V2exTopic[]> {
     const data: V2exTopic[] = JSON.parse(await V2exService.get(`/api/topics/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exTopic[];
+    (data ?? []).forEach((item: V2exTopic) => V2exService.normalizeTopic(item));
     return data ?? [];
   }
 
   static async memberReplies(username: string): Promise<V2exReply[]> {
     const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exReply[];
+    (data ?? []).forEach((item: V2exReply) => V2exService.normalizeMember(item.member));
     return data ?? [];
   }
 
