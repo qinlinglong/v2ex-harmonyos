@@ -20,8 +20,9 @@ struct Index {
   @State errorText: string = '';
   @State topics: V2exTopic[] = [];
   @State nodes: V2exNode[] = [];
+  @State xnaTopics: V2exTopic[] = [];
   @State searchText: string = '';
-  private readonly tabs: string[] = ['首页', '最新', '节点', '我的'];
+  private readonly tabs: string[] = ['首页', '最新', '节点', '我的', 'XNA'];
 
   aboutToAppear(): void { this.loadTopics('latest'); }
 
@@ -39,6 +40,7 @@ struct Index {
     if (index === 0) this.loadTopics('hot');
     if (index === 1) this.loadTopics('latest');
     if (index === 2 && this.nodes.length === 0) this.loadNodes();
+    if (index === 4 && this.xnaTopics.length === 0) this.loadXna();
   }
 
   private shiftTab(delta: number): void {
@@ -59,6 +61,14 @@ struct Index {
     this.errorText = '';
     try { this.nodes = await V2exService.nodes(); }
     catch (_) { this.errorText = '节点加载失败，请稍后重试'; }
+    finally { this.loading = false; }
+  }
+
+  private async loadXna(): Promise<void> {
+    this.loading = true;
+    this.errorText = '';
+    try { this.xnaTopics = await V2exService.xnaTopics(); }
+    catch (_) { this.errorText = 'XNA 加载失败，请稍后重试'; }
     finally { this.loading = false; }
   }
 
@@ -162,6 +172,15 @@ struct Index {
           Button('设置').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Settings' }))
           }.margin({ top: 48, bottom: 32 }).alignItems(HorizontalAlign.Center)
         }.layoutWeight(1).width('100%')
+      } else if (this.selectedTab === 4) {
+        if (this.xnaTopics.length === 0 && !this.loading) {
+          Text('暂无 XNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
+        } else {
+          Refresh({ refreshing: this.loading }) {
+            List({ space: 1 }) { ForEach(this.xnaTopics, (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+              .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
+          }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadXna(); })
+        }
       } else {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }

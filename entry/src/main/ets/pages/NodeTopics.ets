@@ -18,6 +18,8 @@ struct NodeTopics {
   @State topics: V2exTopic[] = [];
   @State loading: boolean = true;
   @State status: string = '';
+  @State page: number = 1;
+  @State loadingMore: boolean = false;
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
@@ -29,6 +31,7 @@ struct NodeTopics {
   private async load(): Promise<void> {
     this.loading = true;
     this.status = '';
+    this.page = 1;
     try {
       this.topics = await V2exService.topicsForNode(this.name);
       if (this.topics.length === 0) this.status = '该节点暂无主题';
@@ -37,6 +40,17 @@ struct NodeTopics {
     } finally {
       this.loading = false;
     }
+  }
+
+  private async loadMore(): Promise<void> {
+    if (this.loadingMore) return;
+    this.loadingMore = true;
+    try {
+      const next: V2exTopic[] = await V2exService.topicsForNodePage(this.name, this.page + 1);
+      if (next.length === 0) this.status = '没有更多主题';
+      else { this.topics = this.topics.concat(next); this.page += 1; }
+    } catch (_) { this.status = '加载更多失败'; }
+    finally { this.loadingMore = false; }
   }
 
   @Builder
@@ -85,6 +99,9 @@ struct NodeTopics {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) {
             ForEach(this.topics, (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`)
+            ListItem() {
+              Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
+            }.width('100%').padding(18).align(Alignment.Center)
           }.layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
           if (state === RefreshStatus.Refresh) this.load();

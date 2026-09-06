@@ -1,17 +1,27 @@
 import { router } from '@kit.ArkUI';
+import { webview } from '@kit.ArkWeb';
 
 @Entry
 @Component
 struct Settings {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exParseContent') parseContent: boolean = true;
+  @StorageLink('v2exBuiltinBrowser') builtinBrowser: boolean = true;
+  @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
   @State customColor: string = '#4F7CAC';
+  @State status: string = '';
   private readonly colors: string[] = ['#4F7CAC', '#5B8C5A', '#C05A73', '#8B6FB0', '#D07A3A'];
   aboutToAppear(): void { this.customColor = this.themeColor; }
   build() {
     Column() {
       Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('设置').fontSize(20).fontWeight(FontWeight.Bold) }
         .height(60).width('100%').backgroundColor(Color.White)
-      Column() {
+      Scroll() {
+        Column() {
+        Row() { Text('内容解析').fontSize(16).layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).onClick(() => this.parseContent = !this.parseContent) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+        Row() { Text('内置浏览器').fontSize(16).layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
         Text('主题颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').width('100%')
         Row() {
           ForEach(this.colors, (color: string) => Circle({ width: 42, height: 42 }).backgroundColor(color)
@@ -27,7 +37,19 @@ struct Settings {
             if (/^#[0-9A-Fa-f]{6}$/.test(value)) this.themeColor = value;
           })
         }.width('100%').margin({ top: 18 })
-      }.width('100%').padding(20).backgroundColor(Color.White).margin({ top: 12 })
+        Row() { Text('清除最近浏览').fontSize(16).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.status = '最近浏览已清除'; }) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+        Row() { Text('问题反馈').fontSize(16).layoutWeight(1); Text('GitHub').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => this.status = '请在浏览器打开项目反馈页')
+        Row() { Text('社区排行').fontSize(16).layoutWeight(1); Text('查看').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/Rank' }))
+        Row() { Text('退出登录').fontSize(16).layoutWeight(1); Button('退出').fontSize(13).onClick(() => { try { webview.WebCookieManager.clearAllCookiesSync(); this.status = '已退出登录'; } catch (_) { this.status = '退出失败'; } }) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+        if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 16 })
+        }.width('100%').padding(20).backgroundColor('#F5F7FA')
+      }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
   }
 }

@@ -13,6 +13,7 @@
     "pages/Settings",
     "pages/RecentTopic",
     "pages/HotestTopics",
-    "pages/MyFollowing"
+    "pages/MyFollowing",
+    "pages/Rank"
   ]
 }

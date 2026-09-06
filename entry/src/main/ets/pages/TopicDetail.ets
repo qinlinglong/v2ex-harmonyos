@@ -37,6 +37,12 @@ struct TopicDetail {
   @State thanked: boolean = false;
   @State actionStatus: string = '';
   @State thankedReplies: number[] = [];
+  @State editingReplyId: number = 0;
+  @State editingReplyText: string = '';
+  @State editingReplyStatus: string = '';
+  @State appendOpen: boolean = false;
+  @State appendText: string = '';
+  @State appendStatus: string = '';
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -95,6 +101,47 @@ struct TopicDetail {
     } catch (_) { this.replyStatus = '操作失败'; }
   }
 
+  private beginEditReply(reply: V2exReply): void {
+    this.editingReplyId = reply.id;
+    this.editingReplyText = reply.content;
+    this.editingReplyStatus = '';
+  }
+
+  private async saveReplyEdit(): Promise<void> {
+    if (this.editingReplyId <= 0 || this.editingReplyText.trim().length === 0) return;
+    this.editingReplyStatus = '保存中…';
+    const id: number = this.editingReplyId;
+    const content: string = this.editingReplyText.trim();
+    try {
+      const ok: boolean = await V2exService.editReply(id, content);
+      if (!ok) { this.editingReplyStatus = '保存失败，请确认登录状态'; return; }
+      this.replies = this.replies.map((item: V2exReply) => {
+        if (item.id !== id) return item;
+        return { id: item.id, content, created: item.created, member: item.member, thanks: item.thanks, thanked: item.thanked } as V2exReply;
+      });
+      this.editingReplyId = 0;
+      this.editingReplyText = '';
+      this.editingReplyStatus = '保存成功';
+      this.replyStatus = '评论已更新';
+    } catch (_) { this.editingReplyStatus = '保存失败，请稍后重试'; }
+  }
+
+  private async submitAppend(): Promise<void> {
+    if (this.appendText.trim().length === 0) return;
+    this.appendStatus = '保存中…';
+    try {
+      const ok: boolean = await V2exService.appendTopic(this.topicId, this.appendText.trim());
+      if (!ok) { this.appendStatus = '保存失败，请确认登录状态'; return; }
+      if (this.topic) this.topic = {
+        id: this.topic.id, title: this.topic.title, content: `${this.topic.content}\n\n${this.appendText.trim()}`,
+        replies: this.topic.replies, last_modified: this.topic.last_modified, last_touched: this.topic.last_touched,
+        node: this.topic.node, member: this.topic.member, url: this.topic.url
+      } as V2exTopic;
+      this.appendText = '';
+      this.appendStatus = '追加成功';
+    } catch (_) { this.appendStatus = '保存失败，请稍后重试'; }
+  }
+
   build() {
     Column() {
       Row() {
@@ -127,6 +174,17 @@ struct TopicDetail {
               }.width('100%').margin({ top: 16 })
               Button('编辑主题').fontSize(13).fontColor('#4F7CAC').backgroundColor(Color.Transparent)
                 .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
+              Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor('#4F7CAC').backgroundColor(Color.Transparent)
+                .margin({ top: 4 }).onClick(() => this.appendOpen = !this.appendOpen)
+              if (this.appendOpen) {
+                TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15)
+                  .onChange((value: string) => this.appendText = value)
+                Row() {
+                  if (this.appendStatus.length > 0) Text(this.appendStatus).fontSize(12).fontColor('#4F7CAC')
+                  Blank()
+                  Button('保存追加').fontSize(13).onClick(() => this.submitAppend())
+                }.width('100%').margin({ top: 8 })
+              }
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
               ForEach(detailParts(this.topic.content || '（无正文）'), (part: DetailPart) => {
                 if (part.kind === 'image') {
@@ -154,11 +212,24 @@ struct TopicDetail {
                   Blank()
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
                 }
-                Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
-                Row() {
-                  Text(this.thankedReplies.indexOf(reply.id) >= 0 ? '♥ 已感谢' : '♡ 感谢')
-                    .fontSize(13).fontColor('#4F7CAC').onClick(() => this.thankReply(reply.id))
-                }.width('100%').margin({ top: 10 })
+                if (this.editingReplyId === reply.id) {
+                  TextArea({ placeholder: '编辑回复', text: this.editingReplyText }).width('100%').height(130).fontSize(15)
+                    .onChange((value: string) => this.editingReplyText = value)
+                  Row() {
+                    if (this.editingReplyStatus.length > 0) Text(this.editingReplyStatus).fontSize(12).fontColor('#4F7CAC')
+                    Blank()
+                    Text('取消').fontSize(13).fontColor('#7B8794').margin({ right: 16 }).onClick(() => this.editingReplyId = 0)
+                    Button('保存').fontSize(13).onClick(() => this.saveReplyEdit())
+                  }.width('100%').margin({ top: 8 })
+                } else {
+                  Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
+                  Row() {
+                    Text(this.thankedReplies.indexOf(reply.id) >= 0 ? '♥ 已感谢' : '♡ 感谢')
+                      .fontSize(13).fontColor('#4F7CAC').onClick(() => this.thankReply(reply.id))
+                    Blank()
+                    Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
+                  }.width('100%').margin({ top: 10 })
+                }
               }.width('100%').padding(16).backgroundColor(Color.White).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
             Column() {

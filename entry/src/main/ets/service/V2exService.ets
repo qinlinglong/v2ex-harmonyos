@@ -83,6 +83,17 @@ export class V2exService {
     return data ?? [];
   }
 
+  static async topicsForNodePage(name: string, page: number): Promise<V2exTopic[]> {
+    if (page === 1) return V2exService.topicsForNode(name);
+    const html: string = await V2exService.get(`/go/${encodeURIComponent(name)}?p=${page}`);
+    return V2exService.parseTopicItems(html);
+  }
+
+  static async xnaTopics(): Promise<V2exTopic[]> {
+    const html: string = await V2exService.get('/xna');
+    return V2exService.parseTopicItems(html);
+  }
+
   static async member(username: string): Promise<V2exMember> {
     const parsed: Object = JSON.parse(await V2exService.get(`/api/members/show.json?username=${encodeURIComponent(username)}`)) as Object;
     if (Array.isArray(parsed)) {
@@ -151,6 +162,23 @@ export class V2exService {
         member: { username: String(value['user'] ?? '') }
       } as V2exTopic;
     }).filter((topic: V2exTopic) => topic.id > 0);
+  }
+
+  static async topMembers(): Promise<V2exMember[]> {
+    const html: string = await V2exService.get('/top');
+    const result: V2exMember[] = [];
+    const seen: string[] = [];
+    const pattern: RegExp = /href=["']\/member\/([^"']+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][\s\S]*?class=["'][^"']*top_name[^"']*["'][^>]*>([^<]*)</gi;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      const username: string = V2exService.cleanHtml(match[3]);
+      if (username.length > 0 && seen.indexOf(username) < 0) {
+        seen.push(username);
+        result.push({ username, avatar_large: match[2] });
+      }
+      match = pattern.exec(html);
+    }
+    return result;
   }
 
   static async myNodes(): Promise<V2exNode[]> {
@@ -233,6 +261,42 @@ export class V2exService {
       const response: http.HttpResponse = await request.request(`${API_BASE}/${action}/reply/${replyId}?once=${V2exService.formValue(onceMatch[1])}`, {
         method: http.RequestMethod.POST,
         header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${topicId}` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
+
+  static async editReply(replyId: number, content: string): Promise<boolean> {
+    const html: string = await V2exService.get(`/edit/reply/${replyId}`, true);
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/edit/reply/${replyId}`, {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/edit/reply/${replyId}` },
+        extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(onceMatch[1])}`,
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
+
+  static async appendTopic(topicId: number, content: string): Promise<boolean> {
+    const html: string = await V2exService.get(`/t/${topicId}`, true);
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/append/topic/${topicId}`, {
+        method: http.RequestMethod.POST,
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/t/${topicId}` },
+        extraData: `content=${V2exService.formValue(content)}&syntax=default&once=${V2exService.formValue(onceMatch[1])}`,
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
