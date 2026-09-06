@@ -14,6 +14,7 @@ V2EX 的 HarmonyOS 原生客户端项目，使用 ArkTS、ArkUI 和 DevEco CLI �
 - 收藏、感谢、赞/踩、回复感谢、作者资料（主题/回复 Tab）和关注；
 - 登录 WebView、发布/编辑主题、预览、通知、我的主题、我的节点、收藏、特别关注、最近浏览、历史热议；
 - 主题颜色、内容解析/内置浏览器开关、主题屏蔽规则、社区排行、反馈 WebView 和退出登录。
+- 主题外观自定义、Markdown 编辑帮助、节点搜索、搜索类型选项、回复对象搜索和回复排序设置均为独立原生页面，并从设置入口可达。
 
 登录页保留 WebView 是为了复用 V2EX 官方登录及验证码流程，其余已覆盖的内容页和操作页使用原生 ArkUI。
 
@@ -45,4 +46,4 @@ devecocli run --module entry@default --device <device-serial> --product default 
 
 ## 真机验证
 
-已使用 DevEco CLI 在 HarmonyOS 6.1.1(24) 真机上验证首页 Tab、节点列表/分页、主题详情、回复编辑入口、搜索、设置、主题屏蔽和社区排行页面。构建输出中的 ArkTS `pushUrl/back/getParams` 为 API 弃用提示，不影响当前构建。
+已使用 DevEco CLI 在 HarmonyOS 6.1.1(24) 真机上验证首页 Tab、网络失败后的个人中心切换、节点列表/分页、主题详情、回复编辑入口、搜索、主题设置、主题屏蔽和社区排行页面。`devecocli check lint` 无缺陷；构建输出中的 ArkTS `pushUrl/back/getParams` 为 API 弃用提示，不影响当前构建。
