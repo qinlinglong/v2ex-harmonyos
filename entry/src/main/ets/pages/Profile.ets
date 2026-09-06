@@ -2,11 +2,20 @@ import { router } from '@kit.ArkUI';
 import { V2exMember, V2exMemberRelations, V2exReply, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
 
+interface ProfileCacheEntry {
+  member: V2exMember;
+  topics: V2exTopic[];
+  replies: V2exReply[];
+  followed: boolean;
+  blocked: boolean;
+}
+
 @Entry
 @Component
 struct Profile {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exBlockedUsers') blockedUsersJson: string = '[]';
+  @StorageLink('v2exProfileCache') profileCacheJson: string = '{}';
   @State member: V2exMember | undefined = undefined;
   @State topics: V2exTopic[] = [];
   @State replies: V2exReply[] = [];
@@ -23,10 +32,44 @@ struct Profile {
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
     this.username = String(params?.['username'] ?? '');
+    this.restoreCache();
     this.load();
   }
 
+  private restoreCache(): void {
+    if (this.username.length === 0) return;
+    try {
+      const cache: Record<string, ProfileCacheEntry> = JSON.parse(this.profileCacheJson) as Record<string, ProfileCacheEntry>;
+      const saved: ProfileCacheEntry | undefined = cache[this.username];
+      if (saved && saved.member) {
+        this.member = saved.member;
+        this.topics = saved.topics ?? [];
+        this.replies = saved.replies ?? [];
+        this.followed = saved.followed;
+        this.blocked = saved.blocked;
+        this.status = '';
+      }
+    } catch (_) { /* corrupt profile cache is ignored */ }
+  }
+
+  private saveCache(): void {
+    if (!this.member || this.username.length === 0) return;
+    try {
+      const cache: Record<string, ProfileCacheEntry> = JSON.parse(this.profileCacheJson) as Record<string, ProfileCacheEntry>;
+      cache[this.username] = {
+        member: this.member,
+        topics: this.topics,
+        replies: this.replies,
+        followed: this.followed,
+        blocked: this.blocked
+      };
+      this.profileCacheJson = JSON.stringify(cache);
+    } catch (_) { /* cache failures must not affect profile */ }
+  }
+
   private async load(): Promise<void> {
+    const hasCachedProfile: boolean = this.member !== undefined;
+    if (!hasCachedProfile) this.status = '加载中…';
     try {
       this.member = await V2exService.member(this.username);
       const results: [V2exTopic[], V2exReply[], V2exMemberRelations] = await Promise.all([
@@ -36,9 +79,10 @@ struct Profile {
       this.replies = results[1];
       this.followed = results[2].followed;
       this.blocked = results[2].blocked;
+      this.saveCache();
       this.status = '';
     } catch (_) {
-      this.status = '用户资料暂时不可用';
+      this.status = hasCachedProfile ? '网络刷新失败，当前显示缓存' : '用户资料暂时不可用';
     }
   }
 

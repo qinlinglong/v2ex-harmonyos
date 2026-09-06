@@ -65,6 +65,7 @@ export default class EntryAbility extends UIAbility {
       // the detail page refreshes these records in the background.
       PersistentStorage.persistProp('v2exTopicCache', '{}');
       PersistentStorage.persistProp('v2exRepliesCache', '{}');
+      PersistentStorage.persistProp('v2exProfileCache', '{}');
       AppStorage.setOrCreate('v2exSafeAreaTop', 0);
       AppStorage.setOrCreate('v2exSafeAreaBottom', 0);
       const uiContext = windowStage.getMainWindowSync().getUIContext();
