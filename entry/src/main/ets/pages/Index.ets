@@ -14,6 +14,7 @@ function relativeTime(unix: number): string {
 @Entry
 @Component
 struct Index {
+  @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @State selectedTab: number = 0;
   @State loading: boolean = false;
   @State errorText: string = '';
@@ -84,20 +85,20 @@ struct Index {
       Row() {
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text(this.loading ? '加载中…' : '刷新').fontSize(14).fontColor('#4F7CAC')
+        Text(this.loading ? '加载中…' : '刷新').fontSize(14).fontColor(this.themeColor)
           .onClick(() => this.loadTopics(this.selectedTab === 0 ? 'hot' : 'latest'))
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
           .layoutWeight(1).height(42).fontSize(14).backgroundColor('#F1F4F7')
           .onChange((value: string) => this.searchText = value)
-        Text('⌕').fontSize(22).fontColor('#4F7CAC').width(44).textAlign(TextAlign.Center)
+        Text('⌕').fontSize(22).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
       Row() {
         ForEach(this.tabs, (tab: string, index: number) => {
           Column() {
-            Text(tab).fontSize(15).fontColor(this.selectedTab === index ? '#4F7CAC' : '#7B8794')
-            Row().height(3).width(28).backgroundColor(this.selectedTab === index ? '#4F7CAC' : Color.Transparent)
+            Text(tab).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : '#7B8794')
+            Row().height(3).width(28).backgroundColor(this.selectedTab === index ? this.themeColor : Color.Transparent)
               .borderRadius(2).margin({ top: 7 })
           }.layoutWeight(1).alignItems(HorizontalAlign.Center).onClick(() => this.selectTab(index))
         }, (tab: string) => tab)
@@ -128,6 +129,7 @@ struct Index {
           Button('我的主题').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyTopics' }))
           Button('我的节点').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyNodes' }))
           Button('我的收藏').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Favorites' }))
+          Button('设置').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Settings' }))
         }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
       } else {
         Refresh({ refreshing: this.loading }) {
