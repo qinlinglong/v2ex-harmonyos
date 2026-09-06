@@ -8,6 +8,7 @@ struct Notifications {
   @State items: V2exNotification[] = [];
   @State loading: boolean = true;
   @State status: string = '';
+  @State deletingId: number = 0;
 
   aboutToAppear(): void { this.load(); }
 
@@ -21,6 +22,14 @@ struct Notifications {
     finally { this.loading = false; }
   }
 
+  private async remove(item: V2exNotification): Promise<void> {
+    this.deletingId = item.id;
+    const ok: boolean = await V2exService.notificationAction(item.id, 'delete');
+    if (ok) this.items = this.items.filter((value: V2exNotification) => value.id !== item.id);
+    else this.status = '删除失败，请先登录';
+    this.deletingId = 0;
+  }
+
   @Builder
   row(item: V2exNotification) {
     ListItem() {
@@ -32,8 +41,12 @@ struct Notifications {
         }
         Column() {
           Text(item.username).fontSize(14).fontColor('#4F7CAC')
-          Text(item.topicTitle).fontSize(15).fontColor('#202124').maxLines(2)
-            .textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 6 })
+          Row() {
+            Text(item.topicTitle).fontSize(15).fontColor('#202124').maxLines(2)
+              .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
+            Text(this.deletingId === item.id ? '删除中' : '删除').fontSize(12).fontColor('#C05A73')
+              .margin({ left: 10 }).onClick(() => this.remove(item))
+          }.width('100%').margin({ top: 6 })
         }.alignItems(HorizontalAlign.Start).margin({ left: 12 }).layoutWeight(1)
       }.width('100%').padding({ left: 18, right: 18, top: 15, bottom: 15 }).backgroundColor(Color.White)
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: item.topicId } }))

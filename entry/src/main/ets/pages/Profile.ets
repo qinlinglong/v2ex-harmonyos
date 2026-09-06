@@ -11,6 +11,7 @@ struct Profile {
   @State username: string = '';
   @State status: string = '加载中…';
   @State followed: boolean = false;
+  @State blocked: boolean = false;
   @State tab: number = 0;
 
   aboutToAppear(): void {
@@ -75,11 +76,18 @@ struct Profile {
               }
               Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124').margin({ top: 12 })
               Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor('#7B8794').margin({ top: 6 })
-              Button(this.followed ? '已关注' : '关注').margin({ top: 16 }).onClick(async () => {
-                const ok: boolean = await V2exService.memberAction(this.username, this.followed ? 'unfollow' : 'follow');
-                if (ok) this.followed = !this.followed;
-                else this.status = '请先登录';
-              })
+              Row() {
+                Button(this.followed ? '已关注' : '关注').layoutWeight(1).onClick(async () => {
+                  const ok: boolean = await V2exService.memberAction(this.username, this.followed ? 'unfollow' : 'follow');
+                  if (ok) this.followed = !this.followed;
+                  else this.status = '请先登录';
+                })
+                Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(async () => {
+                  const ok: boolean = await V2exService.memberAction(this.username, this.blocked ? 'unblock' : 'block');
+                  if (ok) this.blocked = !this.blocked;
+                  else this.status = '请先登录';
+                })
+              }.width('80%').margin({ top: 16 })
             }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(Color.White)
             Row() {
               Text('主题').fontColor(this.tab === 0 ? '#4F7CAC' : '#7B8794').fontSize(15)

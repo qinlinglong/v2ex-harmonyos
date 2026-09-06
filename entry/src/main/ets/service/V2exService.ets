@@ -413,7 +413,7 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
-  static async memberAction(username: string, action: 'follow' | 'unfollow'): Promise<boolean> {
+  static async memberAction(username: string, action: 'follow' | 'unfollow' | 'block' | 'unblock'): Promise<boolean> {
     const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
@@ -422,6 +422,23 @@ export class V2exService {
       const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/member/${encodeURIComponent(username)}?once=${V2exService.formValue(onceMatch[1])}`, {
         method: http.RequestMethod.GET,
         header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/member/${username}` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
+
+  static async notificationAction(notificationId: number, action: 'delete'): Promise<boolean> {
+    const html: string = await V2exService.get('/notifications', true);
+    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+    if (!onceMatch) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/notification/${notificationId}?once=${V2exService.formValue(onceMatch[1])}`, {
+        method: http.RequestMethod.GET,
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/notifications` },
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
