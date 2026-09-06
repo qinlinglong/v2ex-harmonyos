@@ -20,6 +20,8 @@ struct NodeTopics {
   @State status: string = '';
   @State page: number = 1;
   @State loadingMore: boolean = false;
+  @State nodeFavorited: boolean = false;
+  @State actionStatus: string = '';
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
@@ -51,6 +53,12 @@ struct NodeTopics {
       else { this.topics = this.topics.concat(next); this.page += 1; }
     } catch (_) { this.status = '加载更多失败'; }
     finally { this.loadingMore = false; }
+  }
+
+  private async toggleFavorite(): Promise<void> {
+    const ok: boolean = await V2exService.nodeAction(this.name, this.nodeFavorited ? 'unfavorite' : 'favorite');
+    this.actionStatus = ok ? (this.nodeFavorited ? '已取消收藏' : '已收藏') : '请先登录';
+    if (ok) this.nodeFavorited = !this.nodeFavorited;
   }
 
   @Builder
@@ -85,9 +93,11 @@ struct NodeTopics {
           Text(this.name).fontSize(12).fontColor('#8A97A6').margin({ top: 2 })
         }.alignItems(HorizontalAlign.Start)
         Blank()
+        Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor('#D07A3A').width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
         Text('↻').fontSize(24).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center)
           .onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
+      if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor('#4F7CAC').margin({ top: 8 })
       if (this.loading) {
         LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 36 })
       } else if (this.status.length > 0) {

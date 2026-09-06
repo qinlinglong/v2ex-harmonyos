@@ -22,7 +22,7 @@ struct Index {
   @State nodes: V2exNode[] = [];
   @State xnaTopics: V2exTopic[] = [];
   @State searchText: string = '';
-  private readonly tabs: string[] = ['首页', '最新', '节点', '我的', 'XNA'];
+  private readonly tabs: string[] = ['最近', '最热', '节点', '我的', 'XNA'];
 
   aboutToAppear(): void { this.loadTopics('latest'); }
 
@@ -37,8 +37,8 @@ struct Index {
 
   private selectTab(index: number): void {
     this.selectedTab = index;
-    if (index === 0) this.loadTopics('hot');
-    if (index === 1) this.loadTopics('latest');
+    if (index === 0) this.loadTopics('latest');
+    if (index === 1) this.loadTopics('hot');
     if (index === 2 && this.nodes.length === 0) this.loadNodes();
     if (index === 4 && this.xnaTopics.length === 0) this.loadXna();
   }
@@ -186,7 +186,7 @@ struct Index {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
             .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
-          if (state === RefreshStatus.Refresh) this.loadTopics(this.selectedTab === 0 ? 'hot' : 'latest');
+          if (state === RefreshStatus.Refresh) this.loadTopics(this.selectedTab === 1 ? 'hot' : 'latest');
         })
       }
     }.width('100%').height('100%').backgroundColor('#F5F7FA')

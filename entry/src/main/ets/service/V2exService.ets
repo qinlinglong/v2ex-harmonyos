@@ -390,4 +390,22 @@ export class V2exService {
       return response.responseCode >= 200 && response.responseCode < 400;
     } finally { request.destroy(); }
   }
+
+  static async nodeAction(name: string, action: 'favorite' | 'unfavorite'): Promise<boolean> {
+    const html: string = await V2exService.get(`/go/${encodeURIComponent(name)}`, true);
+    const linkPattern: RegExpMatchArray | null = html.match(/href=["']\/((?:un)?favorite\/node\/\d+\?once=[^"']+)["']/i);
+    if (!linkPattern) return false;
+    const target: string = linkPattern[1].replace(/^(?:un)?favorite/, action);
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${API_BASE}/${target}`, {
+        method: http.RequestMethod.GET,
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${API_BASE}/go/${name}` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
 }
