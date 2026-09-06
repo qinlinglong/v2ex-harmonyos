@@ -225,16 +225,15 @@ struct Index {
     Stack() {
       Column() {
       Row() {
-        Text('☰').fontSize(22).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
+        Image($r('app.media.ic_menu')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
           .onClick(() => this.drawerOpen = true)
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text('✉').fontSize(22).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
+        Image($r('app.media.ic_mail')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
           .onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
-        Text('✎').fontSize(23).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
+        Image($r('app.media.ic_edit')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
           .onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
-        Text(this.loading ? '…' : '↻').fontSize(24).fontColor(this.themeColor)
-          .width(42).textAlign(TextAlign.Center)
+        Image($r('app.media.ic_refresh')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
           .onClick(() => {
             const tab: HomeTabItem = this.activeTab();
             if (tab.type === 'hot') this.loadTopics('hot');
@@ -250,7 +249,7 @@ struct Index {
           .layoutWeight(1).height(42).fontSize(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
-        Text('⌕').fontSize(22).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
+        Image($r('app.media.ic_search')).width(24).height(24).fillColor(this.themeColor).margin({ left: 10, right: 10 })
           .onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
       Row() {
