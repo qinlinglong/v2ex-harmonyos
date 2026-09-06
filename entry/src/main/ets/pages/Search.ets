@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { V2exMember, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
 
 @Entry
@@ -10,12 +10,16 @@ struct SearchPage {
   @State mode: number = 0;
   @State topics: V2exTopic[] = [];
   @State members: V2exMember[] = [];
+  @State nodes: V2exNode[] = [];
   @State loading: boolean = false;
   @State status: string = '输入关键词搜索主题或用户';
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
     this.query = String(params?.['query'] ?? '');
+    const savedMode: string | undefined = AppStorage.get<string>('v2exSearchMode');
+    if (savedMode === 'member') this.mode = 1;
+    if (savedMode === 'node') this.mode = 2;
     if (this.query.length > 0) this.submit();
   }
 
@@ -27,9 +31,12 @@ struct SearchPage {
       if (this.mode === 0) {
         this.topics = await V2exService.searchTopics(this.query.trim());
         if (this.topics.length === 0) this.status = '没有找到匹配主题';
-      } else {
+      } else if (this.mode === 1) {
         this.members = await V2exService.searchMembers(this.query.trim());
         if (this.members.length === 0) this.status = '没有找到匹配用户';
+      } else {
+        this.nodes = (await V2exService.nodes()).filter((node: V2exNode) => `${node.title} ${node.name}`.toLowerCase().includes(this.query.trim().toLowerCase()));
+        if (this.nodes.length === 0) this.status = '没有找到匹配节点';
       }
     } catch (_) { this.status = '搜索失败，请稍后重试'; }
     finally { this.loading = false; }
@@ -65,6 +72,16 @@ struct SearchPage {
     }.onClick(() => router.pushUrl({ url: 'pages/Profile', params: { username: member.username } }))
   }
 
+  @Builder
+  nodeRow(node: V2exNode) {
+    ListItem() {
+      Row() {
+        Text(node.title).fontSize(16).fontColor('#202124').layoutWeight(1)
+        Text(node.name).fontSize(13).fontColor('#8A97A6')
+      }.width('100%').padding(16).backgroundColor(Color.White)
+    }.onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
+  }
+
   build() {
     Column() {
       Row() {
@@ -79,11 +96,13 @@ struct SearchPage {
       Row() {
         Text('主题').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 0)
         Text('用户').fontSize(15).fontColor(this.mode === 1 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 1)
+        Text('节点').fontSize(15).fontColor(this.mode === 2 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 2)
       }.height(48).width('100%').backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 46 })
       else if (this.mode === 0) List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
-      else List({ space: 1 }) { ForEach(this.members, (member: V2exMember) => this.memberRow(member), (member: V2exMember) => member.username) }.layoutWeight(1).width('100%')
+      else if (this.mode === 1) List({ space: 1 }) { ForEach(this.members, (member: V2exMember) => this.memberRow(member), (member: V2exMember) => member.username) }.layoutWeight(1).width('100%')
+      else List({ space: 1 }) { ForEach(this.nodes, (node: V2exNode) => this.nodeRow(node), (node: V2exNode) => node.name) }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
   }
 }

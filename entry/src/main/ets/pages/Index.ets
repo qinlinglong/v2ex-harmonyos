@@ -132,7 +132,7 @@ struct Index {
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
         Text(this.loading ? '加载中…' : '刷新').fontSize(14).fontColor(this.themeColor)
-          .onClick(() => this.loadTopics(this.selectedTab === 0 ? 'hot' : 'latest'))
+          .onClick(() => this.loadTopics(this.selectedTab === 1 ? 'hot' : 'latest'))
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
@@ -151,9 +151,9 @@ struct Index {
           }.layoutWeight(1).alignItems(HorizontalAlign.Center).onClick(() => this.selectTab(index))
         }, (tab: string) => tab)
       }.width('100%').height(52).backgroundColor(Color.White)
-      if (this.loading && this.topics.length === 0) {
+      if ((this.selectedTab === 0 || this.selectedTab === 1) && this.loading && this.topics.length === 0) {
         LoadingProgress().width(28).height(28).color('#4F7CAC').margin({ top: 36 })
-      } else if (this.errorText.length > 0 && this.topics.length === 0) {
+      } else if ((this.selectedTab === 0 || this.selectedTab === 1) && this.errorText.length > 0 && this.topics.length === 0) {
         Column() { Text(this.errorText).fontSize(15).fontColor('#7B8794'); Text('点击重试').fontSize(14).fontColor('#4F7CAC').margin({ top: 14 }).onClick(() => this.loadTopics('latest')); }
           .margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       } else if (this.selectedTab === 2) {

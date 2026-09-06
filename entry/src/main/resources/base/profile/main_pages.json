@@ -20,6 +20,12 @@
     "pages/RelatedReplies",
     "pages/ImgurConfig",
     "pages/ConfigureDomain",
-    "pages/WebViewPage"
+    "pages/WebViewPage",
+    "pages/CustomizeTheme",
+    "pages/GitHubMD",
+    "pages/SearchNode",
+    "pages/SearchOptions",
+    "pages/SearchReplyMember",
+    "pages/SortTabs"
   ]
 }

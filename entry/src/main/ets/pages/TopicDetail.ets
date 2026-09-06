@@ -52,6 +52,8 @@ struct TopicDetail {
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
     this.topicId = Number(params?.['id'] ?? 0);
+    const savedSort: string | undefined = AppStorage.get<string>('v2exTopicSort');
+    if (savedSort === 'latest') this.replyOrder = 1;
     this.rememberRecentTopic();
     this.load();
   }

@@ -37,6 +37,21 @@ struct Settings {
             if (/^#[0-9A-Fa-f]{6}$/.test(value)) this.themeColor = value;
           })
         }.width('100%').margin({ top: 18 })
+        Row() { Text('主题设置').fontSize(16).layoutWeight(1); Text('颜色与深色模式').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+          .onClick(() => router.pushUrl({ url: 'pages/CustomizeTheme' }))
+        Row() { Text('Markdown 帮助').fontSize(16).layoutWeight(1); Text('编辑格式').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/GitHubMD' }))
+        Row() { Text('节点搜索').fontSize(16).layoutWeight(1); Text('查找节点').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/SearchNode' }))
+        Row() { Text('搜索选项').fontSize(16).layoutWeight(1); Text('默认搜索类型').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/SearchOptions' }))
+        Row() { Text('回复排序').fontSize(16).layoutWeight(1); Text('详情页回复顺序').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .onClick(() => router.pushUrl({ url: 'pages/SortTabs' }))
         Row() { Text('清除最近浏览').fontSize(16).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.status = '最近浏览已清除'; }) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
         Row() { Text('问题反馈').fontSize(16).layoutWeight(1); Text('GitHub').fontSize(14).fontColor(this.themeColor) }
