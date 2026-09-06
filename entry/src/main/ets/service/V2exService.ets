@@ -181,8 +181,8 @@ export class V2exService {
     catch (_) { return { username }; }
   }
 
-  static async myTopics(): Promise<V2exTopic[]> {
-    const html: string = await V2exService.get('/my/topics', true);
+  static async myTopics(page: number = 1): Promise<V2exTopic[]> {
+    const html: string = await V2exService.get(`/my/topics?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     return V2exService.parseTopicItems(html);
   }
@@ -193,8 +193,8 @@ export class V2exService {
     return V2exService.parseTopicItems(html);
   }
 
-  static async notifications(): Promise<V2exNotification[]> {
-    const html: string = await V2exService.get('/notifications', true);
+  static async notifications(page: number = 1): Promise<V2exNotification[]> {
+    const html: string = await V2exService.get(`/notifications?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     const result: V2exNotification[] = [];
     const pattern: RegExp = /id=["']n_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
@@ -206,8 +206,8 @@ export class V2exService {
     return result;
   }
 
-  static async followingTopics(): Promise<V2exTopic[]> {
-    const html: string = await V2exService.get('/my/following?p=1', true);
+  static async followingTopics(page: number = 1): Promise<V2exTopic[]> {
+    const html: string = await V2exService.get(`/my/following?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     return V2exService.parseTopicItems(html);
   }

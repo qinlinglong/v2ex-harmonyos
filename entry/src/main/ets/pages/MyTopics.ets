@@ -7,6 +7,8 @@ import { V2exTopic } from '../model/V2exModels';
 struct MyTopics {
   @State topics: V2exTopic[] = [];
   @State loading: boolean = true;
+  @State loadingMore: boolean = false;
+  @State page: number = 1;
   @State status: string = '';
 
   aboutToAppear(): void { this.load(); }
@@ -14,11 +16,23 @@ struct MyTopics {
   private async load(): Promise<void> {
     this.loading = true;
     this.status = '';
+    this.page = 1;
     try {
-      this.topics = await V2exService.myTopics();
+      this.topics = await V2exService.myTopics(1);
       if (this.topics.length === 0) this.status = '暂无主题或尚未登录';
     } catch (_) { this.status = '请先登录 V2EX'; }
     finally { this.loading = false; }
+  }
+
+  private async loadMore(): Promise<void> {
+    if (this.loadingMore) return;
+    this.loadingMore = true;
+    try {
+      const next: V2exTopic[] = await V2exService.myTopics(this.page + 1);
+      if (next.length === 0) this.status = '没有更多主题';
+      else { this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0)); this.page += 1; }
+    } catch (_) { this.status = '加载更多失败'; }
+    finally { this.loadingMore = false; }
   }
 
   @Builder
@@ -47,7 +61,10 @@ struct MyTopics {
       }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else {
         Refresh({ refreshing: this.loading }) {
-          List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`) }
+          List({ space: 1 }) {
+            ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
+            ListItem() { Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore()) }
+          }
             .layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }

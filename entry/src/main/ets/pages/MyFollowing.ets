@@ -7,17 +7,31 @@ import { V2exTopic } from '../model/V2exModels';
 struct MyFollowing {
   @State topics: V2exTopic[] = [];
   @State loading: boolean = true;
+  @State loadingMore: boolean = false;
+  @State page: number = 1;
   @State status: string = '';
 
   aboutToAppear(): void { this.load(); }
   private async load(): Promise<void> {
     this.loading = true;
     this.status = '';
+    this.page = 1;
     try {
-      this.topics = await V2exService.followingTopics();
+      this.topics = await V2exService.followingTopics(1);
       if (this.topics.length === 0) this.status = '暂无关注动态或尚未登录';
     } catch (_) { this.status = '请先登录 V2EX'; }
     finally { this.loading = false; }
+  }
+
+  private async loadMore(): Promise<void> {
+    if (this.loadingMore) return;
+    this.loadingMore = true;
+    try {
+      const next: V2exTopic[] = await V2exService.followingTopics(this.page + 1);
+      if (next.length === 0) this.status = '没有更多动态';
+      else { this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0)); this.page += 1; }
+    } catch (_) { this.status = '加载更多失败'; }
+    finally { this.loadingMore = false; }
   }
 
   @Builder
@@ -40,7 +54,10 @@ struct MyFollowing {
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
       else if (this.status.length > 0) Column() { Text(this.status).fontSize(15).fontColor('#7B8794'); Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' })) }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
-      else List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
+      else List({ space: 1 }) {
+        ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
+        ListItem() { Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore()) }
+      }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').backgroundColor('#F5F7FA')
   }
 }
