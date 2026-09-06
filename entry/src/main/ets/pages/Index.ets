@@ -119,6 +119,8 @@ struct Index {
           Button('打开登录页面').margin({ top: 22 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
           Button('发布主题').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
           Button('通知').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
+          Button('我的主题').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyTopics' }))
+          Button('我的节点').margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyNodes' }))
         }.margin({ top: 48 }).alignItems(HorizontalAlign.Center)
       } else {
         List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }

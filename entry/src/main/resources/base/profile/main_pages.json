@@ -5,6 +5,8 @@
     "pages/Login",
     "pages/WriteTopic",
     "pages/Profile",
-    "pages/Notifications"
+    "pages/Notifications",
+    "pages/MyTopics",
+    "pages/MyNodes"
   ]
 }
