@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
-import { V2exNode, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 
 function relativeTime(unix: number): string {
   if (!unix) return '';
@@ -21,6 +21,8 @@ struct Index {
   @State topics: V2exTopic[] = [];
   @State nodes: V2exNode[] = [];
   @State xnaTopics: V2exTopic[] = [];
+  @State currentMember: V2exMember | undefined = undefined;
+  @State memberLoading: boolean = false;
   @State searchText: string = '';
   @State nodeQuery: string = '';
   private readonly tabs: string[] = ['最近', '最热', '节点', '我的', 'XNA'];
@@ -41,6 +43,7 @@ struct Index {
     if (index === 0) this.loadTopics('latest');
     if (index === 1) this.loadTopics('hot');
     if (index === 2 && this.nodes.length === 0) this.loadNodes();
+    if (index === 3 && !this.currentMember && !this.memberLoading) this.loadCurrentMember();
     if (index === 4 && this.xnaTopics.length === 0) this.loadXna();
   }
 
@@ -76,6 +79,13 @@ struct Index {
     try { this.xnaTopics = await V2exService.xnaTopics(); }
     catch (_) { this.errorText = 'XNA 加载失败，请稍后重试'; }
     finally { this.loading = false; }
+  }
+
+  private async loadCurrentMember(): Promise<void> {
+    this.memberLoading = true;
+    try { this.currentMember = await V2exService.currentMember(); }
+    catch (_) { this.currentMember = undefined; }
+    finally { this.memberLoading = false; }
   }
 
   private visibleNodes(): V2exNode[] {
@@ -172,14 +182,29 @@ struct Index {
       } else if (this.selectedTab === 3) {
         Scroll() {
           Column() {
-          Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium)
-          Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
-          Button('打开登录页面').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 22 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
+          if (this.memberLoading) LoadingProgress().width(28).height(28).color(this.themeColor).margin({ top: 32 })
+          if (this.currentMember) {
+            Row() {
+              Stack() {
+                Text(this.currentMember.username.substring(0, 1).toUpperCase()).fontSize(18).fontColor(Color.White)
+                  .width(54).height(54).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(27)
+                if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(54).height(54).borderRadius(27).objectFit(ImageFit.Cover)
+              }
+              Column() { Text(this.currentMember.username).fontSize(20).fontWeight(FontWeight.Medium); Text('已登录').fontSize(13).fontColor('#8A97A6').margin({ top: 5 }) }
+                .alignItems(HorizontalAlign.Start).margin({ left: 14 })
+            }.margin({ top: 36 })
+          } else {
+            Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium)
+            Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
+          }
+          Button(this.currentMember ? '个人资料' : '打开登录页面').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 22 }).onClick(() => {
+            if (this.currentMember) router.pushUrl({ url: 'pages/Profile', params: { username: this.currentMember.username } });
+            else router.pushUrl({ url: 'pages/Login' });
+          })
           Button('发布主题').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
           Button('通知').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
           Button('我的主题').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyTopics' }))
           Button('我的节点').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyNodes' }))
-          Button('我的收藏').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Favorites' }))
           Button('我的关注').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyFollowing' }))
           Button('最近浏览').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/RecentTopic' }))
           Button('历史热议').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/HotestTopics' }))

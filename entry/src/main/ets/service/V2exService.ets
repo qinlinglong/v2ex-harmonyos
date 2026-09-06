@@ -28,6 +28,9 @@ export class V2exService {
       .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
       .replace(/&gt;/gi, '>').replace(/&#39;/gi, "'").trim();
   }
+  private static signedInHtml(html: string): boolean {
+    return html.indexOf('/logout') >= 0 || html.indexOf('/member/') >= 0;
+  }
   private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
@@ -168,21 +171,31 @@ export class V2exService {
     return data ?? [];
   }
 
+  static async currentMember(): Promise<V2exMember | undefined> {
+    const html: string = await V2exService.get('/settings', true);
+    if (html.indexOf('/signin') >= 0 && html.indexOf('/logout') < 0) return undefined;
+    const match: RegExpMatchArray | null = html.match(/href=["']\/member\/([^"']+)["']/i);
+    if (!match) return undefined;
+    const username: string = decodeURIComponent(match[1]);
+    try { return await V2exService.member(username); }
+    catch (_) { return { username }; }
+  }
+
   static async myTopics(): Promise<V2exTopic[]> {
     const html: string = await V2exService.get('/my/topics', true);
-    if (html.indexOf('/signin') >= 0 && html.indexOf('item_title') < 0) throw new Error('请先登录');
+    if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     return V2exService.parseTopicItems(html);
   }
 
   static async myFavorites(): Promise<V2exTopic[]> {
     const html: string = await V2exService.get('/my/favorites', true);
-    if (html.indexOf('/signin') >= 0 && html.indexOf('item_title') < 0) throw new Error('请先登录');
+    if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     return V2exService.parseTopicItems(html);
   }
 
   static async notifications(): Promise<V2exNotification[]> {
     const html: string = await V2exService.get('/notifications', true);
-    if (html.indexOf('/signin') >= 0 && html.indexOf('id="n_') < 0) throw new Error('请先登录');
+    if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     const result: V2exNotification[] = [];
     const pattern: RegExp = /id=["']n_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
     let match: RegExpExecArray | null = pattern.exec(html);
@@ -195,7 +208,7 @@ export class V2exService {
 
   static async followingTopics(): Promise<V2exTopic[]> {
     const html: string = await V2exService.get('/my/following?p=1', true);
-    if (html.indexOf('/signin') >= 0 && html.indexOf('item_title') < 0) throw new Error('请先登录');
+    if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     return V2exService.parseTopicItems(html);
   }
 
@@ -237,7 +250,7 @@ export class V2exService {
 
   static async myNodes(): Promise<V2exNode[]> {
     const html: string = await V2exService.get('/my/nodes', true);
-    if (html.indexOf('/signin') >= 0 && html.indexOf('my-nodes') < 0) throw new Error('请先登录');
+    if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     const all: V2exNode[] = await V2exService.nodes();
     const result: V2exNode[] = [];
     const pattern: RegExp = /href=["']\/go\/([^"']+)["'][\s\S]*?<\/a>/gi;
@@ -257,6 +270,20 @@ export class V2exService {
     while (match !== null) {
       result.push({ id: Number(match[1] ?? match[2]), title: V2exService.cleanHtml(match[3]), content: '', replies: 0, last_modified: 0, last_touched: 0 });
       match = pattern.exec(html);
+    }
+    if (result.length === 0) {
+      const fallback: RegExp = /href=["']\/t\/(\d+)(?:#[^"']*)?["'][^>]*>([\s\S]*?)<\/a>/gi;
+      let generic: RegExpExecArray | null = fallback.exec(html);
+      while (generic !== null) {
+        const title: string = V2exService.cleanHtml(generic[2]);
+        if (title.length > 1 && !title.includes('V2EX')) {
+          const id: number = Number(generic[1]);
+          if (result.findIndex((item: V2exTopic) => item.id === id) < 0) {
+            result.push({ id, title, content: '', replies: 0, last_modified: 0, last_touched: 0 });
+          }
+        }
+        generic = fallback.exec(html);
+      }
     }
     return result;
   }
