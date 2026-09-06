@@ -36,6 +36,7 @@ struct TopicDetail {
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
   @StorageLink('v2exIgnoredTopicIds') ignoredTopicsJson: string = '[]';
   @StorageLink('v2exParseContent') parseContent: boolean = true;
+  @StorageLink('v2exReplyMention') replyMention: string = '';
   @State topic: V2exTopic | undefined = undefined;
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
@@ -64,7 +65,17 @@ struct TopicDetail {
     const savedSort: string | undefined = AppStorage.get<string>('v2exTopicSort');
     if (savedSort === 'latest') this.replyOrder = 1;
     this.rememberRecentTopic();
+    this.applyReplyMention();
     this.load();
+  }
+
+  onPageShow(): void { this.applyReplyMention(); }
+
+  private applyReplyMention(): void {
+    const value: string = this.replyMention.trim();
+    if (value.length === 0) return;
+    this.replyText = this.replyText.length > 0 ? `${this.replyText}${this.replyText.endsWith(' ') ? '' : ' '}${value} ` : `${value} `;
+    this.replyMention = '';
   }
 
   private rememberRecentTopic(): void {
@@ -343,6 +354,8 @@ struct TopicDetail {
               Row() {
                 if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor)
                 Blank()
+                Text('@ 回复对象').fontSize(13).fontColor(this.themeColor).margin({ right: 14 })
+                  .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
                 Button(this.replying ? '发送中' : '回复').backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitReply())
               }.width('100%').margin({ top: 10 })
             }.width('100%').padding(16).backgroundColor(Color.White).margin({ top: 10, bottom: 20 })
