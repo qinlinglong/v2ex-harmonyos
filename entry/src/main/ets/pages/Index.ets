@@ -380,7 +380,7 @@ struct Index {
                 this.drawerItem('个人资料', 'Profile')
                 this.drawerItem('通知', 'Notifications')
                 this.drawerItem('我的主题', 'MyTopics')
-                this.drawerItem('我的收藏', 'Favorites')
+                this.drawerItem('主题收藏', 'Favorites')
                 this.drawerItem('我的节点', 'MyNodes')
                 this.drawerItem('特别关注', 'MyFollowing')
                 this.drawerItem('最近浏览', 'RecentTopic')

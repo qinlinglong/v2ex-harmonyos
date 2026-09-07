@@ -37,10 +37,17 @@ struct MyFollowing {
   @Builder
   row(topic: V2exTopic) {
     ListItem() {
-      Column() {
-        Text(topic.title).fontSize(16).fontColor('#202124').maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(`${topic.member?.username ?? '匿名'} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
-      }.width('100%').padding({ left: 18, right: 18, top: 15, bottom: 15 }).backgroundColor(Color.White)
+      Row() {
+        Stack() {
+          Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
+            .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
+          if (topic.member?.avatar_large) Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
+        }
+        Column() {
+          Text(topic.title).fontSize(16).fontColor('#202124').maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
+          Text(`${topic.member?.username ?? '匿名'} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 6 })
+        }.layoutWeight(1).margin({ left: 10 })
+      }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(Color.White)
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
   }
 
