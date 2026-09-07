@@ -374,14 +374,27 @@ struct TopicDetail {
         Scroll() {
           Column() {
             Column() {
-              Text(this.topic.title).fontSize(23).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
               Row() {
-                Text(this.topic.node?.title ?? 'V2EX').fontSize(13).fontColor('#7B8794')
-                Text(' · ').fontSize(13).fontColor('#7B8794')
-                Text(this.topic.member?.username ?? '匿名').fontSize(13).fontColor(this.themeColor)
-                  .onClick(() => { if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } }); })
-                Text(` · ${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
-              }.margin({ top: 10 })
+                Stack() {
+                  Text((this.topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(16).fontColor(Color.White)
+                    .width(48).height(48).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(24)
+                  if (this.topic.member?.avatar_large) {
+                    Image(this.topic.member.avatar_large).width(48).height(48).borderRadius(24).objectFit(ImageFit.Cover)
+                  }
+                }.onClick(() => {
+                  if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } })
+                })
+                Column() {
+                  Text(this.topic.member?.username ?? '匿名').fontSize(16).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
+                    .onClick(() => { if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } }) })
+                  Row() {
+                    Text(this.topic.node?.title ?? 'V2EX').fontSize(13).fontColor(this.themeColor)
+                    Text(` · ${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
+                  }.margin({ top: 5 })
+                }.margin({ left: 12 }).layoutWeight(1)
+              }.width('100%')
+              Text(this.topic.title).fontSize(23).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
+                .margin({ top: 16 })
               if (this.topic.views !== undefined || this.topic.likes !== undefined || this.topic.thanks !== undefined) {
                 Row() {
                   if (this.topic.views !== undefined) Text(`${this.topic.views} 点击`).fontSize(12).fontColor('#8A97A6')
@@ -389,34 +402,6 @@ struct TopicDetail {
                   if (this.topic.thanks !== undefined) Text(`${this.topic.views !== undefined || this.topic.likes !== undefined ? ' · ' : ''}${this.topic.thanks} 感谢`).fontSize(12).fontColor('#8A97A6')
                 }.margin({ top: 8 })
               }
-              Row() {
-                Column() {
-                  Text(this.favorited ? '★' : '☆').fontSize(19).fontColor(this.favorited ? '#D69E00' : this.themeColor)
-                  Text('收藏').fontSize(12).fontColor(this.favorited ? '#D69E00' : '#66727F').margin({ top: 2 })
-                }.layoutWeight(1).height(50).justifyContent(FlexAlign.Center).backgroundColor(this.favorited ? '#FFF7D6' : '#F3F6FA').borderRadius(10)
-                  .onClick(() => this.action('favorite'))
-                Column() {
-                  Image($r('app.media.ic_heart')).width(20).height(20).fillColor(this.thanked ? '#D05A73' : this.themeColor)
-                  Text('感谢').fontSize(12).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ top: 2 })
-                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(10)
-                  .onClick(() => this.action('thank'))
-                Column() {
-                  Text('▲').fontSize(18).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
-                  Text('赞').fontSize(12).fontColor(this.voteState === 1 ? this.themeColor : '#66727F').margin({ top: 2 })
-                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === 1 ? '#EAF3FF' : '#F3F6FA').borderRadius(10)
-                  .onClick(async () => {
-                    const ok: boolean = await this.action('up');
-                    if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
-                  })
-                Column() {
-                  Text('▼').fontSize(18).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6')
-                  Text('踩').fontSize(12).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6').margin({ top: 2 })
-                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === -1 ? '#E9EDF2' : '#F3F6FA').borderRadius(10)
-                  .onClick(async () => {
-                    const ok: boolean = await this.action('down');
-                    if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
-                  })
-              }.width('100%').margin({ top: 16 })
               if (this.topic.editable === true) {
                 Button('编辑主题').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
                   .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
@@ -453,6 +438,34 @@ struct TopicDetail {
                   Text(plainMarkdown(part.value)).fontSize(16).fontColor(this.bodyText()).lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
+              Row() {
+                Column() {
+                  Text(this.favorited ? '★' : '☆').fontSize(19).fontColor(this.favorited ? '#D69E00' : this.themeColor)
+                  Text('收藏').fontSize(12).fontColor(this.favorited ? '#D69E00' : '#66727F').margin({ top: 2 })
+                }.layoutWeight(1).height(50).justifyContent(FlexAlign.Center).backgroundColor(this.favorited ? '#FFF7D6' : '#F3F6FA').borderRadius(10)
+                  .onClick(() => this.action('favorite'))
+                Column() {
+                  Image($r('app.media.ic_heart')).width(20).height(20).fillColor(this.thanked ? '#D05A73' : this.themeColor)
+                  Text('感谢').fontSize(12).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ top: 2 })
+                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(10)
+                  .onClick(() => this.action('thank'))
+                Column() {
+                  Text('▲').fontSize(18).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
+                  Text('赞').fontSize(12).fontColor(this.voteState === 1 ? this.themeColor : '#66727F').margin({ top: 2 })
+                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === 1 ? '#EAF3FF' : '#F3F6FA').borderRadius(10)
+                  .onClick(async () => {
+                    const ok: boolean = await this.action('up');
+                    if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
+                  })
+                Column() {
+                  Text('▼').fontSize(18).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6')
+                  Text('踩').fontSize(12).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6').margin({ top: 2 })
+                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === -1 ? '#E9EDF2' : '#F3F6FA').borderRadius(10)
+                  .onClick(async () => {
+                    const ok: boolean = await this.action('down');
+                    if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
+                  })
+              }.width('100%').margin({ top: 20 })
             }.width('100%').padding(20).backgroundColor(this.surface())
             Row() {
               Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
