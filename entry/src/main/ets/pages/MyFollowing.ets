@@ -53,10 +53,12 @@ struct MyFollowing {
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
       else if (this.status.length > 0) Column() { Text(this.status).fontSize(15).fontColor('#7B8794'); Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' })) }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
-      else List({ space: 1 }) {
-        ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
-        ListItem() { Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore()) }
-      }.layoutWeight(1).width('100%')
+      else Refresh({ refreshing: this.loading }) {
+        List({ space: 1 }) {
+          ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
+          ListItem() { Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore()) }
+        }.layoutWeight(1).width('100%')
+      }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
 }

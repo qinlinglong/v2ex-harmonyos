@@ -47,8 +47,10 @@ struct RecentTopic {
       if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
       else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 42 })
       else {
-        List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`) }
-          .layoutWeight(1).width('100%')
+        Refresh({ refreshing: this.loading }) {
+          List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`) }
+            .layoutWeight(1).width('100%')
+        }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }
