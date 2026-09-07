@@ -29,6 +29,7 @@ const DEFAULT_HOME_TABS: HomeTabItem[] = [
 @Component
 struct Index {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exSafeAreaTop') safeAreaTop: number = 0;
   @StorageLink('v2exSafeAreaBottom') safeAreaBottom: number = 0;
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
@@ -83,6 +84,10 @@ struct Index {
   private activeTab(): HomeTabItem {
     return this.tabs[this.selectedTab] ?? DEFAULT_HOME_TABS[0];
   }
+
+  private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
+  private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
+  private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
 
   private isTopicTab(): boolean {
     const type: string = this.activeTab().type;
@@ -215,12 +220,12 @@ struct Index {
           Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
         }.width('100%').margin({ bottom: 10 })
         Row() {
-          Text(topic.title).fontSize(17).fontColor('#202124').fontWeight(FontWeight.Medium)
+          Text(topic.title).fontSize(17).fontColor(this.primaryText()).fontWeight(FontWeight.Medium)
             .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
           Text(`${topic.replies}`).fontSize(13).fontColor('#5B6B7A').margin({ left: 12 })
         }.width('100%').alignItems(VerticalAlign.Top)
         Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 8 })
-      }.width('100%').padding({ left: 18, right: 18, top: 16, bottom: 16 }).backgroundColor(Color.White)
+      }.width('100%').padding({ left: 18, right: 18, top: 16, bottom: 16 }).backgroundColor(this.surface())
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
   }
 
@@ -230,7 +235,7 @@ struct Index {
       Row() {
         Image($r('app.media.ic_menu')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
           .onClick(() => this.drawerOpen = true)
-        Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
         Image($r('app.media.ic_mail')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
           .onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
@@ -246,15 +251,15 @@ struct Index {
             else if (tab.type === 'xna') this.loadXna();
             else if (tab.type === 'mine') this.loadCurrentMember();
           })
-      }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(Color.White)
+      }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(this.surface())
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
-          .layoutWeight(1).height(42).fontSize(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
+          .layoutWeight(1).height(42).fontSize(14).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
         Image($r('app.media.ic_search')).width(24).height(24).fillColor(this.themeColor).margin({ left: 10, right: 10 })
           .onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
-      }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(Color.White)
+      }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(this.surface())
       Row() {
         ForEach(this.tabs, (tab: HomeTabItem, index: number) => {
           Column() {
@@ -263,7 +268,7 @@ struct Index {
               .borderRadius(2).margin({ top: 7 })
           }.layoutWeight(1).alignItems(HorizontalAlign.Center).onClick(() => this.selectTab(index))
         }, (tab: HomeTabItem) => tab.key)
-      }.width('100%').height(52).backgroundColor(Color.White)
+      }.width('100%').height(52).backgroundColor(this.surface())
       if (this.isTopicTab() && this.loading && this.topics.length === 0) {
         LoadingProgress().width(28).height(28).color('#4F7CAC').margin({ top: 36 })
       } else if (this.isTopicTab() && this.errorText.length > 0 && this.topics.length === 0) {
@@ -276,13 +281,13 @@ struct Index {
           .margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       } else if (this.activeTab().type === 'nodes') {
         Column() {
-          Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).fontColor('#202124').margin({ top: 18, bottom: 12 })
-          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
+          Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).margin({ top: 18, bottom: 12 })
+          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
             .onChange((value: string) => this.nodeQuery = value).margin({ bottom: 10 })
           List({ space: 1 }) {
             ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
-              Row() { Text(node.title).fontSize(16).fontColor('#202124'); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
-                .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(Color.White)
+              Row() { Text(node.title).fontSize(16).fontColor(this.primaryText()); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
+                .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(this.surface())
                 .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
             }, (node: V2exNode) => node.name)
           }.layoutWeight(1).width('100%')
@@ -298,11 +303,11 @@ struct Index {
                   .width(54).height(54).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(27)
                 if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(54).height(54).borderRadius(27).objectFit(ImageFit.Cover)
               }
-              Column() { Text(this.currentMember.username).fontSize(20).fontWeight(FontWeight.Medium).fontColor('#202124'); Text('已登录').fontSize(13).fontColor('#8A97A6').margin({ top: 5 }) }
+              Column() { Text(this.currentMember.username).fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText()); Text('已登录').fontSize(13).fontColor('#8A97A6').margin({ top: 5 }) }
                 .alignItems(HorizontalAlign.Start).margin({ left: 14 })
             }.margin({ top: 36 })
           } else {
-            Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium).fontColor('#202124')
+            Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
             Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
           }
           Button(this.currentMember ? '个人资料' : '打开登录页面').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 22 }).onClick(() => {
@@ -343,7 +348,7 @@ struct Index {
           }
         })
       }
-    }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
       .gesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
         .onActionEnd((event: GestureEvent) => { if (event.offsetX > 80) this.shiftTab(-1); else if (event.offsetX < -80) this.shiftTab(1); }))
       if (this.drawerOpen) {
@@ -355,7 +360,7 @@ struct Index {
               Text('关闭').fontSize(14).fontColor(this.themeColor).padding({ left: 12, right: 12, top: 8, bottom: 8 })
                 .backgroundColor('#EEF4FA').borderRadius(16).onClick(() => this.drawerOpen = false)
             }
-              .width('100%').height(64).padding({ left: 20, right: 16 }).backgroundColor(Color.White)
+              .width('100%').height(64).padding({ left: 20, right: 16 }).backgroundColor(this.surface())
             if (this.currentMember) {
               Row() {
                 Stack() {
@@ -363,10 +368,10 @@ struct Index {
                     .width(42).height(42).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(21)
                   if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(42).height(42).borderRadius(21).objectFit(ImageFit.Cover)
                 }
-                Text(this.currentMember.username).fontSize(16).fontColor('#202124').margin({ left: 12 })
-              }.width('100%').padding(18).backgroundColor(Color.White)
+                Text(this.currentMember.username).fontSize(16).fontColor(this.primaryText()).margin({ left: 12 })
+              }.width('100%').padding(18).backgroundColor(this.surface())
             } else {
-              Text('登录 V2EX').fontSize(16).fontColor(this.themeColor).width('100%').padding(18).backgroundColor(Color.White)
+              Text('登录 V2EX').fontSize(16).fontColor(this.themeColor).width('100%').padding(18).backgroundColor(this.surface())
                 .onClick(() => { this.drawerOpen = false; router.pushUrl({ url: 'pages/Login' }); })
             }
             Scroll() {
@@ -385,7 +390,7 @@ struct Index {
               }.width('100%')
             }.layoutWeight(1).width('100%').scrollBar(BarState.Off)
             Blank()
-          }.width('78%').height('100%').padding({ top: this.safeAreaTop }).backgroundColor('#F5F7FA')
+          }.width('78%').height('100%').padding({ top: this.safeAreaTop }).backgroundColor(this.pageBackground())
           Blank().layoutWeight(1).height('100%').backgroundColor('#88000000').onClick(() => this.drawerOpen = false)
         }.width('100%').height('100%')
       }
@@ -395,9 +400,9 @@ struct Index {
   @Builder
   drawerItem(label: string, page: string) {
     Row() {
-      Text(label).fontSize(16).fontColor('#202124').layoutWeight(1)
+      Text(label).fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
       Text('›').fontSize(22).fontColor('#9AA0A6')
-    }.width('100%').padding({ left: 20, right: 20, top: 16, bottom: 16 }).backgroundColor(Color.White).margin({ top: 1 })
+    }.width('100%').padding({ left: 20, right: 20, top: 16, bottom: 16 }).backgroundColor(this.surface()).margin({ top: 1 })
       .onClick(() => this.openDrawerPage(page))
   }
 
