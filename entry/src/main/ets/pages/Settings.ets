@@ -42,12 +42,12 @@ struct Settings {
         Column() {
         Row() { Text('内容解析').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).onClick(() => this.parseContent = !this.parseContent) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
-        Row() { Text('内置浏览器').fontSize(16).fontColor('#202124').layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
+        Row() { Text('内置浏览器').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
-        Row() { Text('自动签到').fontSize(16).fontColor('#202124').layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).onClick(() => this.autoCheckin = !this.autoCheckin) }
+        Row() { Text('自动签到').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).onClick(() => this.autoCheckin = !this.autoCheckin) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
-          Row() { Text('消息通知').fontSize(16).fontColor('#202124').layoutWeight(1); Button(this.msgPush ? '已开启' : '已关闭').fontSize(13).onClick(() => this.msgPush = !this.msgPush) }
+          Row() { Text('消息通知').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.msgPush ? '已开启' : '已关闭').fontSize(13).onClick(() => this.msgPush = !this.msgPush) }
             .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         }
         Text('主题颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).width('100%')
@@ -68,57 +68,57 @@ struct Settings {
         Row() { Text('主题设置').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('颜色与深色模式').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
           .onClick(() => router.pushUrl({ url: 'pages/CustomizeTheme' }))
-        Row() { Text('Markdown 帮助').fontSize(16).fontColor('#202124').layoutWeight(1); Text('编辑格式').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('Markdown 帮助').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('编辑格式').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/GitHubMD' }))
-        Row() { Text('节点搜索').fontSize(16).fontColor('#202124').layoutWeight(1); Text('查找节点').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('节点搜索').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('查找节点').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/SearchNode' }))
-        Row() { Text('节点导航').fontSize(16).fontColor('#202124').layoutWeight(1); Text('分类浏览全部节点').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('节点导航').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('分类浏览全部节点').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/NavNodes' }))
-        Row() { Text('搜索选项').fontSize(16).fontColor('#202124').layoutWeight(1); Text('默认搜索类型').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('搜索选项').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('默认搜索类型').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/SearchOptions' }))
-        Row() { Text('回复排序').fontSize(16).fontColor('#202124').layoutWeight(1); Text('详情页回复顺序').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('回复排序').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('详情页回复顺序').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/SortTabs' }))
-        Row() { Text('首页板块').fontSize(16).fontColor('#202124').layoutWeight(1); Text('显示与顺序').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('首页板块').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('显示与顺序').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
-        Row() { Text('清除最近浏览').fontSize(16).fontColor('#202124').layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.status = '最近浏览已清除'; }) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
-        Row() { Text('清除缓存').fontSize(16).fontColor('#202124').layoutWeight(1); Button('清除').fontSize(13).onClick(() => this.clearCache()) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
-        Row() { Text('问题反馈').fontSize(16).fontColor('#202124').layoutWeight(1); Text('GitHub').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('清除最近浏览').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.status = '最近浏览已清除'; }) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
+        Row() { Text('清除缓存').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).onClick(() => this.clearCache()) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
+        Row() { Text('问题反馈').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('GitHub').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '问题反馈', url: 'https://github.com/liaoliao666/v2ex/issues' } }))
-        Row() { Text('社区排行').fontSize(16).fontColor('#202124').layoutWeight(1); Text('查看').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('社区排行').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('查看').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/Rank' }))
-        Row() { Text('主题屏蔽').fontSize(16).fontColor('#202124').layoutWeight(1); Text('管理').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('主题屏蔽').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('管理').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/TopicBlockSettings' }))
-        Row() { Text('屏蔽列表').fontSize(16).fontColor('#202124').layoutWeight(1); Text('用户与忽略主题').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('屏蔽列表').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('用户与忽略主题').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
-        Row() { Text('图片上传').fontSize(16).fontColor('#202124').layoutWeight(1); Text('Imgur').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('图片上传').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('Imgur').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ImgurConfig' }))
-        Row() { Text('域名配置').fontSize(16).fontColor('#202124').layoutWeight(1); Text('V2EX').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('域名配置').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('V2EX').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ConfigureDomain' }))
-        Row() { Text('当前版本').fontSize(16).fontColor('#202124').layoutWeight(1); Text('1.0.0').fontSize(14).fontColor('#8A97A6') }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+        Row() { Text('当前版本').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('1.0.0').fontSize(14).fontColor('#8A97A6') }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
-          Row() { Text('退出登录').fontSize(16).fontColor('#202124').layoutWeight(1); Button('退出').fontSize(13).onClick(() => {
+          Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('退出').fontSize(13).onClick(() => {
             try {
               webview.WebCookieManager.clearAllCookiesSync();
               this.cachedMemberJson = '';
               this.status = '已退出登录';
             } catch (_) { this.status = '退出失败'; }
           }) }
-            .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+            .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
         } else {
           Button('登录 V2EX').width('100%').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 16 })
             .onClick(() => router.pushUrl({ url: 'pages/Login' }))
