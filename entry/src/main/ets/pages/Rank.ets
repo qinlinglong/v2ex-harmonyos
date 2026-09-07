@@ -29,7 +29,6 @@ struct Rank {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('社区排行').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(60).width('100%').backgroundColor(Color.White)
       Row() {
         Text('财富排行').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : '#7B8794')

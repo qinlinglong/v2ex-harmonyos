@@ -58,7 +58,6 @@ struct NavNodes {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('节点导航').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(60).width('100%').padding({ right: 10 }).backgroundColor(Color.White)
       TextInput({ placeholder: '搜索节点', text: this.query }).width('92%').height(44).fontSize(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
         .margin({ top: 10, bottom: 8 }).onChange((value: string) => this.query = value)

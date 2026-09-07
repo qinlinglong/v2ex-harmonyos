@@ -33,7 +33,6 @@ struct RelatedReplies {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('关联回复').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(60).width('100%').backgroundColor(Color.White)
       Row() {
         Text(this.relatedOnly ? '仅显示可能相关的回复' : '显示全部回复').fontSize(14).fontColor('#7B8794').layoutWeight(1)

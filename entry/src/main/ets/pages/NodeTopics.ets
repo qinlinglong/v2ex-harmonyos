@@ -100,8 +100,6 @@ struct NodeTopics {
         }.alignItems(HorizontalAlign.Start)
         Blank()
         Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
-        Text('↻').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
-          .onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
       if (this.loading) {

@@ -147,7 +147,6 @@ struct Profile {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.username || '个人资料').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
-        Text('↻').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.member) {
         Scroll() {

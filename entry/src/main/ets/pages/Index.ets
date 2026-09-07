@@ -22,7 +22,7 @@ const DEFAULT_HOME_TABS: HomeTabItem[] = [
   { title: '最热', key: 'hot', type: 'hot' },
   { title: '节点', key: 'nodes', type: 'nodes' },
   { title: '我的', key: 'mine', type: 'mine' },
-  { title: 'XNA', key: 'xna', type: 'xna' }
+  { title: 'VXNA', key: 'xna', type: 'xna' }
 ];
 
 @Entry
@@ -153,7 +153,7 @@ struct Index {
     this.loading = true;
     this.errorText = '';
     try { this.xnaTopics = await V2exService.xnaTopics(); }
-    catch (_) { this.errorText = 'XNA 加载失败，请稍后重试'; }
+    catch (_) { this.errorText = 'VXNA 加载失败，请稍后重试'; }
     finally { this.loading = false; }
   }
 
@@ -233,32 +233,26 @@ struct Index {
     Stack() {
       Column() {
       Row() {
-        Image($r('app.media.ic_menu')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
-          .onClick(() => this.drawerOpen = true)
+        Button() {
+          Image($r('app.media.ic_menu')).width(24).height(24).fillColor(this.themeColor)
+        }.width(56).height(64).backgroundColor(Color.Transparent).onClick(() => this.drawerOpen = true)
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
-        Image($r('app.media.ic_mail')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
-          .onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
-        Image($r('app.media.ic_edit')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
-          .onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
-        Image($r('app.media.ic_refresh')).width(24).height(24).fillColor(this.themeColor).margin({ left: 9, right: 9 })
-          .onClick(() => {
-            const tab: HomeTabItem = this.activeTab();
-            if (tab.type === 'hot') this.loadTopics('hot');
-            else if (tab.type === 'latest') this.loadTopics('latest');
-            else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
-            else if (tab.type === 'nodes') this.loadNodes();
-            else if (tab.type === 'xna') this.loadXna();
-            else if (tab.type === 'mine') this.loadCurrentMember();
-          })
+        Stack() {
+          Image($r('app.media.ic_mail')).width(24).height(24).fillColor(this.themeColor)
+        }.width(56).height(64).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
+        Stack() {
+          Image($r('app.media.ic_edit')).width(24).height(24).fillColor(this.themeColor)
+        }.width(56).height(64).onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(this.surface())
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
           .layoutWeight(1).height(42).fontSize(14).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
-        Image($r('app.media.ic_search')).width(24).height(24).fillColor(this.themeColor).margin({ left: 10, right: 10 })
-          .onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
+        Stack() {
+          Image($r('app.media.ic_search')).width(24).height(24).fillColor(this.themeColor)
+        }.width(48).height(42).onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(this.surface())
       Row() {
         ForEach(this.tabs, (tab: HomeTabItem, index: number) => {
@@ -328,7 +322,7 @@ struct Index {
         }.layoutWeight(1).width('100%')
       } else if (this.activeTab().type === 'xna') {
         if (this.xnaTopics.length === 0 && !this.loading) {
-          Text('暂无 XNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
+          Text('暂无 VXNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
         } else {
           Refresh({ refreshing: this.loading }) {
             List({ space: 1 }) { ForEach(this.xnaTopics, (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
@@ -349,8 +343,6 @@ struct Index {
         })
       }
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
-      .gesture(PanGesture({ direction: PanDirection.Horizontal, distance: 40 })
-        .onActionEnd((event: GestureEvent) => { if (event.offsetX > 80) this.shiftTab(-1); else if (event.offsetX < -80) this.shiftTab(1); }))
       if (this.drawerOpen) {
         Row() {
           Column() {

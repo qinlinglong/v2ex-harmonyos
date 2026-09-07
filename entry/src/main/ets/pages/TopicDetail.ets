@@ -363,8 +363,6 @@ struct TopicDetail {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).textAlign(TextAlign.Center)
           .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
-        Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
-          .onClick(() => this.load())
       }.height(60).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.loading) {
         LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 32 })

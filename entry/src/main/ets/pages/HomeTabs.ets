@@ -21,7 +21,7 @@ const ALL_HOME_TABS: HomeTabOption[] = [
   { title: 'R2', key: 'r2', type: 'node' },
   { title: '节点', key: 'nodes', type: 'nodes' },
   { title: '我的', key: 'mine', type: 'mine' },
-  { title: 'XNA', key: 'xna', type: 'xna' }
+  { title: 'VXNA', key: 'xna', type: 'xna' }
 ];
 
 const DEFAULT_HOME_TABS: HomeTabOption[] = [

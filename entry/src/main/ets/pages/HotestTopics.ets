@@ -40,7 +40,6 @@ struct HotestTopics {
         Text('‹').fontSize(34).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Column() { Text('历史最热').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124'); Text(this.date).fontSize(12).fontColor('#8A97A6').margin({ top: 2 }) }.alignItems(HorizontalAlign.Start)
         Blank()
-        Text('↻').fontSize(24).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => this.load())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
       else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 42 })
