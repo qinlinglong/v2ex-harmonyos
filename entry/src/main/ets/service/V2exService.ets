@@ -236,6 +236,7 @@ export class V2exService {
     // the native profile's “回复” tab does not appear mysteriously empty.
     const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`);
     const result: V2exReply[] = [];
+    const usedIds: number[] = [];
     const pattern: RegExp = /<div\s+class=["']dock_area["']>([\s\S]*?)<\/div>\s*<div\s+class=["']inner["']>[\s\S]*?<div\s+class=["']reply_content["'][^>]*>([\s\S]*?)<\/div>/gi;
     let index: number = 0;
     let match: RegExpExecArray | null = pattern.exec(html);
@@ -245,7 +246,11 @@ export class V2exService {
         const topicId: number = Number(anchor[1]);
         const timeMatch: RegExpMatchArray | null = match[1].match(/<span\s+class=["']fade["']\s+title=["']([^"']+)["']/i);
         const parsedTime: number = timeMatch ? new Date(timeMatch[1]).getTime() : 0;
-        const replyId: number = Number(anchor[2] ?? 0) || (topicId * 1000 + index);
+        let replyId: number = Number(anchor[2] ?? 0) || (topicId * 1000 + index);
+        // A single V2EX reply can contain several rendered reply blocks with
+        // the same reply number. Keep every block visible in ArkUI's ForEach.
+        if (usedIds.indexOf(replyId) >= 0) replyId = topicId * 100000 + index;
+        usedIds.push(replyId);
         result.push({
           id: replyId,
           topic_id: topicId,
