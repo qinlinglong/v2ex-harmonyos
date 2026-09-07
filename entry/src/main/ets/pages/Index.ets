@@ -209,24 +209,30 @@ struct Index {
         Row() {
           Stack() {
             Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(13).fontColor(Color.White)
-              .width(30).height(30).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(15)
+              .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
             if (topic.member?.avatar_large) {
-              Image(topic.member.avatar_large).width(30).height(30).borderRadius(15).objectFit(ImageFit.Cover)
+              Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
             }
           }
           Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6').margin({ left: 8 })
             .onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
           Blank()
           Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
-        }.width('100%').margin({ bottom: 10 })
+        }.width('100%').margin({ bottom: 8 })
         Row() {
-          Text(topic.title).fontSize(17).fontColor(this.primaryText()).fontWeight(FontWeight.Medium)
+          Text(topic.title).fontSize(16).fontColor(this.primaryText()).fontWeight(FontWeight.Medium)
             .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
           Text(`${topic.replies}`).fontSize(13).fontColor('#5B6B7A').margin({ left: 12 })
         }.width('100%').alignItems(VerticalAlign.Top)
-        Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 8 })
-      }.width('100%').padding({ left: 18, right: 18, top: 16, bottom: 16 }).backgroundColor(this.surface())
-    }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
+        Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 6 })
+      }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(this.surface())
+    }.onClick(() => {
+      if (topic.url && !/\/t\/\d+/i.test(topic.url)) {
+        router.pushUrl({ url: 'pages/WebViewPage', params: { title: topic.title, url: topic.url } });
+      } else {
+        router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } });
+      }
+    })
   }
 
   build() {

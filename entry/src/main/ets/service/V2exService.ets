@@ -203,7 +203,7 @@ export class V2exService {
 
   static async xnaTopics(): Promise<V2exTopic[]> {
     const html: string = await V2exService.get('/xna');
-    return V2exService.parseTopicItems(html);
+    return V2exService.parseXnaItems(html);
   }
 
   static async member(username: string): Promise<V2exMember> {
@@ -400,6 +400,31 @@ export class V2exService {
       }
     }
     return result;
+  }
+
+  /** Parse the external blog entries on V2EX's VXNA page. */
+  private static parseXnaItems(html: string): V2exTopic[] {
+    const result: V2exTopic[] = [];
+    const pattern: RegExp = /<div\s+class=["']xna-entry[^"']*["'][\s\S]*?<a\s+href=["']([^"']+)["'][^>]*class=["']topic-link["'][^>]*>([\s\S]*?)<\/a>[\s\S]*?<a\s+href=["']([^"']+)["'][^>]*class=["']node["'][^>]*>([\s\S]*?)<\/a>[\s\S]*?<a\s+href=["']\/member\/([^"']+)["'][^>]*>/gi;
+    let offset: number = 0;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      result.push({
+        id: 900000000 + offset,
+        title: V2exService.cleanHtml(match[2]),
+        content: '',
+        url: match[1],
+        replies: 0,
+        last_modified: 0,
+        last_touched: 0,
+        node: { name: 'xna', title: V2exService.cleanHtml(match[4]) },
+        member: { username: V2exService.cleanHtml(match[5]) }
+      });
+      offset += 1;
+      match = pattern.exec(html);
+    }
+    // Keep the initial native render bounded while retaining a useful feed.
+    return result.slice(0, 20);
   }
 
   private static parseTopicStats(html: string): V2exTopicStats {
