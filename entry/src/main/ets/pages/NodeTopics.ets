@@ -14,6 +14,7 @@ function age(unix: number): string {
 @Component
 struct NodeTopics {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @State name: string = '';
   @State title: string = '';
   @State topics: V2exTopic[] = [];
@@ -23,6 +24,9 @@ struct NodeTopics {
   @State loadingMore: boolean = false;
   @State nodeFavorited: boolean = false;
   @State actionStatus: string = '';
+  private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
+  private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
+  private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
@@ -75,13 +79,13 @@ struct NodeTopics {
             .borderRadius(18).objectFit(ImageFit.Cover)
         }
         Column() {
-          Text(topic.title).fontSize(16).fontColor('#202124').maxLines(2)
+          Text(topic.title).fontSize(16).fontColor(this.primaryText()).maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
           Text(`${topic.member?.username ?? '匿名'} · ${age(topic.last_touched)} · ${topic.replies} 回复`)
             .fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
         }.layoutWeight(1).margin({ left: 12 })
       }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 })
-        .backgroundColor(Color.White)
+        .backgroundColor(this.surface())
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
   }
 
@@ -91,14 +95,14 @@ struct NodeTopics {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
           .onClick(() => router.back())
         Column() {
-          Text(titleOrName(this.title, this.name)).fontSize(19).fontWeight(FontWeight.Bold).fontColor('#202124')
+          Text(titleOrName(this.title, this.name)).fontSize(19).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
           Text(this.name).fontSize(12).fontColor('#8A97A6').margin({ top: 2 })
         }.alignItems(HorizontalAlign.Start)
         Blank()
         Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
         Text('↻').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
           .onClick(() => this.load())
-      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
+      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
       if (this.loading) {
         LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 36 })
@@ -119,7 +123,7 @@ struct NodeTopics {
           if (state === RefreshStatus.Refresh) this.load();
         })
       }
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(this.pageBackground())
   }
 }
 

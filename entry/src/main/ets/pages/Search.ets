@@ -6,6 +6,7 @@ import { V2exService } from '../service/V2exService';
 @Component
 struct SearchPage {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exSearchHistory') historyJson: string = '[]';
   @StorageLink('v2exSearchSource') searchSource: string = 'sov2ex';
   @State query: string = '';
@@ -15,6 +16,10 @@ struct SearchPage {
   @State nodes: V2exNode[] = [];
   @State loading: boolean = false;
   @State status: string = '输入关键词搜索主题或用户';
+  private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
+  private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
+  private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
+  private bodyText(): string { return this.darkMode ? '#D4DCE5' : '#30343B'; }
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
@@ -77,9 +82,9 @@ struct SearchPage {
   topicRow(topic: V2exTopic) {
     ListItem() {
       Column() {
-        Text(topic.title).fontSize(16).fontColor('#202124').maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(topic.title).fontSize(16).fontColor(this.primaryText()).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(`${topic.member?.username ?? '匿名'} · ${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
-      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
+      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
   }
 
@@ -89,8 +94,8 @@ struct SearchPage {
       Row() {
         Text(member.username.substring(0, 1).toUpperCase()).fontSize(13).fontColor(Color.White)
           .width(36).height(36).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(18)
-        Text(member.username).fontSize(16).fontColor('#202124').margin({ left: 12 })
-      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
+        Text(member.username).fontSize(16).fontColor(this.primaryText()).margin({ left: 12 })
+      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
     }.onClick(() => router.pushUrl({ url: 'pages/Profile', params: { username: member.username } }))
   }
 
@@ -98,9 +103,9 @@ struct SearchPage {
   nodeRow(node: V2exNode) {
     ListItem() {
       Row() {
-        Text(node.title).fontSize(16).fontColor('#202124').layoutWeight(1)
+        Text(node.title).fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
         Text(node.name).fontSize(13).fontColor('#8A97A6')
-      }.width('100%').padding(16).backgroundColor(Color.White)
+      }.width('100%').padding(16).backgroundColor(this.surface())
     }.onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
   }
 
@@ -109,10 +114,10 @@ struct SearchPage {
     ListItem() {
       Row() {
         Text('⌕').fontSize(18).fontColor('#8A97A6')
-        Text(value).fontSize(15).fontColor('#30343B').margin({ left: 12 })
+        Text(value).fontSize(15).fontColor(this.bodyText()).margin({ left: 12 })
         Blank()
         Text('›').fontSize(22).fontColor('#9AA0A6')
-      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
+      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
     }.onClick(() => { this.query = value; this.submit(); })
   }
 
@@ -120,25 +125,25 @@ struct SearchPage {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('搜索').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
-      }.height(60).width('100%').backgroundColor(Color.White)
+        Text('搜索').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
+      }.height(60).width('100%').backgroundColor(this.surface())
       Row() {
-        TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
-          .fontColor('#30343B').placeholderColor('#8A97A6').backgroundColor('#F1F4F7').borderRadius(8)
+        TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
+          .fontColor(this.bodyText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7').borderRadius(8)
           .onChange((value: string) => this.query = value).onSubmit(() => this.submit())
         Button('搜索').fontSize(14).margin({ left: 10 }).onClick(() => this.submit())
-      }.width('100%').padding(16).backgroundColor(Color.White)
+      }.width('100%').padding(16).backgroundColor(this.surface())
       Row() {
         Text('主题').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 0)
         Text('用户').fontSize(15).fontColor(this.mode === 1 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 1)
         Text('节点').fontSize(15).fontColor(this.mode === 2 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 2)
-      }.height(48).width('100%').backgroundColor(Color.White)
+      }.height(48).width('100%').backgroundColor(this.surface())
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0 && this.query.trim().length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 46 })
       else if (this.query.trim().length === 0 && this.history().length > 0) {
         Column() {
           Row() {
-            Text('搜索历史').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').layoutWeight(1)
+            Text('搜索历史').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).layoutWeight(1)
             Text('清除').fontSize(13).fontColor(this.themeColor).onClick(() => this.historyJson = '[]')
           }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 10 })
           List({ space: 1 }) { ForEach(this.history(), (item: string) => this.historyRow(item), (item: string) => item) }.layoutWeight(1).width('100%')
@@ -147,6 +152,6 @@ struct SearchPage {
       else if (this.mode === 0) List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
       else if (this.mode === 1) List({ space: 1 }) { ForEach(this.members, (member: V2exMember) => this.memberRow(member), (member: V2exMember) => member.username) }.layoutWeight(1).width('100%')
       else List({ space: 1 }) { ForEach(this.nodes, (node: V2exNode) => this.nodeRow(node), (node: V2exNode) => node.name) }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(this.pageBackground())
   }
 }
