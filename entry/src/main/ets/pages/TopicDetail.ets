@@ -67,6 +67,7 @@ function replyTextParts(value: string): ReplyTextPart[] {
 @Component
 struct TopicDetail {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exSafeAreaTop') safeAreaTop: number = 0;
   @StorageLink('v2exSafeAreaBottom') safeAreaBottom: number = 0;
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
@@ -97,6 +98,10 @@ struct TopicDetail {
   @State replyOrder: number = 0;
   @State ignored: boolean = false;
   private topicId: number = 0;
+  private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
+  private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
+  private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
+  private bodyText(): string { return this.darkMode ? '#D4DCE5' : '#30343B'; }
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
@@ -356,11 +361,11 @@ struct TopicDetail {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).fontColor('#202124').textAlign(TextAlign.Center)
+        Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).textAlign(TextAlign.Center)
           .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
         Text('↻').fontSize(24).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
           .onClick(() => this.load())
-      }.height(60).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
+      }.height(60).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.loading) {
         LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 32 })
       } else if (this.errorText.length > 0) {
@@ -369,7 +374,7 @@ struct TopicDetail {
         Scroll() {
           Column() {
             Column() {
-              Text(this.topic.title).fontSize(23).fontWeight(FontWeight.Bold).fontColor('#202124')
+              Text(this.topic.title).fontSize(23).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
               Row() {
                 Text(this.topic.node?.title ?? 'V2EX').fontSize(13).fontColor('#7B8794')
                 Text(' · ').fontSize(13).fontColor('#7B8794')
@@ -426,7 +431,7 @@ struct TopicDetail {
                 Text('举报').fontSize(13).fontColor('#C05A73').onClick(() => this.action('report'))
               }.width('80%').margin({ top: 4 })
               if (this.appendOpen) {
-                TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15).fontColor('#202124')
+                TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15).fontColor(this.primaryText())
                   .onChange((value: string) => this.appendText = value)
                 Row() {
                   if (this.appendStatus.length > 0) Text(this.appendStatus).fontSize(12).fontColor(this.themeColor)
@@ -445,12 +450,12 @@ struct TopicDetail {
                     .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).margin({ top: 20 })
                     .onClick(() => this.openLink(part.value))
                 } else {
-                  Text(plainMarkdown(part.value)).fontSize(16).fontColor('#30343B').lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
+                  Text(plainMarkdown(part.value)).fontSize(16).fontColor(this.bodyText()).lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
-            }.width('100%').padding(20).backgroundColor(Color.White)
+            }.width('100%').padding(20).backgroundColor(this.surface())
             Row() {
-              Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124')
+              Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
               Blank()
               Text('关联').fontSize(13).fontColor('#7B8794').margin({ right: 16 })
                 .onClick(() => router.pushUrl({ url: 'pages/RelatedReplies', params: { id: this.topicId } }))
@@ -473,7 +478,7 @@ struct TopicDetail {
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
                 }
                 if (this.editingReplyId === reply.id) {
-                  TextArea({ placeholder: '编辑回复', text: this.editingReplyText }).width('100%').height(130).fontSize(15).fontColor('#202124')
+                  TextArea({ placeholder: '编辑回复', text: this.editingReplyText }).width('100%').height(130).fontSize(15).fontColor(this.primaryText())
                     .onChange((value: string) => this.editingReplyText = value)
                   Row() {
                     if (this.editingReplyStatus.length > 0) Text(this.editingReplyStatus).fontSize(12).fontColor(this.themeColor)
@@ -493,7 +498,7 @@ struct TopicDetail {
                       Flex({ wrap: FlexWrap.Wrap }) {
                         ForEach(replyTextParts(plainMarkdown(part.value)), (fragment: ReplyTextPart) => {
                           Text(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value)
-                            .fontSize(15).fontColor(fragment.kind === 'mention' ? this.themeColor : '#30343B').lineHeight(23)
+                            .fontSize(15).fontColor(fragment.kind === 'mention' ? this.themeColor : this.bodyText()).lineHeight(23)
                             .decoration({ type: fragment.kind === 'mention' ? TextDecorationType.Underline : TextDecorationType.None, color: this.themeColor })
                             .onClick(() => {
                               if (fragment.kind === 'mention') router.pushUrl({ url: 'pages/Profile', params: { username: fragment.value } });
@@ -511,10 +516,10 @@ struct TopicDetail {
                   }.width('100%').margin({ top: 10 })
                 }
               }.width('100%').padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
-                .backgroundColor(Color.White).margin({ bottom: 1 })
+                .backgroundColor(this.surface()).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
             Column() {
-              TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15).fontColor('#202124')
+              TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15).fontColor(this.primaryText())
                 .onChange((value: string) => this.replyText = value)
               Row() {
                 if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor)
@@ -523,10 +528,10 @@ struct TopicDetail {
                   .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
                 Button(this.replying ? '发送中' : '回复').backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitReply())
               }.width('100%').margin({ top: 10 })
-            }.width('100%').padding(16).backgroundColor(Color.White).margin({ top: 10, bottom: 20 })
+            }.width('100%').padding(16).backgroundColor(this.surface()).margin({ top: 10, bottom: 20 })
           }.width('100%')
         }.layoutWeight(1).width('100%')
       }
-    }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
   }
 }

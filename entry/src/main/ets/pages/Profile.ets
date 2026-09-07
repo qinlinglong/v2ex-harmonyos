@@ -14,6 +14,7 @@ interface ProfileCacheEntry {
 @Component
 struct Profile {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exBlockedUsers') blockedUsersJson: string = '[]';
   @StorageLink('v2exProfileCache') profileCacheJson: string = '{}';
   @State member: V2exMember | undefined = undefined;
@@ -24,6 +25,10 @@ struct Profile {
   @State followed: boolean = false;
   @State blocked: boolean = false;
   @State tab: number = 0;
+  private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
+  private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
+  private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
+  private bodyText(): string { return this.darkMode ? '#D4DCE5' : '#30343B'; }
 
   private replyTopicId(reply: V2exReply): number {
     return Number(reply.topic_id ?? 0);
@@ -112,11 +117,11 @@ struct Profile {
   topicRow(topic: V2exTopic) {
     ListItem() {
       Column() {
-        Text(topic.title).fontSize(16).fontColor('#202124').maxLines(2)
+        Text(topic.title).fontSize(16).fontColor(this.primaryText()).maxLines(2)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(`${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12)
           .fontColor('#8A97A6').margin({ top: 7 })
-      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
+      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
   }
 
@@ -126,10 +131,10 @@ struct Profile {
       Column() {
         Text(reply.topic_title ?? '回复').fontSize(13).fontColor(this.themeColor).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(reply.content).fontSize(15).fontColor('#30343B').maxLines(4)
+        Text(reply.content).fontSize(15).fontColor(this.bodyText()).maxLines(4)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
-      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(Color.White)
+      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
     }.onClick(() => {
       const topicId: number = this.replyTopicId(reply);
       if (topicId > 0) router.pushUrl({ url: 'pages/TopicDetail', params: { id: topicId } });
@@ -140,10 +145,10 @@ struct Profile {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text(this.username || '个人资料').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text(this.username || '个人资料').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
         Text('↻').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.load())
-      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
+      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.member) {
         Scroll() {
           Column() {
@@ -153,7 +158,7 @@ struct Profile {
                   .width(76).height(76).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(38)
                 if (this.member.avatar_large) Image(this.member.avatar_large).width(76).height(76).borderRadius(38).objectFit(ImageFit.Cover)
               }
-              Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor('#202124').margin({ top: 12 })
+              Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).margin({ top: 12 })
               Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor('#7B8794').margin({ top: 6 })
               if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor('#4F7CAC').margin({ top: 6 })
                 .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
@@ -162,13 +167,13 @@ struct Profile {
                 Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(() => this.toggleMemberAction(this.blocked ? 'unblock' : 'block'))
               }.width('80%').margin({ top: 16 })
               if (this.status.length > 0 && this.status !== '加载中…') Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })
-            }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(Color.White)
+            }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(this.surface())
             Row() {
               Text('主题').fontColor(this.tab === 0 ? this.themeColor : '#7B8794').fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 0)
               Text('回复').fontColor(this.tab === 1 ? this.themeColor : '#7B8794').fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 1)
-            }.width('100%').height(52).backgroundColor(Color.White)
+            }.width('100%').height(52).backgroundColor(this.surface())
             if (this.tab === 0) {
               List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`) }
                 .width('100%').height(560)
@@ -181,6 +186,6 @@ struct Profile {
       } else {
         Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 48 })
       }
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(this.pageBackground())
   }
 }
