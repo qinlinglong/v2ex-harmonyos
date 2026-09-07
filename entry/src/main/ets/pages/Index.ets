@@ -283,17 +283,20 @@ struct Index {
           Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).margin({ top: 18, bottom: 12 })
           TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
             .onChange((value: string) => this.nodeQuery = value).margin({ bottom: 10 })
-          List({ space: 1 }) {
-            ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
-              Row() { Text(node.title).fontSize(16).fontColor(this.primaryText()); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
-                .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(this.surface())
-                .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
-            }, (node: V2exNode) => node.name)
-          }.layoutWeight(1).width('100%')
+          Refresh({ refreshing: this.loading }) {
+            List({ space: 1 }) {
+              ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
+                Row() { Text(node.title).fontSize(16).fontColor(this.primaryText()); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
+                  .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(this.surface())
+                  .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
+              }, (node: V2exNode) => node.name)
+            }.layoutWeight(1).width('100%')
+          }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadNodes(); })
         }.layoutWeight(1).width('100%')
       } else if (this.activeTab().type === 'mine') {
-        Scroll() {
-          Column() {
+        Refresh({ refreshing: this.memberLoading }) {
+          Scroll() {
+            Column() {
           if (this.memberLoading) LoadingProgress().width(28).height(28).color(this.themeColor).margin({ top: 32 })
           if (this.currentMember) {
             Row() {
@@ -323,8 +326,9 @@ struct Index {
           Button('历史热议').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/HotestTopics' }))
           Button('设置').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Settings' }))
           Button('屏蔽列表').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
-          }.margin({ top: 48, bottom: 32 }).alignItems(HorizontalAlign.Center)
-        }.layoutWeight(1).width('100%')
+            }.margin({ top: 48, bottom: 32 }).alignItems(HorizontalAlign.Center)
+          }.layoutWeight(1).width('100%')
+        }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadCurrentMember(); })
       } else if (this.activeTab().type === 'xna') {
         if (this.xnaTopics.length === 0 && !this.loading) {
           Text('暂无 VXNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
