@@ -5,6 +5,7 @@ import { webview } from '@kit.ArkWeb';
 @Component
 struct Settings {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exParseContent') parseContent: boolean = true;
   @StorageLink('v2exBuiltinBrowser') builtinBrowser: boolean = true;
   @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
@@ -20,6 +21,9 @@ struct Settings {
   @State status: string = '';
   private readonly colors: string[] = ['#4F7CAC', '#5B8C5A', '#C05A73', '#8B6FB0', '#D07A3A'];
   aboutToAppear(): void { this.customColor = this.themeColor; }
+  private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
+  private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
+  private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
   private clearCache(): void {
     this.cachedMemberJson = '';
     this.recentJson = '[]';
@@ -32,21 +36,21 @@ struct Settings {
   }
   build() {
     Column() {
-      Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('设置').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124') }
-        .height(60).width('100%').backgroundColor(Color.White)
+      Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('设置').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText()) }
+        .height(60).width('100%').backgroundColor(this.surface())
       Scroll() {
         Column() {
-        Row() { Text('内容解析').fontSize(16).fontColor('#202124').layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).onClick(() => this.parseContent = !this.parseContent) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+        Row() { Text('内容解析').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).onClick(() => this.parseContent = !this.parseContent) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
         Row() { Text('内置浏览器').fontSize(16).fontColor('#202124').layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         Row() { Text('自动签到').fontSize(16).fontColor('#202124').layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).onClick(() => this.autoCheckin = !this.autoCheckin) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
           Row() { Text('消息通知').fontSize(16).fontColor('#202124').layoutWeight(1); Button(this.msgPush ? '已开启' : '已关闭').fontSize(13).onClick(() => this.msgPush = !this.msgPush) }
-            .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
+            .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         }
-        Text('主题颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor('#202124').width('100%')
+        Text('主题颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).width('100%')
         Row() {
           ForEach(this.colors, (color: string) => Column().width(42).height(42).borderRadius(21).backgroundColor(color)
             .margin({ right: 14 }).border({ width: this.themeColor === color ? 3 : 0, color: Color.White })
@@ -54,15 +58,15 @@ struct Settings {
         }.margin({ top: 18 })
         Text('主题会保存在本机，下次启动继续使用。').fontSize(13).fontColor('#8A97A6').margin({ top: 18 })
         Row() {
-          TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(44).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
+          TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(44).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
             .onChange((value: string) => this.customColor = value)
           Button('应用').margin({ left: 10 }).onClick(() => {
             const value: string = this.customColor.trim();
             if (/^#[0-9A-Fa-f]{6}$/.test(value)) this.themeColor = value;
           })
         }.width('100%').margin({ top: 18 })
-        Row() { Text('主题设置').fontSize(16).fontColor('#202124').layoutWeight(1); Text('颜色与深色模式').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 12 })
+        Row() { Text('主题设置').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('颜色与深色模式').fontSize(14).fontColor(this.themeColor) }
+          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
           .onClick(() => router.pushUrl({ url: 'pages/CustomizeTheme' }))
         Row() { Text('Markdown 帮助').fontSize(16).fontColor('#202124').layoutWeight(1); Text('编辑格式').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(Color.White).margin({ top: 1 })
@@ -120,8 +124,8 @@ struct Settings {
             .onClick(() => router.pushUrl({ url: 'pages/Login' }))
         }
         if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 16 })
-        }.width('100%').padding(20).backgroundColor('#F5F7FA')
+        }.width('100%').padding(20).backgroundColor(this.pageBackground())
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(this.pageBackground())
   }
 }
