@@ -226,9 +226,39 @@ export class V2exService {
   }
 
   static async memberReplies(username: string): Promise<V2exReply[]> {
-    const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exReply[];
-    (data ?? []).forEach((item: V2exReply) => V2exService.normalizeMember(item.member));
-    return data ?? [];
+    try {
+      const data: V2exReply[] = JSON.parse(await V2exService.get(`/api/replies/show.json?username=${encodeURIComponent(username)}&page_size=100`)) as V2exReply[];
+      (data ?? []).forEach((item: V2exReply) => V2exService.normalizeMember(item.member));
+      if (Array.isArray(data) && data.length > 0) return data;
+    } catch (_) { /* the public replies endpoint is unavailable on some V2EX deployments */ }
+    // V2EX currently renders recent replies on the member page even when the
+    // JSON endpoint returns an empty array. Parse that rendered fallback so
+    // the native profile's “回复” tab does not appear mysteriously empty.
+    const html: string = await V2exService.get(`/member/${encodeURIComponent(username)}`);
+    const result: V2exReply[] = [];
+    const pattern: RegExp = /<div\s+class=["']dock_area["']>([\s\S]*?)<\/div>\s*<div\s+class=["']inner["']>[\s\S]*?<div\s+class=["']reply_content["'][^>]*>([\s\S]*?)<\/div>/gi;
+    let index: number = 0;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      const anchor: RegExpMatchArray | null = match[1].match(/href=["']\/t\/(\d+)(?:#reply(\d+))?["'][^>]*>([\s\S]*?)<\/a>/i);
+      if (anchor) {
+        const topicId: number = Number(anchor[1]);
+        const timeMatch: RegExpMatchArray | null = match[1].match(/<span\s+class=["']fade["']\s+title=["']([^"']+)["']/i);
+        const parsedTime: number = timeMatch ? new Date(timeMatch[1]).getTime() : 0;
+        const replyId: number = Number(anchor[2] ?? 0) || (topicId * 1000 + index);
+        result.push({
+          id: replyId,
+          topic_id: topicId,
+          topic_title: V2exService.cleanHtml(anchor[3]),
+          content: V2exService.htmlContentToMarkdown(match[2]),
+          created: parsedTime > 0 ? Math.floor(parsedTime / 1000) : 0,
+          member: { username }
+        });
+        index += 1;
+      }
+      match = pattern.exec(html);
+    }
+    return result;
   }
 
   static async memberRelations(username: string): Promise<V2exMemberRelations> {
