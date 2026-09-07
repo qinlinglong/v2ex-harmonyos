@@ -88,13 +88,21 @@ export class V2exService {
 
   static async topics(kind: 'latest' | 'hot' = 'latest'): Promise<V2exTopic[]> {
     const path: string = kind === 'hot' ? '/api/topics/hot.json?limit=100' : '/api/topics/latest.json?limit=100';
-    const parsed: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
-    parsed.forEach((item: V2exTopic) => {
-      if (item.replies === undefined) item.replies = 0;
-      if (item.content === undefined) item.content = '';
-      V2exService.normalizeTopic(item);
-    });
-    return parsed;
+    try {
+      const parsed: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
+      if (!Array.isArray(parsed)) throw new Error('主题接口响应格式错误');
+      parsed.forEach((item: V2exTopic) => {
+        if (item.replies === undefined) item.replies = 0;
+        if (item.content === undefined) item.content = '';
+        V2exService.normalizeTopic(item);
+      });
+      return parsed;
+    } catch (_) {
+      // The public JSON feed can be rate-limited. Keep the home tab useful by
+      // falling back to the same rendered pages used by the reference client.
+      const htmlPath: string = kind === 'hot' ? '/?tab=hot' : '/recent';
+      return V2exService.parseTopicItems(await V2exService.get(htmlPath));
+    }
   }
 
   static async searchTopics(query: string): Promise<V2exTopic[]> {
