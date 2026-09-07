@@ -371,7 +371,8 @@ struct TopicDetail {
       } else if (this.errorText.length > 0) {
         Text(this.errorText).fontSize(15).fontColor('#7B8794').margin({ top: 40 })
       } else if (this.topic) {
-        Scroll() {
+        Column() {
+          Scroll() {
           Column() {
             Column() {
               Row() {
@@ -531,18 +532,19 @@ struct TopicDetail {
               }.width('100%').padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
                 .backgroundColor(this.surface()).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
-            Column() {
-              TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(120).fontSize(15).fontColor(this.primaryText())
-                .onChange((value: string) => this.replyText = value)
-              Row() {
-                if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor)
-                Blank()
-                Text('@ 回复对象').fontSize(13).fontColor(this.themeColor).margin({ right: 14 })
-                  .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
-                Button(this.replying ? '发送中' : '回复').backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitReply())
-              }.width('100%').margin({ top: 10 })
-            }.width('100%').padding(16).backgroundColor(this.surface()).margin({ top: 10, bottom: 20 })
           }.width('100%')
+          }.layoutWeight(1).width('100%')
+          Column() {
+            TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(96).fontSize(15).fontColor(this.primaryText())
+              .onChange((value: string) => this.replyText = value)
+            Row() {
+              if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor).maxLines(1)
+              Blank()
+              Text('@ 回复对象').fontSize(13).fontColor(this.themeColor).margin({ right: 14 })
+                .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
+              Button(this.replying ? '发送中' : '回复').backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitReply())
+            }.width('100%').margin({ top: 8 })
+          }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }).backgroundColor(this.surface())
         }.layoutWeight(1).width('100%')
       }
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
