@@ -16,7 +16,7 @@ V2EX 的 HarmonyOS 原生客户端项目，使用 ArkTS、ArkUI 和 DevEco CLI �
 - 主题颜色、内容解析/内置浏览器开关、主题屏蔽规则、社区排行、反馈 WebView 和退出登录。
 - 主题外观自定义、Markdown 编辑帮助、节点搜索、搜索类型选项、回复对象搜索和回复排序设置均为独立原生页面，并从设置入口可达。
 - 主题设置支持自定义颜色和可持久化深色模式；首页、详情、个人中心、设置和侧边菜单会同步主题表面与文字颜色。
-- 应用桌面图标和启动图使用参考客户端风格的 V 标识矢量资源，Bundle 为 `qinlinglong.github.io`。
+- 应用桌面图标和启动图使用参考客户端风格的 V 标识矢量资源，Bundle 为 `io.github.qinlinglong.v2ex`。
 - 节点导航和屏蔽列表已补齐为独立原生页面；屏蔽用户操作使用 V2EX 会员 ID 请求，并在本地同步屏蔽/忽略状态。
 - 首页已加入可收起的原生侧边菜单；节点收藏状态、屏蔽列表清空、自动签到均与网页端状态同步。
 - 详情页支持原生选择回复对象，可按用户名或回复内容筛选并将多个 `@用户名` 回填到回复框。
@@ -47,9 +47,9 @@ devecocli run --module entry@default --device <device-serial> --product default 
 
 ## 项目标识
 
-- Bundle：`qinlinglong.github.io`
+- Bundle：`io.github.qinlinglong.v2ex`
 - 初始版本：`1.0.0`
-- 项目目录：`code/v2ex-harmonyos`
+- 项目目录：`v2ex-harmonyos`
 
 ## 真机验证
 
