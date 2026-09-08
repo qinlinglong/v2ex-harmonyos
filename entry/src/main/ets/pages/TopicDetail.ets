@@ -442,34 +442,40 @@ struct TopicDetail {
                   Text(plainMarkdown(part.value)).fontSize(16).fontColor(this.bodyText()).lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
-              Row() {
-                Column() {
-                  Text(this.favorited ? '★' : '☆').fontSize(19).fontColor(this.favorited ? '#D69E00' : this.themeColor)
-                  Text('收藏').fontSize(12).fontColor(this.favorited ? '#D69E00' : '#66727F').margin({ top: 2 })
-                }.layoutWeight(1).height(50).justifyContent(FlexAlign.Center).backgroundColor(this.favorited ? '#FFF7D6' : '#F3F6FA').borderRadius(10)
+              Row({ space: 8 }) {
+                Row() {
+                  Text(this.favorited ? '★' : '☆').fontSize(18).fontColor(this.favorited ? '#D69E00' : this.themeColor)
+                  if ((this.topic.likes ?? 0) > 0) {
+                    Text(`${this.topic.likes}`).fontSize(13).fontColor(this.favorited ? '#D69E00' : '#66727F').margin({ left: 3 })
+                  }
+                }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
+                  .backgroundColor(this.favorited ? '#FFF7D6' : '#F3F6FA').borderRadius(21)
                   .onClick(() => this.action('favorite'))
-                Column() {
-                  Image($r('app.media.ic_heart')).width(20).height(20).fillColor(this.thanked ? '#D05A73' : this.themeColor)
-                  Text('感谢').fontSize(12).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ top: 2 })
-                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(10)
+                Row() {
+                  Image($r('app.media.ic_heart')).width(18).height(18).fillColor(this.thanked ? '#D05A73' : this.themeColor)
+                  if ((this.topic.thanks ?? 0) > 0) {
+                    Text(`${this.topic.thanks}`).fontSize(13).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ left: 3 })
+                  }
+                }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
+                  .backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(21)
                   .onClick(() => this.action('thank'))
-                Column() {
-                  Text('▲').fontSize(18).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
-                  Text('赞').fontSize(12).fontColor(this.voteState === 1 ? this.themeColor : '#66727F').margin({ top: 2 })
-                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === 1 ? '#EAF3FF' : '#F3F6FA').borderRadius(10)
+                Row() {
+                  Text('▲').fontSize(15).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
+                }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
+                  .backgroundColor(this.voteState === 1 ? '#EAF3FF' : '#F3F6FA').borderRadius(21)
                   .onClick(async () => {
                     const ok: boolean = await this.action('up');
                     if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
                   })
-                Column() {
-                  Text('▼').fontSize(18).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6')
-                  Text('踩').fontSize(12).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6').margin({ top: 2 })
-                }.layoutWeight(1).height(50).margin({ left: 8 }).justifyContent(FlexAlign.Center).backgroundColor(this.voteState === -1 ? '#E9EDF2' : '#F3F6FA').borderRadius(10)
+                Row() {
+                  Text('▼').fontSize(15).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6')
+                }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
+                  .backgroundColor(this.voteState === -1 ? '#E9EDF2' : '#F3F6FA').borderRadius(21)
                   .onClick(async () => {
                     const ok: boolean = await this.action('down');
                     if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
                   })
-              }.width('100%').margin({ top: 20 })
+              }.width('100%').margin({ top: 18 })
             }.width('100%').alignItems(HorizontalAlign.Start).padding(20).backgroundColor(this.surface())
             Row() {
               Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
