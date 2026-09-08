@@ -307,6 +307,9 @@ struct Index {
               .borderRadius(2).margin({ top: 7 })
           }.layoutWeight(1).alignItems(HorizontalAlign.Center).onClick(() => this.selectTab(index))
         }, (tab: HomeTabItem) => tab.key)
+        Stack() {
+          Image($r('app.media.ic_menu')).width(18).height(18).fillColor(this.themeColor)
+        }.width(48).height(52).onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
       }.width('100%').height(52).backgroundColor(this.surface())
       if (this.isTopicTab() && this.loading && this.topics.length === 0) {
         LoadingProgress().width(28).height(28).color('#4F7CAC').margin({ top: 36 })
@@ -395,43 +398,44 @@ struct Index {
       if (this.drawerOpen) {
         Row() {
           Column() {
-            Row() {
-              Text('V2EX').fontSize(22).fontWeight(FontWeight.Bold).fontColor(this.themeColor)
-              Blank()
-              Text('关闭').fontSize(14).fontColor(this.themeColor).padding({ left: 12, right: 12, top: 8, bottom: 8 })
-                .backgroundColor('#EEF4FA').borderRadius(16).onClick(() => this.drawerOpen = false)
-            }
-              .width('100%').height(64).padding({ left: 20, right: 16 }).backgroundColor(this.surface())
             if (this.currentMember) {
-              Row() {
-                Stack() {
-                  Text(this.currentMember.username.substring(0, 1).toUpperCase()).fontSize(16).fontColor(Color.White)
-                    .width(42).height(42).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(21)
-                  if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(42).height(42).borderRadius(21).objectFit(ImageFit.Cover)
+              Column() {
+                Row() {
+                  Stack() {
+                    Text(this.currentMember.username.substring(0, 1).toUpperCase()).fontSize(14).fontColor(Color.White)
+                      .width(40).height(40).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(20)
+                    if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(40).height(40).borderRadius(20).objectFit(ImageFit.Cover)
+                  }
+                  Blank()
+                  Text('个人主页 ›').fontSize(14).fontColor('#7B8794')
                 }
-                Text(this.currentMember.username).fontSize(16).fontColor(this.primaryText()).margin({ left: 12 })
-              }.width('100%').padding(18).backgroundColor(this.surface())
+                  .width('100%').onClick(() => {
+                    this.drawerOpen = false;
+                    router.pushUrl({ url: 'pages/Profile', params: { username: this.currentMember?.username ?? '' } });
+                  })
+                Text(this.currentMember.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
+                  .margin({ top: 8 }).width('100%')
+              }.width('100%').padding({ left: 20, right: 20, top: 32, bottom: 20 }).backgroundColor(this.surface())
             } else {
-              Text('登录 V2EX').fontSize(16).fontColor(this.themeColor).width('100%').padding(18).backgroundColor(this.surface())
+              Text('点我登录 ›').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.themeColor).width('100%')
+                .padding({ left: 20, right: 20, top: 48, bottom: 32 }).backgroundColor(this.surface())
                 .onClick(() => { this.drawerOpen = false; router.pushUrl({ url: 'pages/Login' }); })
             }
             Scroll() {
               Column() {
-                this.drawerItem('个人资料', 'Profile')
-                this.drawerItem('通知', 'Notifications')
-                this.drawerItem('我的主题', 'MyTopics')
-                this.drawerItem('主题收藏', 'Favorites')
-                this.drawerItem('我的节点', 'MyNodes')
-                this.drawerItem('特别关注', 'MyFollowing')
+                if (this.currentMember) {
+                  this.drawerItem('节点收藏', 'MyNodes')
+                  this.drawerItem('主题收藏', 'Favorites')
+                  this.drawerItem('特别关注', 'MyFollowing')
+                  this.drawerItem('未读提醒', 'Notifications')
+                }
+                this.drawerItem('历史最热', 'HotestTopics')
                 this.drawerItem('最近浏览', 'RecentTopic')
-                this.drawerItem('历史热议', 'HotestTopics')
                 this.drawerItem('节点导航', 'NavNodes')
-                this.drawerItem('首页板块', 'HomeTabs')
-                this.drawerItem('设置', 'Settings')
+                this.drawerItem('更多选项', 'Settings')
               }.width('100%')
             }.layoutWeight(1).width('100%').scrollBar(BarState.Off)
-            Blank()
-          }.width('78%').height('100%').padding({ top: this.safeAreaTop }).backgroundColor(this.pageBackground())
+          }.width(300).height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
           Blank().layoutWeight(1).height('100%').backgroundColor('#88000000').onClick(() => this.drawerOpen = false)
         }.width('100%').height('100%')
       }
