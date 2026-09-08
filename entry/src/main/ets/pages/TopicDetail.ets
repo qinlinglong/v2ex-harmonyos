@@ -1,11 +1,15 @@
 import { router } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
+import { pasteboard } from '@kit.BasicServicesKit';
+import { util } from '@kit.ArkTS';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
 
 interface MarkdownTable { headers: string[]; rows: string[][]; }
 interface DetailPart { kind: string; value: string; label?: string; table?: MarkdownTable; }
 interface ReplyTextPart { kind: string; value: string; }
+
+const BASE64_MENU_ID: TextMenuItemId = TextMenuItemId.of('v2ex_base64_decode');
 
 function appendTextWithLinks(parts: DetailPart[], value: string): void {
   const pattern: RegExp = /https?:\/\/[^\s<>()]+/gi;
@@ -166,6 +170,7 @@ struct TopicDetail {
   @State voteState: number = 0;
   @State replyOrder: number = 0;
   @State ignored: boolean = false;
+  @State base64Result: string = '';
   private topicId: number = 0;
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
@@ -186,6 +191,64 @@ struct TopicDetail {
 
   private canEditReply(reply: V2exReply): boolean {
     return reply.editable === true && this.isSelf(reply.member?.username);
+  }
+
+  private selectionMenu(source: string): EditMenuOptions {
+    return {
+      onCreateMenu: (items: Array<TextMenuItem>): Array<TextMenuItem> => {
+        if (items.some((item: TextMenuItem) => item.id.equals(BASE64_MENU_ID))) return items;
+        return items.concat([{ id: BASE64_MENU_ID, content: 'Base64 解码' }]);
+      },
+      onMenuItemClick: (item: TextMenuItem, range: TextRange): boolean => {
+        if (!item.id.equals(BASE64_MENU_ID)) return false;
+        const start: number = Math.max(0, Math.min(range.start ?? 0, source.length));
+        const end: number = Math.max(start, Math.min(range.end ?? source.length, source.length));
+        const selected: string = source.substring(start, end).trim();
+        if (selected.length === 0) {
+          this.actionStatus = '请先选择 Base64 文本';
+          return true;
+        }
+        try {
+          const normalized: string = selected.replace(/\s+/g, '');
+          if (!/^[A-Za-z0-9+/=_-]+$/.test(normalized)) throw new Error('invalid base64');
+          const decodeType: util.Type = /[-_]/.test(normalized) ? util.Type.BASIC_URL_SAFE : util.Type.BASIC;
+          const bytes: Uint8Array = new util.Base64Helper().decodeSync(normalized, decodeType);
+          const decoded: string = util.TextDecoder.create('utf-8').decodeToString(bytes);
+          if (decoded.length === 0) throw new Error('empty result');
+          this.base64Result = decoded;
+          this.actionStatus = 'Base64 解码完成';
+        } catch (_) {
+          this.base64Result = '';
+          this.actionStatus = '选中的内容不是有效 Base64';
+        }
+        return true;
+      }
+    };
+  }
+
+  private topicShareUrl(): string {
+    if (this.topic?.url && this.topic.url.length > 0) return this.topic.url;
+    const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
+    return `${configured.replace(/\/$/, '')}/t/${this.topicId}`;
+  }
+
+  private async copyTopicLink(): Promise<void> {
+    try {
+      const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.topicShareUrl());
+      await pasteboard.getSystemPasteboard().setData(data);
+      this.actionStatus = '主题链接已复制';
+    } catch (_) {
+      this.actionStatus = '复制链接失败';
+    }
+  }
+
+  private async toggleIgnoredFromMenu(): Promise<void> {
+    const nextIgnored: boolean = !this.ignored;
+    const ok: boolean = await this.action(nextIgnored ? 'ignore' : 'unignore');
+    if (ok) {
+      this.ignored = nextIgnored;
+      this.setIgnoredTopic(nextIgnored);
+    }
   }
 
   aboutToAppear(): void {
@@ -491,6 +554,15 @@ struct TopicDetail {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('帖子').fontSize(19).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).textAlign(TextAlign.Center)
           .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
+        Text('⋮').fontSize(28).fontColor(this.primaryText()).width(44).height(44).textAlign(TextAlign.Center)
+          .bindMenu([
+            { value: '复制主题链接', action: () => this.copyTopicLink() },
+            { value: '在浏览器打开', action: () => this.openLink(this.topicShareUrl()) },
+            { value: this.favorited ? '取消收藏主题' : '收藏主题', action: () => this.action('favorite') },
+            { value: '感谢作者', enabled: !this.isSelf(this.topic?.member?.username), action: () => this.action('thank') },
+            { value: this.ignored ? '取消忽略主题' : '忽略主题', action: () => this.toggleIgnoredFromMenu() },
+            { value: '举报主题', enabled: !this.isSelf(this.topic?.member?.username), action: () => this.action('report') }
+          ], { placement: Placement.BottomRight })
       }.height(60).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.loading) {
         LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 32 })
@@ -559,24 +631,39 @@ struct TopicDetail {
                 }.width('100%').margin({ top: 8 })
               }
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
+              if (this.base64Result.length > 0) {
+                Column() {
+                  Text('Base64 解码结果').fontSize(12).fontColor(this.themeColor).margin({ bottom: 4 })
+                  Text(this.base64Result).fontSize(15).fontColor(this.bodyText()).lineHeight(24)
+                    .width('100%').copyOption(CopyOptions.LocalDevice)
+                    .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                    .editMenuOptions(this.selectionMenu(this.base64Result))
+                }.width('100%').padding(10).backgroundColor(this.darkMode ? '#202A35' : '#F3F6FA')
+                  .borderRadius(8).margin({ top: 10 })
+              }
               ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
                 if (part.kind === 'code') {
                   Text(part.value).fontSize(14).fontColor(this.bodyText()).lineHeight(22).fontFamily('monospace')
                     .width('100%').padding(12).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
-                    .borderRadius(6).margin({ top: 16 })
+                    .borderRadius(6).margin({ top: 16 }).copyOption(CopyOptions.LocalDevice)
+                    .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE).editMenuOptions(this.selectionMenu(part.value))
                 } else if (part.kind === 'table' && part.table) {
                   Column({ space: 1 }) {
                     Row() {
                       ForEach(part.table.headers, (cell: string, cellIndex: number) => Text(plainMarkdown(cell)).fontSize(14)
                         .fontWeight(FontWeight.Medium).fontColor(this.primaryText()).layoutWeight(1)
-                        .padding({ left: 8, right: 8, top: 8, bottom: 8 }).backgroundColor(this.darkMode ? '#26313D' : '#EAF1F8'),
+                        .padding({ left: 8, right: 8, top: 8, bottom: 8 }).backgroundColor(this.darkMode ? '#26313D' : '#EAF1F8')
+                        .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                        .editMenuOptions(this.selectionMenu(plainMarkdown(cell))),
                         (cell: string, cellIndex: number) => `table-header-${cellIndex}`)
                     }.width('100%')
                     ForEach(part.table.rows, (row: string[], rowIndex: number) => Row() {
                       ForEach(part.table?.headers ?? [], (header: string, cellIndex: number) => Text(plainMarkdown(row[cellIndex] ?? ''))
                         .fontSize(14).fontColor(this.bodyText()).layoutWeight(1)
                         .padding({ left: 8, right: 8, top: 8, bottom: 8 })
-                        .backgroundColor(rowIndex % 2 === 0 ? this.surface() : (this.darkMode ? '#202A35' : '#F7F9FB')),
+                        .backgroundColor(rowIndex % 2 === 0 ? this.surface() : (this.darkMode ? '#202A35' : '#F7F9FB'))
+                        .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                        .editMenuOptions(this.selectionMenu(plainMarkdown(row[cellIndex] ?? ''))),
                         (header: string, cellIndex: number) => `table-cell-${rowIndex}-${cellIndex}`)
                     }.width('100%'), (row: string[], rowIndex: number) => `table-row-${rowIndex}`)
                   }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
@@ -588,9 +675,13 @@ struct TopicDetail {
                 } else if (part.kind === 'link') {
                   Text(part.label ?? part.value).fontSize(16).fontColor(this.themeColor).lineHeight(26)
                     .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).margin({ top: 20 })
+                    .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                    .editMenuOptions(this.selectionMenu(part.label ?? part.value))
                     .onClick(() => this.openLink(part.value))
                 } else {
                   Text(plainMarkdown(part.value)).fontSize(16).fontColor(this.bodyText()).lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
+                    .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                    .editMenuOptions(this.selectionMenu(plainMarkdown(part.value)))
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
               Row({ space: 8 }) {
@@ -673,20 +764,25 @@ struct TopicDetail {
                     if (part.kind === 'code') {
                       Text(part.value).fontSize(13).fontColor(this.bodyText()).lineHeight(20).fontFamily('monospace')
                         .width('100%').padding(10).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
-                        .borderRadius(5).margin({ top: 8 })
+                        .borderRadius(5).margin({ top: 8 }).copyOption(CopyOptions.LocalDevice)
+                        .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE).editMenuOptions(this.selectionMenu(part.value))
                     } else if (part.kind === 'table' && part.table) {
                       Column({ space: 1 }) {
                         Row() {
                           ForEach(part.table.headers, (cell: string, cellIndex: number) => Text(plainMarkdown(cell)).fontSize(13)
                             .fontWeight(FontWeight.Medium).fontColor(this.primaryText()).layoutWeight(1)
-                            .padding({ left: 7, right: 7, top: 7, bottom: 7 }).backgroundColor(this.darkMode ? '#26313D' : '#EAF1F8'),
+                            .padding({ left: 7, right: 7, top: 7, bottom: 7 }).backgroundColor(this.darkMode ? '#26313D' : '#EAF1F8')
+                            .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                            .editMenuOptions(this.selectionMenu(plainMarkdown(cell))),
                             (cell: string, cellIndex: number) => `reply-table-header-${reply.id}-${cellIndex}`)
                         }.width('100%')
                         ForEach(part.table.rows, (row: string[], rowIndex: number) => Row() {
                           ForEach(part.table?.headers ?? [], (header: string, cellIndex: number) => Text(plainMarkdown(row[cellIndex] ?? ''))
                             .fontSize(13).fontColor(this.bodyText()).layoutWeight(1)
                             .padding({ left: 7, right: 7, top: 7, bottom: 7 })
-                            .backgroundColor(rowIndex % 2 === 0 ? this.surface() : (this.darkMode ? '#202A35' : '#F7F9FB')),
+                            .backgroundColor(rowIndex % 2 === 0 ? this.surface() : (this.darkMode ? '#202A35' : '#F7F9FB'))
+                            .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                            .editMenuOptions(this.selectionMenu(plainMarkdown(row[cellIndex] ?? ''))),
                             (header: string, cellIndex: number) => `reply-table-cell-${reply.id}-${rowIndex}-${cellIndex}`)
                         }.width('100%'), (row: string[], rowIndex: number) => `reply-table-row-${reply.id}-${rowIndex}`)
                       }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
@@ -696,13 +792,17 @@ struct TopicDetail {
                         .onClick(() => this.openLink(part.value))
                     } else if (part.kind === 'link') {
                       Text(part.label ?? part.value).fontSize(15).fontColor(this.themeColor).lineHeight(23).margin({ top: 8 })
-                        .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).onClick(() => this.openLink(part.value))
+                        .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' })
+                        .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                        .editMenuOptions(this.selectionMenu(part.label ?? part.value)).onClick(() => this.openLink(part.value))
                     } else {
                       Flex({ wrap: FlexWrap.Wrap }) {
                         ForEach(replyTextParts(plainMarkdown(part.value)), (fragment: ReplyTextPart) => {
                           Text(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value)
                             .fontSize(15).fontColor(fragment.kind === 'mention' ? this.themeColor : this.bodyText()).lineHeight(23)
                             .decoration({ type: fragment.kind === 'mention' ? TextDecorationType.Underline : TextDecorationType.None, color: this.themeColor })
+                            .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                            .editMenuOptions(this.selectionMenu(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value))
                             .onClick(() => {
                               if (fragment.kind === 'mention') router.pushUrl({ url: 'pages/Profile', params: { username: fragment.value } });
                             });
