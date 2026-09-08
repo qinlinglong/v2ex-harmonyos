@@ -213,9 +213,11 @@ struct Index {
             if (topic.member?.avatar_large) {
               Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
             }
-          }
+          }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
+            .hitTestBehavior(HitTestMode.Block)
           Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6').margin({ left: 8 })
             .onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
+            .hitTestBehavior(HitTestMode.Block)
           Blank()
           Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
         }.width('100%').margin({ bottom: 8 })
