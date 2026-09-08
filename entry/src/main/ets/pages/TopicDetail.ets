@@ -84,6 +84,7 @@ struct TopicDetail {
   @State replyText: string = '';
   @State replyStatus: string = '';
   @State replying: boolean = false;
+  @State replyComposerOpen: boolean = false;
   @State favorited: boolean = false;
   @State thanked: boolean = false;
   @State actionStatus: string = '';
@@ -126,6 +127,7 @@ struct TopicDetail {
     const value: string = this.replyMention.trim();
     if (value.length === 0) return;
     this.replyText = this.replyText.length > 0 ? `${this.replyText}${this.replyText.endsWith(' ') ? '' : ' '}${value} ` : `${value} `;
+    this.replyComposerOpen = true;
     this.replyMention = '';
   }
 
@@ -216,7 +218,12 @@ struct TopicDetail {
     this.replying = true; this.replyStatus = '发送中…';
     try {
       const ok: boolean = await V2exService.reply(this.topicId, this.replyText.trim());
-      if (ok) { this.replyText = ''; this.replyStatus = '回复成功'; await this.load(); }
+      if (ok) {
+        this.replyText = '';
+        this.replyStatus = '回复成功';
+        this.replyComposerOpen = false;
+        await this.load();
+      }
       else this.replyStatus = '回复失败，请先登录';
     } catch (_) { this.replyStatus = '回复失败，请先登录'; }
     finally { this.replying = false; }
@@ -495,7 +502,10 @@ struct TopicDetail {
                   }.onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   Text(`${index + 1}. ${reply.member?.username ?? '匿名'}`).fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
                     .onClick(() => {
-                      if (reply.member?.username) this.replyText = `@${reply.member.username} `;
+                      if (reply.member?.username) {
+                        this.replyText = `@${reply.member.username} `;
+                        this.replyComposerOpen = true;
+                      }
                     })
                   Blank()
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
@@ -543,18 +553,32 @@ struct TopicDetail {
             }, (reply: V2exReply) => `${reply.id}`)
           }.width('100%')
           }.layoutWeight(1).width('100%')
-          Column() {
-            TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(52).fontSize(15).fontColor(this.primaryText())
-              .onChange((value: string) => this.replyText = value)
+          if (this.replyComposerOpen) {
+            Column() {
+              TextArea({ placeholder: '发送你的评论', text: this.replyText }).width('100%').height(72).fontSize(15)
+                .fontColor(this.primaryText()).textAlign(TextAlign.Start)
+                .backgroundColor(this.pageBackground()).borderRadius(10)
+                .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+                .onChange((value: string) => this.replyText = value)
+              Row() {
+                if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(12).fontColor(this.themeColor).maxLines(1)
+                Blank()
+                Text('@ 回复对象').fontSize(13).fontColor(this.themeColor).margin({ right: 14 })
+                  .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
+                Text('取消').fontSize(13).fontColor('#7B8794').margin({ right: 14 })
+                  .onClick(() => { if (!this.replying) this.replyComposerOpen = false; })
+                Button(this.replying ? '发送中' : '发送').height(36).backgroundColor(this.themeColor).fontColor(Color.White)
+                  .fontSize(13).onClick(() => this.submitReply())
+              }.width('100%').height(40).margin({ top: 4 })
+            }.width('100%').padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(this.surface())
+          } else {
             Row() {
-              if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor).maxLines(1)
-              Blank()
-              Text('@ 回复对象').fontSize(13).fontColor(this.themeColor).margin({ right: 14 })
-                .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
-              Button(this.replying ? '发送中' : '回复').height(40).backgroundColor(this.themeColor).fontColor(Color.White)
-                .fontSize(14).onClick(() => this.submitReply())
-            }.width('100%').margin({ top: 4 })
-          }.width('100%').padding({ left: 12, right: 12, top: 6, bottom: 6 }).backgroundColor(this.surface())
+              Text(this.replyStatus.length > 0 ? this.replyStatus : '写下你的回复…').fontSize(14)
+                .fontColor(this.replyStatus.length > 0 ? this.themeColor : '#8A97A6').layoutWeight(1).maxLines(1)
+              Text('回复').fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
+            }.width('100%').height(48).padding({ left: 18, right: 18 }).backgroundColor(this.surface())
+              .onClick(() => this.replyComposerOpen = true)
+          }
         }.layoutWeight(1).width('100%')
       }
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
