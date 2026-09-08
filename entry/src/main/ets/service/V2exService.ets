@@ -563,10 +563,14 @@ export class V2exService {
     // The public replies API does not expose viewer-specific permissions.
     // Fetch the authenticated H5 page as well so editing is shown only while
     // V2EX itself exposes an /edit/reply/:id action for that exact reply.
-    let pageHtml: string = '';
-    try { pageHtml = await V2exService.get(`/t/${id}`, true); } catch (_) { pageHtml = ''; }
+    // Start the HTML and JSON requests together. The HTML is only needed for
+    // viewer-specific flags (editable/thanks/op/mod), while the JSON carries
+    // the reply list itself; doing them serially doubled the cold-load time.
+    const pageRequest: Promise<string> = V2exService.get(`/t/${id}`, true).catch(() => '');
+    const repliesRequest: Promise<string> = V2exService.get(`/api/replies/show.json?topic_id=${id}&page_size=100`);
+    const pageHtml: string = await pageRequest;
     try {
-      const parsed: Object = JSON.parse(await V2exService.get(`/api/replies/show.json?topic_id=${id}&page_size=100`)) as Object;
+      const parsed: Object = JSON.parse(await repliesRequest) as Object;
       if (Array.isArray(parsed) && (parsed as V2exReply[]).length > 0) {
         const replies: V2exReply[] = parsed as V2exReply[];
         replies.forEach((reply: V2exReply) => {

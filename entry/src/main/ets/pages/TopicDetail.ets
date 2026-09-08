@@ -169,30 +169,35 @@ struct TopicDetail {
     const hasCachedTopic: boolean = this.topic !== undefined;
     if (!hasCachedTopic) this.loading = true;
     this.errorText = '';
-    try {
-      this.topic = await V2exService.topic(this.topicId);
-      this.favorited = this.topic.favorited === true;
-      this.thanked = this.topic.thanked === true;
+    // Start both requests before awaiting either one. The topic endpoint also
+    // performs an authenticated HTML lookup, so serializing it ahead of the
+    // replies request made comments appear noticeably late on a cold detail
+    // page. Each result is applied independently as soon as it is available.
+    const topicTask: Promise<void> = V2exService.topic(this.topicId).then((loadedTopic: V2exTopic) => {
+      this.topic = loadedTopic;
+      this.favorited = loadedTopic.favorited === true;
+      this.thanked = loadedTopic.thanked === true;
       let locallyIgnored: number[] = [];
       try { locallyIgnored = JSON.parse(this.ignoredTopicsJson) as number[]; } catch (_) { locallyIgnored = []; }
-      this.ignored = this.topic.ignored === true || locallyIgnored.indexOf(this.topicId) >= 0;
-      if (this.topic.vote === 1 || this.topic.vote === -1) this.voteState = this.topic.vote;
-      this.saveTopicCache(this.topic);
+      this.ignored = loadedTopic.ignored === true || locallyIgnored.indexOf(this.topicId) >= 0;
+      if (loadedTopic.vote === 1 || loadedTopic.vote === -1) this.voteState = loadedTopic.vote;
+      this.saveTopicCache(loadedTopic);
       this.loading = false;
-      try {
-        this.replies = await V2exService.replies(this.topicId);
-        this.saveRepliesCache(this.topicId, this.replies);
-      } catch (_) {
-        if (this.replies.length === 0) this.replyStatus = '回复暂时无法加载，可稍后重试';
-      }
-    } catch (_) {
+    }).catch(() => {
       if (!hasCachedTopic) {
         this.errorText = '主题加载失败，请稍后重试';
         this.loading = false;
       } else {
         this.actionStatus = '网络刷新失败，当前显示缓存';
       }
-    }
+    });
+    const repliesTask: Promise<void> = V2exService.replies(this.topicId).then((loadedReplies: V2exReply[]) => {
+      this.replies = loadedReplies;
+      this.saveRepliesCache(this.topicId, loadedReplies);
+    }).catch(() => {
+      if (this.replies.length === 0) this.replyStatus = '回复暂时无法加载，可稍后重试';
+    });
+    await Promise.all([topicTask, repliesTask]);
   }
 
   private restoreCache(): void {
