@@ -117,11 +117,12 @@ struct Profile {
   topicRow(topic: V2exTopic) {
     ListItem() {
       Row() {
-        Stack() {
-          Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
-            .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
-          if (topic.member?.avatar_large) Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
-        }
+          Stack() {
+            Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
+              .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
+            if (topic.member?.avatar_large) Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
+          }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
+            .hitTestBehavior(HitTestMode.Block)
         Column() {
           Text(topic.title).fontSize(16).fontColor(this.primaryText()).maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
