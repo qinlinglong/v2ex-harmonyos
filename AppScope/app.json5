@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "qinlinglong.github.io",
+    "bundleName": "io.github.qinlinglong.v2ex",
     "vendor": "qinlinglong",
     "versionCode": 1000000,
     "versionName": "1.0.0",
