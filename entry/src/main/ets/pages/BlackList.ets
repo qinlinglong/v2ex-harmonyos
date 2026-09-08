@@ -42,7 +42,8 @@ struct BlackList {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('屏蔽列表').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text('清空').fontSize(14).fontColor(this.themeColor).onClick(() => this.tab === 0 ? this.clearUsers() : this.clearTopics())
+        Image($r('app.media.ic_delete')).width(22).height(22).fillColor(this.themeColor).margin({ right: 8 })
+          .onClick(() => this.tab === 0 ? this.clearUsers() : this.clearTopics())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Row() {
         Text('屏蔽用户').fontSize(15).fontColor(this.tab === 0 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center)

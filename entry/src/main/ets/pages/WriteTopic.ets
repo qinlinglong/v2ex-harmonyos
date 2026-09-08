@@ -126,10 +126,12 @@ struct WriteTopic {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
         Blank()
-        Text(this.preview ? '返回编辑' : '预览').fontSize(14).fontColor(this.themeColor).margin({ right: 16 })
+        Image($r('app.media.ic_preview')).width(22).height(22).fillColor(this.themeColor).margin({ right: 16 })
           .onClick(() => this.preview = !this.preview)
-        Text('图片').fontSize(14).fontColor(this.themeColor).margin({ right: 16 }).onClick(() => this.insertImage())
-        Text(this.submitting ? '保存中' : (this.editing ? '保存' : '发布')).fontSize(15).fontColor(this.themeColor).onClick(() => this.submit())
+        Image($r('app.media.ic_image')).width(22).height(22).fillColor(this.themeColor).margin({ right: 16 })
+          .onClick(() => this.insertImage())
+        Image($r('app.media.ic_send')).width(22).height(22).fillColor(this.submitting ? '#9AA0A6' : this.themeColor)
+          .opacity(this.submitting ? 0.5 : 1).onClick(() => { if (!this.submitting) this.submit(); })
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Scroll() {
         Column({ space: 14 }) {

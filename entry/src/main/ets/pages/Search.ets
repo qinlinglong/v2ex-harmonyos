@@ -141,7 +141,8 @@ struct SearchPage {
         TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
           .fontColor(this.bodyText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7').borderRadius(8)
           .onChange((value: string) => this.query = value).onSubmit(() => this.submit())
-        Button('搜索').fontSize(14).margin({ left: 10 }).onClick(() => this.submit())
+        Image($r('app.media.ic_search')).width(24).height(24).fillColor(this.themeColor).margin({ left: 10 })
+          .onClick(() => this.submit())
       }.width('100%').padding(16).backgroundColor(this.surface())
       Row() {
         Text('主题').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 0)

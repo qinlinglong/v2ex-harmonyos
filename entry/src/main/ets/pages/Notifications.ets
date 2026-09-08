@@ -58,8 +58,8 @@ struct Notifications {
           Row() {
             Text(item.topicTitle).fontSize(15).fontColor('#202124').maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
-            Text(this.deletingId === item.id ? '删除中' : '删除').fontSize(12).fontColor('#C05A73')
-              .margin({ left: 10 }).onClick(() => this.remove(item))
+            Image($r('app.media.ic_delete')).width(18).height(18).fillColor('#C05A73').margin({ left: 10 })
+              .onClick(() => this.remove(item)).hitTestBehavior(HitTestMode.Block)
           }.width('100%').margin({ top: 6 })
         }.alignItems(HorizontalAlign.Start).margin({ left: 12 }).layoutWeight(1)
       }.width('100%').padding({ left: 18, right: 18, top: 15, bottom: 15 }).backgroundColor(Color.White)
