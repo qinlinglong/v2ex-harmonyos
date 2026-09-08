@@ -605,7 +605,7 @@ struct TopicDetail {
               }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
                 .backgroundColor(this.surface()).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
-          }.width('100%')
+          }.width('100%').constraintSize({ minHeight: '100%' })
           }.layoutWeight(1).width('100%')
           if (this.replyComposerOpen) {
             Column() {
