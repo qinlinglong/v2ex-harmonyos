@@ -465,6 +465,35 @@ export class V2exService {
       offset += 1;
       match = pattern.exec(html);
     }
+    // VXNA markup has changed class names over time. Keep a small generic
+    // fallback that still extracts the first external article link from each
+    // entry when the legacy topic-link/node/member classes are absent.
+    if (result.length === 0) {
+      const entryPattern: RegExp = /<div\s+class=["'][^"']*xna-entry[^"']*["'][\s\S]*?<\/div>/gi;
+      let entry: RegExpExecArray | null = entryPattern.exec(html);
+      let fallbackId: number = 900000000;
+      while (entry !== null && result.length < 20) {
+        const block: string = entry[0];
+        const linkPattern: RegExp = /<a\s+href=["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+        const link: RegExpExecArray | null = linkPattern.exec(block);
+        if (link !== null) {
+          const memberMatch: RegExpMatchArray | null = block.match(/href=["']\/member\/([^"']+)["']/i);
+          result.push({
+            id: fallbackId,
+            title: V2exService.cleanHtml(link[2]),
+            content: '',
+            url: link[1],
+            replies: 0,
+            last_modified: 0,
+            last_touched: 0,
+            node: { name: 'xna', title: 'VXNA' },
+            member: { username: memberMatch ? V2exService.cleanHtml(memberMatch[1]) : 'VXNA' }
+          });
+          fallbackId += 1;
+        }
+        entry = entryPattern.exec(html);
+      }
+    }
     // Keep the initial native render bounded while retaining a useful feed.
     return result.slice(0, 20);
   }
