@@ -21,7 +21,7 @@ const ALL_HOME_TABS: HomeTabOption[] = [
   { title: 'R2', key: 'r2', type: 'tab' },
   { title: 'VXNA', key: 'xna', type: 'xna' },
   { title: '节点', key: 'nodes', type: 'nodes' },
-  { title: '关注', key: 'members', type: 'node' },
+  { title: '关注', key: 'members', type: 'members' },
   { title: '刚更新', key: 'changes', type: 'tab' }
 ];
 

@@ -32,7 +32,7 @@ const DEFAULT_HOME_TABS: HomeTabItem[] = [
   { title: 'R2', key: 'r2', type: 'tab' },
   { title: 'VXNA', key: 'xna', type: 'xna' },
   { title: '节点', key: 'nodes', type: 'nodes' },
-  { title: '关注', key: 'members', type: 'node' },
+  { title: '关注', key: 'members', type: 'members' },
   { title: '刚更新', key: 'changes', type: 'tab' }
 ];
 
@@ -103,7 +103,7 @@ struct Index {
 
   private isTopicTab(): boolean {
     const type: string = this.activeTab().type;
-    return type === 'latest' || type === 'hot' || type === 'tab' || type === 'node';
+    return type === 'latest' || type === 'hot' || type === 'tab' || type === 'node' || type === 'members';
   }
 
   private async loadTopics(kind: 'latest' | 'hot'): Promise<void> {
@@ -123,6 +123,7 @@ struct Index {
     else if (tab.type === 'nodes' && this.nodes.length === 0) this.loadNodes();
     else if (tab.type === 'xna' && this.xnaTopics.length === 0) this.loadXna();
     else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
+    else if (tab.type === 'members') this.loadTopicsForTab(tab.key);
     else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
   }
 
@@ -345,6 +346,7 @@ struct Index {
           const tab: HomeTabItem = this.activeTab();
           if (tab.type === 'hot') this.loadTopics('hot');
           else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
+          else if (tab.type === 'members') this.loadTopicsForTab(tab.key);
           else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
           else this.loadTopics('latest');
         }); }
@@ -382,6 +384,7 @@ struct Index {
             const tab: HomeTabItem = this.activeTab();
             if (tab.type === 'hot') this.loadTopics('hot');
             else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
+            else if (tab.type === 'members') this.loadTopicsForTab(tab.key);
             else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
             else this.loadTopics('latest');
           }
