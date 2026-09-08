@@ -36,6 +36,7 @@ struct Index {
   @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
   @StorageLink('v2exLastCheckinDate') lastCheckinDate: string = '';
   @StorageLink('v2exHomeTabs') homeTabsJson: string = JSON.stringify(DEFAULT_HOME_TABS);
+  @StorageLink('v2exVisitedXna') visitedXnaJson: string = '[]';
   @State selectedTab: number = 0;
   @State loading: boolean = false;
   @State errorText: string = '';
@@ -236,6 +237,43 @@ struct Index {
     })
   }
 
+  private visitedXna(): string[] {
+    try { return JSON.parse(this.visitedXnaJson) as string[]; } catch (_) { return []; }
+  }
+
+  private openXna(topic: V2exTopic): void {
+    const url: string = topic.url ?? '';
+    const visited: string[] = this.visitedXna().filter((item: string) => item !== url);
+    this.visitedXnaJson = JSON.stringify([url].concat(visited).slice(0, 100));
+    router.pushUrl({ url: 'pages/WebViewPage', params: { title: topic.title, url } });
+  }
+
+  @Builder
+  xnaCard(topic: V2exTopic) {
+    ListItem() {
+      Row() {
+        Stack() {
+          Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
+            .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
+          if (topic.member?.avatar_large) Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
+        }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
+          .hitTestBehavior(HitTestMode.Block)
+        Column() {
+          Row() {
+            Text(topic.member?.username ?? '匿名').fontSize(13).fontColor(this.visitedXna().indexOf(topic.url ?? '') >= 0 ? '#7B8794' : this.primaryText())
+            if (topic.node?.title) {
+              Text(topic.node.title).fontSize(11).fontColor(this.themeColor)
+                .padding({ left: 8, right: 8, top: 2, bottom: 2 })
+                .backgroundColor(this.darkMode ? '#26313D' : '#EEF3F8').borderRadius(8).margin({ left: 8 })
+            }
+          }.width('100%')
+          Text(topic.title).fontSize(15).fontColor(this.visitedXna().indexOf(topic.url ?? '') >= 0 ? '#7B8794' : this.primaryText())
+            .fontWeight(FontWeight.Medium).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 3 })
+        }.layoutWeight(1).alignItems(HorizontalAlign.Start).margin({ left: 10 })
+      }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(this.surface())
+    }.onClick(() => this.openXna(topic))
+  }
+
   build() {
     Stack() {
       Column() {
@@ -336,7 +374,7 @@ struct Index {
           Text('暂无 VXNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
         } else {
           Refresh({ refreshing: this.loading }) {
-            List({ space: 1 }) { ForEach(this.xnaTopics, (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+            List({ space: 1 }) { ForEach(this.xnaTopics, (topic: V2exTopic) => this.xnaCard(topic), (topic: V2exTopic) => `${topic.id}`) }
               .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
           }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadXna(); })
         }
