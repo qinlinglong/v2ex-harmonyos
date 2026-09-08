@@ -2,6 +2,22 @@ import { router } from '@kit.ArkUI';
 import { V2exMember, V2exMemberRelations, V2exReply, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
 
+function decodeHtmlEntities(value: string): string {
+  return value.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#x([0-9a-f]+);/gi, (match: string, code: string) => String.fromCharCode(parseInt(code, 16)))
+    .replace(/&#(\d+);/g, (match: string, code: string) => String.fromCharCode(Number(code)));
+}
+
+function replyPreview(value: string): string {
+  let text: string = value.replace(/<br\s*\/?>(\r?\n)?/gi, '\n').replace(/<[^>]+>/g, '');
+  text = decodeHtmlEntities(text).replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1').replace(/__([^_]+)__/g, '$1')
+    .replace(/`([^`]+)`/g, '$1');
+  return text.trim();
+}
+
 interface ProfileCacheEntry {
   member: V2exMember;
   topics: V2exTopic[];
@@ -151,10 +167,11 @@ struct Profile {
   replyRow(reply: V2exReply) {
     ListItem() {
       Column() {
-        Text(reply.topic_title ?? '回复').fontSize(13).fontColor(this.themeColor).maxLines(1)
+        Text(replyPreview(reply.topic_title ?? '回复')).fontSize(13).fontColor(this.themeColor).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(reply.content).fontSize(15).fontColor(this.bodyText()).maxLines(4)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
+        Text(replyPreview(reply.content)).fontSize(15).fontColor(this.bodyText()).lineHeight(23).maxLines(4)
+          .textOverflow({ overflow: TextOverflow.Ellipsis }).copyOption(CopyOptions.LocalDevice)
+          .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
         Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
       }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
     }.onClick(() => {
