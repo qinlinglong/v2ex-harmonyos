@@ -22,22 +22,19 @@ struct MyNodes {
   }
 
   @Builder
-  row(node: V2exNode) {
-    ListItem() {
-      Row() {
+  gridItem(node: V2exNode) {
+    GridItem() {
+      Column() {
         Stack() {
           Text(node.title.substring(0, 1)).fontSize(16).fontColor(Color.White).width(44).height(44)
             .textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(22)
           if (node.avatar_large) Image(node.avatar_large).width(44).height(44).borderRadius(22).objectFit(ImageFit.Cover)
         }
-        Column() {
-          Text(node.title).fontSize(16).fontColor('#202124')
-          Text(node.name).fontSize(12).fontColor('#8A97A6').margin({ top: 5 })
-        }.alignItems(HorizontalAlign.Start).margin({ left: 12 })
-        Blank()
-        Text('›').fontSize(25).fontColor('#A0AAB5')
-      }.width('100%').padding({ left: 18, right: 18, top: 13, bottom: 13 }).backgroundColor(Color.White)
-    }.onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
+        Text(node.title).fontSize(13).fontColor('#202124').margin({ top: 6 }).maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
+      }.width('100%').height(96).justifyContent(FlexAlign.Center)
+        .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
+    }
   }
 
   build() {
@@ -54,8 +51,10 @@ struct MyNodes {
       }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else {
         Refresh({ refreshing: this.loading }) {
-          List({ space: 1 }) { ForEach(this.nodes, (node: V2exNode) => this.row(node), (node: V2exNode) => node.name) }
-            .layoutWeight(1).width('100%')
+          Grid() {
+            ForEach(this.nodes, (node: V2exNode) => this.gridItem(node), (node: V2exNode) => node.name)
+          }.columnsTemplate('1fr 1fr 1fr 1fr').columnsGap(8).rowsGap(8).width('100%').layoutWeight(1)
+            .padding(12).scrollBar(BarState.Off)
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
