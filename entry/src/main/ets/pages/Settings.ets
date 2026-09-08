@@ -36,7 +36,7 @@ struct Settings {
   }
   build() {
     Column() {
-      Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('设置').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText()) }
+      Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('更多选项').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText()) }
         .height(60).width('100%').backgroundColor(this.surface())
       Scroll() {
         Column() {
