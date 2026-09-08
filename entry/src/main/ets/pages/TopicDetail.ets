@@ -1,8 +1,10 @@
 import { router } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
 
-interface DetailPart { kind: string; value: string; label?: string; }
+interface MarkdownTable { headers: string[]; rows: string[][]; }
+interface DetailPart { kind: string; value: string; label?: string; table?: MarkdownTable; }
 interface ReplyTextPart { kind: string; value: string; }
 
 function appendTextWithLinks(parts: DetailPart[], value: string): void {
@@ -22,8 +24,7 @@ function appendTextWithLinks(parts: DetailPart[], value: string): void {
   if (tail.length > 0) parts.push({ kind: 'text', value: tail });
 }
 
-function detailParts(markdown: string): DetailPart[] {
-  const parts: DetailPart[] = [];
+function appendInlineParts(parts: DetailPart[], markdown: string): void {
   const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
@@ -37,7 +38,73 @@ function detailParts(markdown: string): DetailPart[] {
   }
   const tail: string = markdown.substring(cursor).trim();
   if (tail.length > 0) appendTextWithLinks(parts, tail);
-  if (parts.length === 0 && markdown.trim().length > 0) appendTextWithLinks(parts, markdown.trim());
+}
+
+function splitTableRow(line: string): string[] {
+  let row: string = line.trim();
+  if (row.startsWith('|')) row = row.substring(1);
+  if (row.endsWith('|') && !row.endsWith('\\|')) row = row.substring(0, row.length - 1);
+  const cells: string[] = [];
+  let cell: string = '';
+  let escaped: boolean = false;
+  for (let index = 0; index < row.length; index += 1) {
+    const character: string = row.charAt(index);
+    if (character === '|' && !escaped) {
+      cells.push(cell.trim());
+      cell = '';
+      continue;
+    }
+    cell += character;
+    escaped = character === '\\' && !escaped;
+    if (character !== '\\') escaped = false;
+  }
+  cells.push(cell.trim());
+  return cells.map((value: string) => value.replace(/\\\|/g, '|'));
+}
+
+function isTableSeparator(line: string): boolean {
+  return /^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+}
+
+function detailParts(markdown: string): DetailPart[] {
+  const parts: DetailPart[] = [];
+  const lines: string[] = markdown.replace(/\r/g, '').split('\n');
+  const inlineLines: string[] = [];
+  const flushInline = (): void => {
+    if (inlineLines.length === 0) return;
+    appendInlineParts(parts, inlineLines.join('\n'));
+    inlineLines.length = 0;
+  };
+  let index: number = 0;
+  while (index < lines.length) {
+    if (lines[index].trim().startsWith('```')) {
+      flushInline();
+      index += 1;
+      const codeLines: string[] = [];
+      while (index < lines.length && !lines[index].trim().startsWith('```')) {
+        codeLines.push(lines[index]);
+        index += 1;
+      }
+      if (index < lines.length) index += 1;
+      parts.push({ kind: 'code', value: codeLines.join('\n') });
+      continue;
+    }
+    if (index + 1 < lines.length && lines[index].indexOf('|') >= 0 && isTableSeparator(lines[index + 1])) {
+      flushInline();
+      const headers: string[] = splitTableRow(lines[index]);
+      const rows: string[][] = [];
+      index += 2;
+      while (index < lines.length && lines[index].trim().length > 0 && lines[index].indexOf('|') >= 0) {
+        rows.push(splitTableRow(lines[index]));
+        index += 1;
+      }
+      if (headers.length > 0) parts.push({ kind: 'table', value: '', table: { headers, rows } });
+      continue;
+    }
+    inlineLines.push(lines[index]);
+    index += 1;
+  }
+  flushInline();
   return parts;
 }
 
@@ -384,7 +451,11 @@ struct TopicDetail {
     const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
     const absolute: string = url.startsWith('/') ? `${configured.replace(/\/$/, '')}${url}` : url;
     const topicMatch: RegExpMatchArray | null = absolute.match(/\/t\/(\d+)/);
-    const isV2ex: boolean = absolute.indexOf(configured.replace(/\/$/, '')) === 0 || /https?:\/\/([^/]*\.)?v2ex\.com(?:\/|$)/i.test(absolute);
+    const configuredOriginMatch: RegExpMatchArray | null = configured.match(/^https?:\/\/[^/]+/i);
+    const absoluteOriginMatch: RegExpMatchArray | null = absolute.match(/^https?:\/\/[^/]+/i);
+    const sameConfiguredSite: boolean = configuredOriginMatch !== null && absoluteOriginMatch !== null &&
+      configuredOriginMatch[0].toLowerCase() === absoluteOriginMatch[0].toLowerCase();
+    const isV2ex: boolean = sameConfiguredSite || /^https?:\/\/([^/]*\.)?v2ex\.com(?:\/|$)/i.test(absolute);
     if (isV2ex && topicMatch) {
       router.pushUrl({ url: 'pages/TopicDetail', params: { id: Number(topicMatch[1]) } });
       return;
@@ -394,7 +465,18 @@ struct TopicDetail {
       router.pushUrl({ url: 'pages/Profile', params: { username: decodeURIComponent(memberMatch[1]) } });
       return;
     }
-    router.pushUrl({ url: 'pages/WebViewPage', params: { title: '网页', url: absolute } });
+    this.openExternal(absolute);
+  }
+
+  private async openExternal(url: string): Promise<void> {
+    try {
+      const context = getContext(this) as common.UIAbilityContext;
+      await context.openLink(url);
+    } catch (_) {
+      // Some devices have no default browser handler. Keep the link usable in
+      // the app as a safe fallback instead of dropping the click silently.
+      router.pushUrl({ url: 'pages/WebViewPage', params: { title: '网页', url } });
+    }
   }
 
   private contentUrl(url: string): string {
@@ -478,7 +560,28 @@ struct TopicDetail {
               }
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
               ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
-                if (part.kind === 'image') {
+                if (part.kind === 'code') {
+                  Text(part.value).fontSize(14).fontColor(this.bodyText()).lineHeight(22).fontFamily('monospace')
+                    .width('100%').padding(12).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
+                    .borderRadius(6).margin({ top: 16 })
+                } else if (part.kind === 'table' && part.table) {
+                  Column({ space: 1 }) {
+                    Row() {
+                      ForEach(part.table.headers, (cell: string, cellIndex: number) => Text(plainMarkdown(cell)).fontSize(14)
+                        .fontWeight(FontWeight.Medium).fontColor(this.primaryText()).layoutWeight(1)
+                        .padding({ left: 8, right: 8, top: 8, bottom: 8 }).backgroundColor(this.darkMode ? '#26313D' : '#EAF1F8'),
+                        (cell: string, cellIndex: number) => `table-header-${cellIndex}`)
+                    }.width('100%')
+                    ForEach(part.table.rows, (row: string[], rowIndex: number) => Row() {
+                      ForEach(part.table?.headers ?? [], (header: string, cellIndex: number) => Text(plainMarkdown(row[cellIndex] ?? ''))
+                        .fontSize(14).fontColor(this.bodyText()).layoutWeight(1)
+                        .padding({ left: 8, right: 8, top: 8, bottom: 8 })
+                        .backgroundColor(rowIndex % 2 === 0 ? this.surface() : (this.darkMode ? '#202A35' : '#F7F9FB')),
+                        (header: string, cellIndex: number) => `table-cell-${rowIndex}-${cellIndex}`)
+                    }.width('100%'), (row: string[], rowIndex: number) => `table-row-${rowIndex}`)
+                  }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
+                    .margin({ top: 16, bottom: 4 })
+                } else if (part.kind === 'image') {
                   Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
                     .margin({ top: 14, bottom: 4 })
                     .onClick(() => this.openLink(part.value))
@@ -567,7 +670,28 @@ struct TopicDetail {
                   }.width('100%').margin({ top: 8 })
                 } else {
                   ForEach(detailParts(reply.content), (part: DetailPart) => {
-                    if (part.kind === 'image') {
+                    if (part.kind === 'code') {
+                      Text(part.value).fontSize(13).fontColor(this.bodyText()).lineHeight(20).fontFamily('monospace')
+                        .width('100%').padding(10).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
+                        .borderRadius(5).margin({ top: 8 })
+                    } else if (part.kind === 'table' && part.table) {
+                      Column({ space: 1 }) {
+                        Row() {
+                          ForEach(part.table.headers, (cell: string, cellIndex: number) => Text(plainMarkdown(cell)).fontSize(13)
+                            .fontWeight(FontWeight.Medium).fontColor(this.primaryText()).layoutWeight(1)
+                            .padding({ left: 7, right: 7, top: 7, bottom: 7 }).backgroundColor(this.darkMode ? '#26313D' : '#EAF1F8'),
+                            (cell: string, cellIndex: number) => `reply-table-header-${reply.id}-${cellIndex}`)
+                        }.width('100%')
+                        ForEach(part.table.rows, (row: string[], rowIndex: number) => Row() {
+                          ForEach(part.table?.headers ?? [], (header: string, cellIndex: number) => Text(plainMarkdown(row[cellIndex] ?? ''))
+                            .fontSize(13).fontColor(this.bodyText()).layoutWeight(1)
+                            .padding({ left: 7, right: 7, top: 7, bottom: 7 })
+                            .backgroundColor(rowIndex % 2 === 0 ? this.surface() : (this.darkMode ? '#202A35' : '#F7F9FB')),
+                            (header: string, cellIndex: number) => `reply-table-cell-${reply.id}-${rowIndex}-${cellIndex}`)
+                        }.width('100%'), (row: string[], rowIndex: number) => `reply-table-row-${reply.id}-${rowIndex}`)
+                      }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
+                        .margin({ top: 10, bottom: 2 })
+                    } else if (part.kind === 'image') {
                       Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
                         .onClick(() => this.openLink(part.value))
                     } else if (part.kind === 'link') {
