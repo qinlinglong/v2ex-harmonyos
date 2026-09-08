@@ -101,7 +101,7 @@ export class V2exService {
       // The public JSON feed can be rate-limited. Keep the home tab useful by
       // falling back to the same rendered pages used by the reference client.
       const htmlPath: string = kind === 'hot' ? '/?tab=hot' : '/recent';
-      return V2exService.parseTopicItems(await V2exService.get(htmlPath));
+      return V2exService.parseRichTopicItems(await V2exService.get(htmlPath));
     }
   }
 
@@ -191,14 +191,14 @@ export class V2exService {
       // Use the rendered node page as a resilient fallback so the native page
       // remains useful instead of getting stuck on an error state.
       const html: string = await V2exService.get(`/go/${encodeURIComponent(name)}`);
-      return V2exService.parseTopicItems(html);
+      return V2exService.parseRichTopicItems(html);
     }
   }
 
   static async topicsForNodePage(name: string, page: number): Promise<V2exTopic[]> {
     if (page === 1) return V2exService.topicsForNode(name);
     const html: string = await V2exService.get(`/go/${encodeURIComponent(name)}?p=${page}`);
-    return V2exService.parseTopicItems(html);
+    return V2exService.parseRichTopicItems(html);
   }
 
   static async xnaTopics(): Promise<V2exTopic[]> {
@@ -298,13 +298,13 @@ export class V2exService {
   static async myTopics(page: number = 1): Promise<V2exTopic[]> {
     const html: string = await V2exService.get(`/my/topics?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
-    return V2exService.parseTopicItems(html);
+    return V2exService.parseRichTopicItems(html);
   }
 
   static async myFavorites(page: number = 1): Promise<V2exTopic[]> {
     const html: string = await V2exService.get(`/my/favorites?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
-    return V2exService.parseTopicItems(html);
+    return V2exService.parseRichTopicItems(html);
   }
 
   static async notifications(page: number = 1): Promise<V2exNotification[]> {
@@ -323,7 +323,7 @@ export class V2exService {
   static async followingTopics(page: number = 1): Promise<V2exTopic[]> {
     const html: string = await V2exService.get(`/my/following?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
-    return V2exService.parseTopicItems(html);
+    return V2exService.parseRichTopicItems(html);
   }
 
   static async hotestTopics(date: string): Promise<V2exTopic[]> {
@@ -400,6 +400,35 @@ export class V2exService {
       }
     }
     return result;
+  }
+
+  /** Parse V2EX rendered list rows with member, node and reply metadata. */
+  private static parseRichTopicItems(html: string): V2exTopic[] {
+    const result: V2exTopic[] = [];
+    const seen: number[] = [];
+    const pattern: RegExp = /<div\s+class=["']cell item["'][^>]*>[\s\S]*?<a\s+href=["']\/member\/([^"']+)["'][^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][^>]*>[\s\S]*?class=["']item_title["'][\s\S]*?<a\s+href=["']\/t\/(\d+)(?:#[^"']+)?["'][^>]*>([\s\S]*?)<\/a>[\s\S]*?class=["']node["'][^>]*href=["']\/go\/([^"']+)["'][^>]*>([\s\S]*?)<\/a>[\s\S]*?class=["']count_livid["'][^>]*>([\d,]+)<\/a>/gi;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      const id: number = Number(match[4]);
+      if (seen.indexOf(id) < 0) {
+        seen.push(id);
+        const topic: V2exTopic = {
+          id,
+          title: V2exService.cleanHtml(match[5]),
+          content: '',
+          replies: Number(match[8].replace(/,/g, '')),
+          last_modified: 0,
+          last_touched: 0,
+          member: { username: V2exService.cleanHtml(match[3]), avatar_large: V2exService.assetUrl(match[2]) },
+          node: { name: V2exService.cleanHtml(match[6]), title: V2exService.cleanHtml(match[7]) }
+        } as V2exTopic;
+        V2exService.normalizeTopic(topic);
+        result.push(topic);
+      }
+      match = pattern.exec(html);
+    }
+    if (result.length > 0) return result;
+    return V2exService.parseTopicItems(html);
   }
 
   /** Parse the external blog entries on V2EX's VXNA page. */
