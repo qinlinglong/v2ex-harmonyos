@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
-import { V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
 
 interface DetailPart { kind: string; value: string; label?: string; }
 interface ReplyTextPart { kind: string; value: string; }
@@ -77,6 +77,7 @@ struct TopicDetail {
   @StorageLink('v2exIgnoredReplyIds') ignoredReplyIdsJson: string = '[]';
   @StorageLink('v2exTopicCache') topicCacheJson: string = '{}';
   @StorageLink('v2exRepliesCache') repliesCacheJson: string = '{}';
+  @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   @State topic: V2exTopic | undefined = undefined;
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
@@ -103,6 +104,22 @@ struct TopicDetail {
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
   private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
   private bodyText(): string { return this.darkMode ? '#D4DCE5' : '#30343B'; }
+
+  private currentUsername(): string {
+    try {
+      const member: V2exMember = JSON.parse(this.cachedMemberJson) as V2exMember;
+      return member.username?.toLowerCase() ?? '';
+    } catch (_) { return ''; }
+  }
+
+  private isSelf(username: string | undefined): boolean {
+    const current: string = this.currentUsername();
+    return current.length > 0 && username !== undefined && current === username.toLowerCase();
+  }
+
+  private canEditReply(reply: V2exReply): boolean {
+    return reply.editable === true && this.isSelf(reply.member?.username);
+  }
 
   aboutToAppear(): void {
     const params = router.getParams() as Record<string, Object> | undefined;
@@ -252,7 +269,11 @@ struct TopicDetail {
         this.thankedReplies = this.thankedReplies.concat([replyId]);
         this.replies = this.replies.map((item: V2exReply) => {
           if (item.id !== replyId) return item;
-          return { id: item.id, content: item.content, created: item.created, member: item.member, thanks: (item.thanks ?? 0) + 1, thanked: true } as V2exReply;
+          return {
+            id: item.id, content: item.content, created: item.created, member: item.member,
+            thanks: (item.thanks ?? 0) + 1, thanked: true, editable: item.editable,
+            op: item.op, mod: item.mod
+          } as V2exReply;
         });
       }
       else this.replyStatus = '请先登录';
@@ -297,6 +318,10 @@ struct TopicDetail {
   }
 
   private beginEditReply(reply: V2exReply): void {
+    if (!this.canEditReply(reply)) {
+      this.replyStatus = '当前回复不可编辑';
+      return;
+    }
     this.editingReplyId = reply.id;
     this.editingReplyText = reply.content;
     this.editingReplyStatus = '';
@@ -304,6 +329,11 @@ struct TopicDetail {
 
   private async saveReplyEdit(): Promise<void> {
     if (this.editingReplyId <= 0 || this.editingReplyText.trim().length === 0) return;
+    const target: V2exReply | undefined = this.replies.find((item: V2exReply) => item.id === this.editingReplyId);
+    if (!target || !this.canEditReply(target)) {
+      this.editingReplyStatus = '当前回复不可编辑';
+      return;
+    }
     this.editingReplyStatus = '保存中…';
     const id: number = this.editingReplyId;
     const content: string = this.editingReplyText.trim();
@@ -312,7 +342,11 @@ struct TopicDetail {
       if (!ok) { this.editingReplyStatus = '保存失败，请确认登录状态'; return; }
       this.replies = this.replies.map((item: V2exReply) => {
         if (item.id !== id) return item;
-        return { id: item.id, content, created: item.created, member: item.member, thanks: item.thanks, thanked: item.thanked } as V2exReply;
+        return {
+          id: item.id, content, created: item.created, member: item.member,
+          thanks: item.thanks, thanked: item.thanked, editable: item.editable,
+          op: item.op, mod: item.mod
+        } as V2exReply;
       });
       this.saveRepliesCache(this.topicId, this.replies);
       this.editingReplyId = 0;
@@ -404,7 +438,7 @@ struct TopicDetail {
                     }
                   }
                   Row() {
-                    Text(`${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
+                    Text(`${Math.max(this.topic.replies, this.replies.length)} 条回复`).fontSize(13).fontColor('#7B8794')
                     if (this.topic.views !== undefined) {
                       Text(`${this.topic.views} 点击`).fontSize(13).fontColor('#7B8794').margin({ left: 12 })
                     }
@@ -413,19 +447,21 @@ struct TopicDetail {
               }.width('100%')
               Text(this.topic.title).fontSize(21).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
                 .lineHeight(30).margin({ top: 16 })
-              if (this.topic.editable === true) {
+              if (this.topic.editable === true && this.isSelf(this.topic.member?.username)) {
                 Button('编辑主题').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
                   .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
               }
-              if (this.topic.appendable === true) {
+              if (this.topic.appendable === true && this.isSelf(this.topic.member?.username)) {
                 Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
                   .margin({ top: 4 }).onClick(() => this.appendOpen = !this.appendOpen)
               }
-              Row() {
-                Text(this.ignored ? '取消忽略' : '忽略主题').fontSize(13).fontColor('#7B8794').layoutWeight(1)
-                  .onClick(async () => { const nextIgnored: boolean = !this.ignored; const ok: boolean = await this.action(nextIgnored ? 'ignore' : 'unignore'); if (ok) { this.ignored = nextIgnored; this.setIgnoredTopic(nextIgnored); } })
-                Text('举报').fontSize(13).fontColor('#C05A73').onClick(() => this.action('report'))
-              }.width('80%').margin({ top: 4 })
+              if (!this.isSelf(this.topic.member?.username)) {
+                Row() {
+                  Text(this.ignored ? '取消忽略' : '忽略主题').fontSize(13).fontColor('#7B8794').layoutWeight(1)
+                    .onClick(async () => { const nextIgnored: boolean = !this.ignored; const ok: boolean = await this.action(nextIgnored ? 'ignore' : 'unignore'); if (ok) { this.ignored = nextIgnored; this.setIgnoredTopic(nextIgnored); } })
+                  Text('举报').fontSize(13).fontColor('#C05A73').onClick(() => this.action('report'))
+                }.width('80%').margin({ top: 4 })
+              }
               if (this.appendOpen) {
                 TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15).fontColor(this.primaryText())
                   .onChange((value: string) => this.appendText = value)
@@ -458,14 +494,16 @@ struct TopicDetail {
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
                   .backgroundColor(this.favorited ? '#FFF7D6' : '#F3F6FA').borderRadius(21)
                   .onClick(() => this.action('favorite'))
-                Row() {
-                  Image($r('app.media.ic_heart')).width(18).height(18).fillColor(this.thanked ? '#D05A73' : this.themeColor)
-                  if ((this.topic.thanks ?? 0) > 0) {
-                    Text(`${this.topic.thanks}`).fontSize(13).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ left: 3 })
-                  }
-                }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
-                  .backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(21)
-                  .onClick(() => this.action('thank'))
+                if (!this.isSelf(this.topic.member?.username)) {
+                  Row() {
+                    Image($r('app.media.ic_heart')).width(18).height(18).fillColor(this.thanked ? '#D05A73' : this.themeColor)
+                    if ((this.topic.thanks ?? 0) > 0) {
+                      Text(`${this.topic.thanks}`).fontSize(13).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ left: 3 })
+                    }
+                  }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
+                    .backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(21)
+                    .onClick(() => this.action('thank'))
+                }
                 Row() {
                   Text('▲').fontSize(15).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
@@ -501,12 +539,15 @@ struct TopicDetail {
                     if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(28).height(28).borderRadius(14).objectFit(ImageFit.Cover)
                   }.onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   Text(`${index + 1}. ${reply.member?.username ?? '匿名'}`).fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
-                    .onClick(() => {
-                      if (reply.member?.username) {
-                        this.replyText = `@${reply.member.username} `;
-                        this.replyComposerOpen = true;
-                      }
-                    })
+                    .onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
+                  if (reply.mod === true) {
+                    Text('MOD').fontSize(10).fontColor(Color.White).padding({ left: 5, right: 5, top: 1, bottom: 1 })
+                      .backgroundColor(this.themeColor).borderRadius(3).margin({ left: 6 })
+                  }
+                  if (reply.op === true) {
+                    Text('OP').fontSize(10).fontColor(this.themeColor).padding({ left: 5, right: 5, top: 1, bottom: 1 })
+                      .border({ width: 1, color: this.themeColor }).borderRadius(3).margin({ left: 4 })
+                  }
                   Blank()
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
                 }
@@ -541,11 +582,24 @@ struct TopicDetail {
                     }
                   }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
                   Row() {
-                    Text(this.thankedReplies.indexOf(reply.id) >= 0 ? `♥ 已感谢 ${reply.thanks ?? 0}` : `♡ 感谢 ${reply.thanks ?? 0}`)
-                      .fontSize(13).fontColor(this.themeColor).onClick(() => this.thankReply(reply.id))
+                    if (!this.isSelf(reply.member?.username) || (reply.thanks ?? 0) > 0) {
+                      Text(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? `♥ 已感谢 ${reply.thanks ?? 0}` : `♡ 感谢 ${reply.thanks ?? 0}`)
+                        .fontSize(13).fontColor(this.themeColor)
+                        .onClick(() => { if (!this.isSelf(reply.member?.username)) this.thankReply(reply.id); })
+                    }
+                    Text('回复').fontSize(13).fontColor('#7B8794').margin({ left: 16 }).onClick(() => {
+                      if (reply.member?.username) {
+                        this.replyText = `@${reply.member.username} `;
+                        this.replyComposerOpen = true;
+                      }
+                    })
                     Blank()
-                    Text('忽略').fontSize(13).fontColor('#9AA0A6').margin({ right: 16 }).onClick(() => this.ignoreReply(reply.id))
-                    Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
+                    if (!this.isSelf(reply.member?.username)) {
+                      Text('隐藏').fontSize(13).fontColor('#9AA0A6').margin({ right: 16 }).onClick(() => this.ignoreReply(reply.id))
+                    }
+                    if (this.canEditReply(reply)) {
+                      Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
+                    }
                   }.width('100%').margin({ top: 10 })
                 }
               }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })

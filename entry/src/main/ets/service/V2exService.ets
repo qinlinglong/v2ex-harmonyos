@@ -560,20 +560,45 @@ export class V2exService {
   }
 
   static async replies(id: number): Promise<V2exReply[]> {
+    // The public replies API does not expose viewer-specific permissions.
+    // Fetch the authenticated H5 page as well so editing is shown only while
+    // V2EX itself exposes an /edit/reply/:id action for that exact reply.
+    let pageHtml: string = '';
+    try { pageHtml = await V2exService.get(`/t/${id}`, true); } catch (_) { pageHtml = ''; }
     try {
       const parsed: Object = JSON.parse(await V2exService.get(`/api/replies/show.json?topic_id=${id}&page_size=100`)) as Object;
       if (Array.isArray(parsed) && (parsed as V2exReply[]).length > 0) {
         const replies: V2exReply[] = parsed as V2exReply[];
-        replies.forEach((reply: V2exReply) => V2exService.normalizeMember(reply.member));
+        replies.forEach((reply: V2exReply) => {
+          V2exService.normalizeMember(reply.member);
+          reply.editable = pageHtml.indexOf(`/edit/reply/${reply.id}`) >= 0;
+          const blockMatch: RegExpMatchArray | null = pageHtml.match(new RegExp(`id=["']r_${reply.id}["']([\\s\\S]*?)(?=id=["']r_\\d+["']|$)`, 'i'));
+          const block: string = blockMatch?.[1] ?? '';
+          reply.thanked = /class=["'][^"']*thanked/i.test(block);
+          reply.op = /class=["'][^"']*badge[^"']*op/i.test(block);
+          reply.mod = /class=["'][^"']*badge[^"']*mod/i.test(block);
+        });
         return replies;
       }
     } catch (_) { /* fall back to the HTML page */ }
-    const html: string = await V2exService.get(`/t/${id}`);
+    const html: string = pageHtml.length > 0 ? pageHtml : await V2exService.get(`/t/${id}`, true);
     const result: V2exReply[] = [];
     const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<div class=["']reply_content["']>([\s\S]*?)<\/div>/gi;
     let match: RegExpExecArray | null = pattern.exec(html);
     while (match !== null) {
-      result.push({ id: Number(match[1]), content: V2exService.cleanHtml(match[4]), created: 0, member: { username: match[3], avatar_large: V2exService.assetUrl(match[2]) } });
+      const replyId: number = Number(match[1]);
+      const blockMatch: RegExpMatchArray | null = html.match(new RegExp(`id=["']r_${replyId}["']([\\s\\S]*?)(?=id=["']r_\\d+["']|$)`, 'i'));
+      const block: string = blockMatch?.[1] ?? '';
+      result.push({
+        id: replyId,
+        content: V2exService.cleanHtml(match[4]),
+        created: 0,
+        member: { username: match[3], avatar_large: V2exService.assetUrl(match[2]) },
+        editable: html.indexOf(`/edit/reply/${replyId}`) >= 0,
+        thanked: /class=["'][^"']*thanked/i.test(block),
+        op: /class=["'][^"']*badge[^"']*op/i.test(block),
+        mod: /class=["'][^"']*badge[^"']*mod/i.test(block)
+      });
       match = pattern.exec(html);
     }
     return result;

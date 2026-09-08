@@ -54,6 +54,10 @@ export interface V2exReply {
   topic_title?: string;
   thanks?: number;
   thanked?: boolean;
+  /** Present only while the authenticated H5 page exposes edit/reply/:id. */
+  editable?: boolean;
+  op?: boolean;
+  mod?: boolean;
 }
 
 export interface V2exNotification {

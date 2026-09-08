@@ -17,6 +17,7 @@ struct Profile {
   @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exBlockedUsers') blockedUsersJson: string = '[]';
   @StorageLink('v2exProfileCache') profileCacheJson: string = '{}';
+  @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   @State member: V2exMember | undefined = undefined;
   @State topics: V2exTopic[] = [];
   @State replies: V2exReply[] = [];
@@ -29,6 +30,13 @@ struct Profile {
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
   private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
   private bodyText(): string { return this.darkMode ? '#D4DCE5' : '#30343B'; }
+
+  private isSelf(): boolean {
+    try {
+      const current: V2exMember = JSON.parse(this.cachedMemberJson) as V2exMember;
+      return current.username?.toLowerCase() === this.username.toLowerCase();
+    } catch (_) { return false; }
+  }
 
   private replyTopicId(reply: V2exReply): number {
     return Number(reply.topic_id ?? 0);
@@ -99,6 +107,10 @@ struct Profile {
   }
 
   private async toggleMemberAction(action: 'follow' | 'unfollow' | 'block' | 'unblock'): Promise<void> {
+    if (this.isSelf()) {
+      this.status = '不能对自己执行此操作';
+      return;
+    }
     this.status = '处理中…';
     try {
       const ok: boolean = await V2exService.memberAction(this.username, action);
@@ -171,10 +183,12 @@ struct Profile {
               Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor('#7B8794').margin({ top: 6 })
               if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor('#4F7CAC').margin({ top: 6 })
                 .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
-              Row() {
-                Button(this.followed ? '已关注' : '关注').layoutWeight(1).onClick(() => this.toggleMemberAction(this.followed ? 'unfollow' : 'follow'))
-                Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(() => this.toggleMemberAction(this.blocked ? 'unblock' : 'block'))
-              }.width('80%').margin({ top: 16 })
+              if (!this.isSelf()) {
+                Row() {
+                  Button(this.followed ? '已关注' : '关注').layoutWeight(1).onClick(() => this.toggleMemberAction(this.followed ? 'unfollow' : 'follow'))
+                  Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(() => this.toggleMemberAction(this.blocked ? 'unblock' : 'block'))
+                }.width('80%').margin({ top: 16 })
+              }
               if (this.status.length > 0 && this.status !== '加载中…') Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })
             }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(this.surface())
             Row() {

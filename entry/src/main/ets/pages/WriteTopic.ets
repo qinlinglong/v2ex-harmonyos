@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { picker } from '@kit.CoreFileKit';
-import { V2exNode } from '../model/V2exModels';
+import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
 
 interface PreviewPart { kind: string; value: string; label?: string; }
@@ -42,7 +42,10 @@ struct WriteTopic {
   @State preview: boolean = false;
   @State nodes: V2exNode[] = [];
   @State editing: boolean = false;
+  @State editAllowed: boolean = false;
+  @State editPermissionChecked: boolean = false;
   @StorageLink('v2exImgurClientId') imgurClientId: string = '';
+  @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   private topicId: number = 0;
 
   aboutToAppear(): void {
@@ -65,14 +68,32 @@ struct WriteTopic {
 
   private async loadDraft(): Promise<void> {
     try {
-      const topic = await V2exService.topic(this.topicId);
+      const topic: V2exTopic = await V2exService.topic(this.topicId);
+      if (topic.editable !== true || !this.isSelf(topic.member?.username)) {
+        this.status = '当前账号无权编辑此主题';
+        return;
+      }
+      this.editAllowed = true;
       this.title = topic.title;
       this.content = topic.content;
       this.node = topic.node?.name ?? this.node;
     } catch (_) { this.status = '编辑内容加载失败'; }
+    finally { this.editPermissionChecked = true; }
+  }
+
+  private isSelf(username: string | undefined): boolean {
+    if (!username) return false;
+    try {
+      const member: V2exMember = JSON.parse(this.cachedMemberJson) as V2exMember;
+      return member.username?.toLowerCase() === username.toLowerCase();
+    } catch (_) { return false; }
   }
 
   private async submit(): Promise<void> {
+    if (this.editing && (!this.editPermissionChecked || !this.editAllowed)) {
+      this.status = '当前账号无权编辑此主题';
+      return;
+    }
     if (this.title.trim().length < 3 || this.content.trim().length < 3) { this.status = '标题和正文至少 3 个字符'; return; }
     this.submitting = true; this.status = '正在发布…';
     try {
@@ -130,8 +151,10 @@ struct WriteTopic {
           .onClick(() => this.preview = !this.preview)
         Image($r('app.media.ic_image')).width(22).height(22).fillColor(this.themeColor).margin({ right: 16 })
           .onClick(() => this.insertImage())
-        Image($r('app.media.ic_send')).width(22).height(22).fillColor(this.submitting ? '#9AA0A6' : this.themeColor)
-          .opacity(this.submitting ? 0.5 : 1).onClick(() => { if (!this.submitting) this.submit(); })
+        Image($r('app.media.ic_send')).width(22).height(22)
+          .fillColor(this.submitting || (this.editing && !this.editAllowed) ? '#9AA0A6' : this.themeColor)
+          .opacity(this.submitting || (this.editing && !this.editAllowed) ? 0.5 : 1)
+          .onClick(() => { if (!this.submitting) this.submit(); })
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
       Scroll() {
         Column({ space: 14 }) {
