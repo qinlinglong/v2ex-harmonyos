@@ -22,15 +22,14 @@ const ALL_HOME_TABS: HomeTabOption[] = [
   { title: 'VXNA', key: 'xna', type: 'xna' },
   { title: '节点', key: 'nodes', type: 'nodes' },
   { title: '关注', key: 'members', type: 'node' },
-  { title: '刚更新', key: 'changes', type: 'tab' },
-  { title: '我的', key: 'mine', type: 'mine' }
+  { title: '刚更新', key: 'changes', type: 'tab' }
 ];
 
 const DEFAULT_HOME_TABS: HomeTabOption[] = [
   ALL_HOME_TABS[0], ALL_HOME_TABS[1], ALL_HOME_TABS[2], ALL_HOME_TABS[3],
   ALL_HOME_TABS[4], ALL_HOME_TABS[5], ALL_HOME_TABS[6], ALL_HOME_TABS[7],
   ALL_HOME_TABS[8], ALL_HOME_TABS[9], ALL_HOME_TABS[10], ALL_HOME_TABS[11],
-  ALL_HOME_TABS[12], ALL_HOME_TABS[13], ALL_HOME_TABS[14], ALL_HOME_TABS[15]
+  ALL_HOME_TABS[12], ALL_HOME_TABS[13], ALL_HOME_TABS[14]
 ];
 
 @Entry

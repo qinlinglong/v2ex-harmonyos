@@ -33,8 +33,7 @@ const DEFAULT_HOME_TABS: HomeTabItem[] = [
   { title: 'VXNA', key: 'xna', type: 'xna' },
   { title: '节点', key: 'nodes', type: 'nodes' },
   { title: '关注', key: 'members', type: 'node' },
-  { title: '刚更新', key: 'changes', type: 'tab' },
-  { title: '我的', key: 'mine', type: 'mine' }
+  { title: '刚更新', key: 'changes', type: 'tab' }
 ];
 
 @Entry
@@ -122,7 +121,6 @@ struct Index {
     if (tab.type === 'latest') this.loadTopics('latest');
     else if (tab.type === 'hot') this.loadTopics('hot');
     else if (tab.type === 'nodes' && this.nodes.length === 0) this.loadNodes();
-    else if (tab.type === 'mine' && !this.currentMember && !this.memberLoading) this.loadCurrentMember();
     else if (tab.type === 'xna' && this.xnaTopics.length === 0) this.loadXna();
     else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
     else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
@@ -366,42 +364,6 @@ struct Index {
             }.layoutWeight(1).width('100%')
           }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadNodes(); })
         }.layoutWeight(1).width('100%')
-      } else if (this.activeTab().type === 'mine') {
-        Refresh({ refreshing: this.memberLoading }) {
-          Scroll() {
-            Column() {
-          if (this.memberLoading) LoadingProgress().width(28).height(28).color(this.themeColor).margin({ top: 32 })
-          if (this.currentMember) {
-            Row() {
-              Stack() {
-                Text(this.currentMember.username.substring(0, 1).toUpperCase()).fontSize(18).fontColor(Color.White)
-                  .width(54).height(54).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(27)
-                if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(54).height(54).borderRadius(27).objectFit(ImageFit.Cover)
-              }
-              Column() { Text(this.currentMember.username).fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText()); Text('已登录').fontSize(13).fontColor('#8A97A6').margin({ top: 5 }) }
-                .alignItems(HorizontalAlign.Start).margin({ left: 14 })
-            }.margin({ top: 36 })
-          } else {
-            Text('我的 V2EX').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
-            Text('登录后可查看个人主题、收藏与通知').fontSize(14).fontColor('#8A97A6').margin({ top: 12 })
-          }
-          Button(this.currentMember ? '个人资料' : '打开登录页面').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 22 }).onClick(() => {
-            if (this.currentMember) router.pushUrl({ url: 'pages/Profile', params: { username: this.currentMember.username } });
-            else router.pushUrl({ url: 'pages/Login' });
-          })
-          Button('发布主题').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
-          Button('通知').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
-          Button('我的主题').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyTopics' }))
-          Button('我的节点').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyNodes' }))
-          Button('节点导航').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/NavNodes' }))
-          Button('我的关注').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/MyFollowing' }))
-          Button('最近浏览').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/RecentTopic' }))
-          Button('历史热议').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/HotestTopics' }))
-          Button('设置').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/Settings' }))
-          Button('屏蔽列表').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 14 }).onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
-            }.margin({ top: 48, bottom: 32 }).alignItems(HorizontalAlign.Center)
-          }.layoutWeight(1).width('100%')
-        }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadCurrentMember(); })
       } else if (this.activeTab().type === 'xna') {
         if (this.xnaTopics.length === 0 && !this.loading) {
           Text('暂无 VXNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
