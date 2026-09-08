@@ -20,9 +20,21 @@ interface HomeTabItem {
 const DEFAULT_HOME_TABS: HomeTabItem[] = [
   { title: '最近', key: 'latest', type: 'latest' },
   { title: '最热', key: 'hot', type: 'hot' },
+  { title: '技术', key: 'tech', type: 'tab' },
+  { title: '创意', key: 'creative', type: 'tab' },
+  { title: '好玩', key: 'play', type: 'tab' },
+  { title: 'Apple', key: 'apple', type: 'tab' },
+  { title: '酷工作', key: 'jobs', type: 'tab' },
+  { title: '交易', key: 'deals', type: 'tab' },
+  { title: '城市', key: 'city', type: 'tab' },
+  { title: '问与答', key: 'qna', type: 'tab' },
+  { title: '全部', key: 'all', type: 'tab' },
+  { title: 'R2', key: 'r2', type: 'tab' },
+  { title: 'VXNA', key: 'xna', type: 'xna' },
   { title: '节点', key: 'nodes', type: 'nodes' },
-  { title: '我的', key: 'mine', type: 'mine' },
-  { title: 'VXNA', key: 'xna', type: 'xna' }
+  { title: '关注', key: 'members', type: 'node' },
+  { title: '刚更新', key: 'changes', type: 'tab' },
+  { title: '我的', key: 'mine', type: 'mine' }
 ];
 
 @Entry
@@ -92,7 +104,7 @@ struct Index {
 
   private isTopicTab(): boolean {
     const type: string = this.activeTab().type;
-    return type === 'latest' || type === 'hot' || type === 'node';
+    return type === 'latest' || type === 'hot' || type === 'tab' || type === 'node';
   }
 
   private async loadTopics(kind: 'latest' | 'hot'): Promise<void> {
@@ -112,6 +124,7 @@ struct Index {
     else if (tab.type === 'nodes' && this.nodes.length === 0) this.loadNodes();
     else if (tab.type === 'mine' && !this.currentMember && !this.memberLoading) this.loadCurrentMember();
     else if (tab.type === 'xna' && this.xnaTopics.length === 0) this.loadXna();
+    else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
     else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
   }
 
@@ -126,6 +139,15 @@ struct Index {
     this.errorText = '';
     try { this.topics = await V2exService.topicsForNode(name); }
     catch (_) { this.errorText = '节点内容加载失败，请稍后重试'; }
+    finally { this.loading = false; }
+  }
+
+  private async loadTopicsForTab(name: string): Promise<void> {
+    if (this.loading) return;
+    this.loading = true;
+    this.errorText = '';
+    try { this.topics = await V2exService.topicsForTab(name); }
+    catch (_) { this.errorText = '板块内容加载失败，请稍后重试'; }
     finally { this.loading = false; }
   }
 
@@ -300,16 +322,23 @@ struct Index {
         }.width(48).height(42).onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(this.surface())
       Row() {
-        ForEach(this.tabs, (tab: HomeTabItem, index: number) => {
-          Column() {
-            Text(tab.title).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : '#7B8794')
-            Row().height(3).width(28).backgroundColor(this.selectedTab === index ? this.themeColor : Color.Transparent)
-              .borderRadius(2).margin({ top: 7 })
-          }.layoutWeight(1).alignItems(HorizontalAlign.Center).onClick(() => this.selectTab(index))
-        }, (tab: HomeTabItem) => tab.key)
+        Scroll() {
+          Row() {
+            ForEach(this.tabs, (tab: HomeTabItem, index: number) => {
+              Column() {
+                Text(tab.title).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : '#7B8794')
+                  .maxLines(1)
+                Row().height(3).width(28).backgroundColor(this.selectedTab === index ? this.themeColor : Color.Transparent)
+                  .borderRadius(2).margin({ top: 7 })
+              }.alignItems(HorizontalAlign.Center).padding({ left: 11, right: 11, top: 10, bottom: 0 })
+                .onClick(() => this.selectTab(index))
+            }, (tab: HomeTabItem) => tab.key)
+          }.alignItems(VerticalAlign.Bottom)
+        }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).layoutWeight(1).height('100%')
+          .align(Alignment.Start)
         Stack() {
           Image($r('app.media.ic_menu')).width(18).height(18).fillColor(this.themeColor)
-        }.width(48).height(52).onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
+        }.width(48).height('100%').backgroundColor(this.surface()).onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
       }.width('100%').height(52).backgroundColor(this.surface())
       if (this.isTopicTab() && this.loading && this.topics.length === 0) {
         LoadingProgress().width(28).height(28).color('#4F7CAC').margin({ top: 36 })
@@ -317,6 +346,7 @@ struct Index {
         Column() { Text(this.errorText).fontSize(15).fontColor('#7B8794'); Text('点击重试').fontSize(14).fontColor('#4F7CAC').margin({ top: 14 }).onClick(() => {
           const tab: HomeTabItem = this.activeTab();
           if (tab.type === 'hot') this.loadTopics('hot');
+          else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
           else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
           else this.loadTopics('latest');
         }); }
@@ -389,6 +419,7 @@ struct Index {
           if (state === RefreshStatus.Refresh) {
             const tab: HomeTabItem = this.activeTab();
             if (tab.type === 'hot') this.loadTopics('hot');
+            else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
             else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
             else this.loadTopics('latest');
           }

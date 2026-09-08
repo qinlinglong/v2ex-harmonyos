@@ -9,23 +9,28 @@ interface HomeTabOption {
 const ALL_HOME_TABS: HomeTabOption[] = [
   { title: '最近', key: 'latest', type: 'latest' },
   { title: '最热', key: 'hot', type: 'hot' },
-  { title: '技术', key: 'tech', type: 'node' },
-  { title: '创意', key: 'creative', type: 'node' },
-  { title: '好玩', key: 'play', type: 'node' },
-  { title: 'Apple', key: 'apple', type: 'node' },
-  { title: '酷工作', key: 'jobs', type: 'node' },
-  { title: '交易', key: 'deals', type: 'node' },
-  { title: '城市', key: 'city', type: 'node' },
-  { title: '问与答', key: 'qna', type: 'node' },
-  { title: '全部', key: 'all', type: 'node' },
-  { title: 'R2', key: 'r2', type: 'node' },
+  { title: '技术', key: 'tech', type: 'tab' },
+  { title: '创意', key: 'creative', type: 'tab' },
+  { title: '好玩', key: 'play', type: 'tab' },
+  { title: 'Apple', key: 'apple', type: 'tab' },
+  { title: '酷工作', key: 'jobs', type: 'tab' },
+  { title: '交易', key: 'deals', type: 'tab' },
+  { title: '城市', key: 'city', type: 'tab' },
+  { title: '问与答', key: 'qna', type: 'tab' },
+  { title: '全部', key: 'all', type: 'tab' },
+  { title: 'R2', key: 'r2', type: 'tab' },
+  { title: 'VXNA', key: 'xna', type: 'xna' },
   { title: '节点', key: 'nodes', type: 'nodes' },
-  { title: '我的', key: 'mine', type: 'mine' },
-  { title: 'VXNA', key: 'xna', type: 'xna' }
+  { title: '关注', key: 'members', type: 'node' },
+  { title: '刚更新', key: 'changes', type: 'tab' },
+  { title: '我的', key: 'mine', type: 'mine' }
 ];
 
 const DEFAULT_HOME_TABS: HomeTabOption[] = [
-  ALL_HOME_TABS[0], ALL_HOME_TABS[1], ALL_HOME_TABS[12], ALL_HOME_TABS[13], ALL_HOME_TABS[14]
+  ALL_HOME_TABS[0], ALL_HOME_TABS[1], ALL_HOME_TABS[2], ALL_HOME_TABS[3],
+  ALL_HOME_TABS[4], ALL_HOME_TABS[5], ALL_HOME_TABS[6], ALL_HOME_TABS[7],
+  ALL_HOME_TABS[8], ALL_HOME_TABS[9], ALL_HOME_TABS[10], ALL_HOME_TABS[11],
+  ALL_HOME_TABS[12], ALL_HOME_TABS[13], ALL_HOME_TABS[14], ALL_HOME_TABS[15]
 ];
 
 @Entry

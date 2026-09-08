@@ -105,6 +105,19 @@ export class V2exService {
     }
   }
 
+  /**
+   * V2EX home board feeds (`?tab=tech`, `?tab=all`, `/changes`, ...). These
+   * are rendered on the site home page rather than exposed through the public
+   * JSON API, so parse the same HTML cells used by the reference client.
+   */
+  static async topicsForTab(tab: string): Promise<V2exTopic[]> {
+    const path: string = tab === 'changes' ? '/changes' : `/?tab=${encodeURIComponent(tab)}`;
+    const authenticated: boolean = tab === 'members';
+    const html: string = await V2exService.get(path, authenticated);
+    if (authenticated && !V2exService.signedInHtml(html)) throw new Error('请先登录');
+    return V2exService.parseRichTopicItems(html);
+  }
+
   static async searchTopics(query: string): Promise<V2exTopic[]> {
     const sort: string = AppStorage.get<string>('v2exSearchSort') ?? 'created';
     const order: string = AppStorage.get<string>('v2exSearchOrder') ?? '0';
