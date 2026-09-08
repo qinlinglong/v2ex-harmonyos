@@ -402,7 +402,7 @@ struct TopicDetail {
                       Text(`${this.topic.views} 点击`).fontSize(13).fontColor('#7B8794').margin({ left: 12 })
                     }
                   }.margin({ top: 7 })
-                }.margin({ left: 12 }).layoutWeight(1)
+                }.margin({ left: 12 }).layoutWeight(1).alignItems(HorizontalAlign.Start)
               }.width('100%')
               Text(this.topic.title).fontSize(21).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
                 .lineHeight(30).margin({ top: 16 })
@@ -538,16 +538,17 @@ struct TopicDetail {
           }.width('100%')
           }.layoutWeight(1).width('100%')
           Column() {
-            TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(96).fontSize(15).fontColor(this.primaryText())
+            TextArea({ placeholder: '写下你的回复…', text: this.replyText }).width('100%').height(52).fontSize(15).fontColor(this.primaryText())
               .onChange((value: string) => this.replyText = value)
             Row() {
               if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(13).fontColor(this.themeColor).maxLines(1)
               Blank()
               Text('@ 回复对象').fontSize(13).fontColor(this.themeColor).margin({ right: 14 })
                 .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
-              Button(this.replying ? '发送中' : '回复').backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitReply())
-            }.width('100%').margin({ top: 8 })
-          }.width('100%').padding({ left: 16, right: 16, top: 10, bottom: 10 }).backgroundColor(this.surface())
+              Button(this.replying ? '发送中' : '回复').height(40).backgroundColor(this.themeColor).fontColor(Color.White)
+                .fontSize(14).onClick(() => this.submitReply())
+            }.width('100%').margin({ top: 4 })
+          }.width('100%').padding({ left: 12, right: 12, top: 6, bottom: 6 }).backgroundColor(this.surface())
         }.layoutWeight(1).width('100%')
       }
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())

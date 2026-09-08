@@ -418,23 +418,21 @@ struct Index {
               }.width('100%').padding({ left: 20, right: 20, top: 32, bottom: 20 }).backgroundColor(this.surface())
             } else {
               Text('点我登录 ›').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.themeColor).width('100%')
-                .padding({ left: 20, right: 20, top: 48, bottom: 32 }).backgroundColor(this.surface())
+                .padding({ left: 20, right: 20, top: 24, bottom: 18 }).backgroundColor(this.surface())
                 .onClick(() => { this.drawerOpen = false; router.pushUrl({ url: 'pages/Login' }); })
             }
-            Scroll() {
-              Column() {
-                if (this.currentMember) {
-                  this.drawerItem('节点收藏', 'MyNodes')
-                  this.drawerItem('主题收藏', 'Favorites')
-                  this.drawerItem('特别关注', 'MyFollowing')
-                  this.drawerItem('未读提醒', 'Notifications')
-                }
-                this.drawerItem('历史最热', 'HotestTopics')
-                this.drawerItem('最近浏览', 'RecentTopic')
-                this.drawerItem('节点导航', 'NavNodes')
-                this.drawerItem('更多选项', 'Settings')
-              }.width('100%')
-            }.layoutWeight(1).width('100%').scrollBar(BarState.Off)
+            Column() {
+              if (this.currentMember) {
+                this.drawerItem('节点收藏', 'MyNodes')
+                this.drawerItem('主题收藏', 'Favorites')
+                this.drawerItem('特别关注', 'MyFollowing')
+                this.drawerItem('未读提醒', 'Notifications')
+              }
+              this.drawerItem('历史最热', 'HotestTopics')
+              this.drawerItem('最近浏览', 'RecentTopic')
+              this.drawerItem('节点导航', 'NavNodes')
+              this.drawerItem('更多选项', 'Settings')
+            }.width('100%')
           }.width(300).height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
           Blank().layoutWeight(1).height('100%').backgroundColor('#88000000').onClick(() => this.drawerOpen = false)
         }.width('100%').height('100%')
