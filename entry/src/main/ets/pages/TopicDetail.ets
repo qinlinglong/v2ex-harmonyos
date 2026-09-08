@@ -384,23 +384,28 @@ struct TopicDetail {
                   if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } })
                 })
                 Column() {
-                  Text(this.topic.member?.username ?? '匿名').fontSize(16).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
-                    .onClick(() => { if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } }) })
                   Row() {
-                    Text(this.topic.node?.title ?? 'V2EX').fontSize(13).fontColor(this.themeColor)
-                    Text(` · ${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
-                  }.margin({ top: 5 })
+                    Text(this.topic.member?.username ?? '匿名').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
+                      .onClick(() => { if (this.topic?.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: this.topic.member.username } }) })
+                    if (this.topic?.node?.title) {
+                      Text(this.topic.node.title).fontSize(12).fontColor(this.themeColor)
+                        .padding({ left: 10, right: 10, top: 2, bottom: 2 })
+                        .backgroundColor(this.darkMode ? '#26313D' : '#EEF3F8').borderRadius(10)
+                        .margin({ left: 10 }).onClick(() => {
+                          if (this.topic?.node?.name) router.pushUrl({ url: 'pages/NodeTopics', params: { name: this.topic.node.name, title: this.topic.node.title } })
+                        })
+                    }
+                  }
+                  Row() {
+                    Text(`${this.topic.replies} 条回复`).fontSize(13).fontColor('#7B8794')
+                    if (this.topic.views !== undefined) {
+                      Text(`${this.topic.views} 点击`).fontSize(13).fontColor('#7B8794').margin({ left: 12 })
+                    }
+                  }.margin({ top: 7 })
                 }.margin({ left: 12 }).layoutWeight(1)
               }.width('100%')
-              Text(this.topic.title).fontSize(23).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
-                .margin({ top: 16 })
-              if (this.topic.views !== undefined || this.topic.likes !== undefined || this.topic.thanks !== undefined) {
-                Row() {
-                  if (this.topic.views !== undefined) Text(`${this.topic.views} 点击`).fontSize(12).fontColor('#8A97A6')
-                  if (this.topic.likes !== undefined) Text(`${this.topic.views !== undefined ? ' · ' : ''}${this.topic.likes} 收藏`).fontSize(12).fontColor('#8A97A6')
-                  if (this.topic.thanks !== undefined) Text(`${this.topic.views !== undefined || this.topic.likes !== undefined ? ' · ' : ''}${this.topic.thanks} 感谢`).fontSize(12).fontColor('#8A97A6')
-                }.margin({ top: 8 })
-              }
+              Text(this.topic.title).fontSize(21).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
+                .lineHeight(30).margin({ top: 16 })
               if (this.topic.editable === true) {
                 Button('编辑主题').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
                   .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
