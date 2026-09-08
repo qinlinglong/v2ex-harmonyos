@@ -227,7 +227,7 @@ struct Index {
             .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
         }.width('100%').alignItems(VerticalAlign.Top)
         Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 6 })
-      }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(this.surface())
+      }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(this.surface())
     }.onClick(() => {
       if (topic.url && !/\/t\/\d+/i.test(topic.url)) {
         router.pushUrl({ url: 'pages/WebViewPage', params: { title: topic.title, url: topic.url } });

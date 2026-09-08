@@ -470,7 +470,7 @@ struct TopicDetail {
                     if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
                   })
               }.width('100%').margin({ top: 20 })
-            }.width('100%').padding(20).backgroundColor(this.surface())
+            }.width('100%').alignItems(HorizontalAlign.Start).padding(20).backgroundColor(this.surface())
             Row() {
               Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
               Blank()
@@ -532,7 +532,7 @@ struct TopicDetail {
                     Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
                   }.width('100%').margin({ top: 10 })
                 }
-              }.width('100%').padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
+              }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
                 .backgroundColor(this.surface()).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
           }.width('100%')
