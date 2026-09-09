@@ -85,7 +85,7 @@ struct Login {
       const code: string = compact.length === 4 ? compact : (candidates && candidates.length > 0 ? candidates[0] : compact.substring(0, 4));
       if (!/^[A-Z0-9]{4}$/.test(code)) throw new Error('未识别到 4 位验证码，请点击图片刷新后重试');
       const filled: string = await this.controller.runJavaScript(`(() => {
-        const inputs = Array.from(document.querySelectorAll('input')) as HTMLInputElement[];
+        const inputs = Array.from(document.querySelectorAll('input'));
         const input = inputs.find((element) => /captcha|once|code|验证码/i.test(
           [element.id, element.name, element.placeholder].join(' ')))
           ?? inputs.filter((element) => element.type === 'text').slice(-1)[0];
