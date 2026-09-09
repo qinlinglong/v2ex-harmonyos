@@ -61,7 +61,7 @@ struct NavNodes {
     GridItem() {
       Column() {
         Stack() {
-          Text(node.title.substring(0, 1)).fontSize(18).fontColor(Color.White)
+        Text(node.title.substring(0, 1)).fontSize(18).fontColor(Color.White)
             .width(48).height(48).textAlign(TextAlign.Center).backgroundColor(this.themeColor).borderRadius(24)
           if (node.avatar_large) Image(node.avatar_large).width(48).height(48).borderRadius(24).objectFit(ImageFit.Cover)
         }

@@ -231,7 +231,7 @@ struct Index {
         Row() {
           Stack() {
             Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(13).fontColor(Color.White)
-              .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
+              .width(26).height(26).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(13)
             if (topic.member?.avatar_large) {
               Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
             }
@@ -277,7 +277,7 @@ struct Index {
       Row() {
         Stack() {
           Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
-            .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
+            .width(26).height(26).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(13)
           if (topic.member?.avatar_large) Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
         }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
           .hitTestBehavior(HitTestMode.Block)
@@ -401,7 +401,7 @@ struct Index {
                 Row() {
                   Stack() {
                     Text(this.currentMember.username.substring(0, 1).toUpperCase()).fontSize(14).fontColor(Color.White)
-                      .width(40).height(40).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(20)
+                      .width(40).height(40).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(20)
                     if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(40).height(40).borderRadius(20).objectFit(ImageFit.Cover)
                   }
                   Blank()

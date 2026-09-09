@@ -147,7 +147,7 @@ struct Profile {
       Row() {
           Stack() {
             Text((topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
-              .width(26).height(26).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(13)
+              .width(26).height(26).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(13)
             if (topic.member?.avatar_large) Image(topic.member.avatar_large).width(26).height(26).borderRadius(13).objectFit(ImageFit.Cover)
           }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
             .hitTestBehavior(HitTestMode.Block)
@@ -193,7 +193,7 @@ struct Profile {
             Column() {
               Stack() {
                 Text(this.member.username.substring(0, 1).toUpperCase()).fontSize(28).fontColor(Color.White)
-                  .width(76).height(76).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(38)
+                  .width(76).height(76).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(38)
                 if (this.member.avatar_large) Image(this.member.avatar_large).width(76).height(76).borderRadius(38).objectFit(ImageFit.Cover)
               }
               Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).margin({ top: 12 })

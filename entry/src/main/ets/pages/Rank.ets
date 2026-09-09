@@ -49,7 +49,7 @@ struct Rank {
               Text(`${index + 1}`).fontSize(16).fontColor(this.themeColor).width(44).textAlign(TextAlign.Center)
               Stack() {
                 Text(member.username.substring(0, 1).toUpperCase()).fontSize(13).fontColor(Color.White)
-                  .width(34).height(34).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(17)
+                  .width(34).height(34).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(17)
                 if (member.avatar_large) Image(member.avatar_large).width(34).height(34).borderRadius(17).objectFit(ImageFit.Cover)
               }
               Text(member.username).fontSize(16).fontColor(themePrimaryText(this.darkMode)).margin({ left: 12 })

@@ -49,7 +49,7 @@ struct MyNodes {
       Column() {
         Stack() {
           Text(node.title.substring(0, 1)).fontSize(16).fontColor(Color.White).width(44).height(44)
-            .textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(22)
+            .textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(22)
           if (node.avatar_large) Image(node.avatar_large).width(44).height(44).borderRadius(22).objectFit(ImageFit.Cover)
         }
         Text(node.title).fontSize(13).fontColor(themePrimaryText(this.darkMode)).margin({ top: 6 }).maxLines(1)

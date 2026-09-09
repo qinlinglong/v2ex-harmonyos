@@ -627,7 +627,7 @@ struct TopicDetail {
               Row() {
                 Stack() {
                   Text((this.topic.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(16).fontColor(Color.White)
-                    .width(48).height(48).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(24)
+                    .width(48).height(48).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(24)
                   if (this.topic.member?.avatar_large) {
                     Image(this.topic.member.avatar_large).width(48).height(48).borderRadius(24).objectFit(ImageFit.Cover)
                   }
@@ -718,7 +718,7 @@ struct TopicDetail {
                     .onClick(() => this.openLink(part.value))
                 } else if (part.kind === 'link') {
                   Text(part.label ?? part.value).fontSize(16).fontColor(this.themeColor).lineHeight(26)
-                    .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' }).margin({ top: 20 })
+                    .decoration({ type: TextDecorationType.Underline, color: this.themeColor }).margin({ top: 20 })
                     .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
                     .editMenuOptions(this.selectionMenu(part.label ?? part.value))
                     .onClick(() => this.openLink(part.value))
@@ -735,7 +735,7 @@ struct TopicDetail {
                     Text(`${this.topic.likes}`).fontSize(13).fontColor(this.favorited ? '#D69E00' : '#66727F').margin({ left: 3 })
                   }
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
-                  .backgroundColor(this.favorited ? '#FFF7D6' : '#F3F6FA').borderRadius(21)
+                  .backgroundColor(this.darkMode ? (this.favorited ? '#5C4A18' : '#26313D') : (this.favorited ? '#FFF7D6' : '#F3F6FA')).borderRadius(21)
                   .onClick(() => this.action('favorite'))
                 if (!this.isSelf(this.topic.member?.username)) {
                   Row() {
@@ -744,13 +744,13 @@ struct TopicDetail {
                       Text(`${this.topic.thanks}`).fontSize(13).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ left: 3 })
                     }
                   }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
-                    .backgroundColor(this.thanked ? '#FFF0F3' : '#F3F6FA').borderRadius(21)
+                    .backgroundColor(this.darkMode ? (this.thanked ? '#5A2634' : '#26313D') : (this.thanked ? '#FFF0F3' : '#F3F6FA')).borderRadius(21)
                     .onClick(() => this.action('thank'))
                 }
                 Row() {
                   Text('▲').fontSize(15).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
-                  .backgroundColor(this.voteState === 1 ? '#EAF3FF' : '#F3F6FA').borderRadius(21)
+                  .backgroundColor(this.darkMode ? (this.voteState === 1 ? '#243C58' : '#26313D') : (this.voteState === 1 ? '#EAF3FF' : '#F3F6FA')).borderRadius(21)
                   .onClick(async () => {
                     const ok: boolean = await this.action('up');
                     if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
@@ -758,7 +758,7 @@ struct TopicDetail {
                 Row() {
                   Text('▼').fontSize(15).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6')
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
-                  .backgroundColor(this.voteState === -1 ? '#E9EDF2' : '#F3F6FA').borderRadius(21)
+                  .backgroundColor(this.darkMode ? (this.voteState === -1 ? '#36404B' : '#26313D') : (this.voteState === -1 ? '#E9EDF2' : '#F3F6FA')).borderRadius(21)
                   .onClick(async () => {
                     const ok: boolean = await this.action('down');
                     if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
@@ -776,7 +776,7 @@ struct TopicDetail {
                 Row() {
                   Stack() {
                     Text((reply.member?.username ?? '?').substring(0, 1).toUpperCase()).fontSize(12).fontColor(Color.White)
-                      .width(28).height(28).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(14)
+                      .width(28).height(28).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(14)
                     if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(28).height(28).borderRadius(14).objectFit(ImageFit.Cover)
                   }.onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   Text(reply.member?.username ?? '匿名').fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
@@ -839,7 +839,7 @@ struct TopicDetail {
                         .onClick(() => this.openLink(part.value))
                     } else if (part.kind === 'link') {
                       Text(part.label ?? part.value).fontSize(15).fontColor(this.themeColor).lineHeight(23).margin({ top: 8 })
-                        .decoration({ type: TextDecorationType.Underline, color: '#4F7CAC' })
+                        .decoration({ type: TextDecorationType.Underline, color: this.themeColor })
                         .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
                         .editMenuOptions(this.selectionMenu(part.label ?? part.value)).onClick(() => this.openLink(part.value))
                     } else {

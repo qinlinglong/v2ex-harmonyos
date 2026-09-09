@@ -85,7 +85,7 @@ struct Notifications {
       Row() {
         Stack() {
           Text(item.username.substring(0, 1).toUpperCase()).fontSize(13).fontColor(Color.White)
-            .width(40).height(40).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(20)
+            .width(40).height(40).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(20)
           if (item.avatar) Image(item.avatar).width(40).height(40).borderRadius(20).objectFit(ImageFit.Cover)
         }
         Column() {
