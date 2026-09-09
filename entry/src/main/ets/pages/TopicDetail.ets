@@ -134,6 +134,10 @@ function replyTextParts(value: string): ReplyTextPart[] {
   return parts;
 }
 
+function hasReplyReferences(value: string): boolean {
+  return /@(?:<a\s+href=["']\/member\/[^"']+["'][^>]*>[\s\S]*?<\/a>|[A-Za-z0-9_\-\u4e00-\u9fff]+)/i.test(value);
+}
+
 @Entry
 @Component
 struct TopicDetail {
@@ -736,8 +740,6 @@ struct TopicDetail {
             Row() {
               Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
               Blank()
-              Text('关联').fontSize(13).fontColor('#7B8794').margin({ right: 16 })
-                .onClick(() => router.pushUrl({ url: 'pages/RelatedReplies', params: { id: this.topicId } }))
               Text(this.replyOrder === 0 ? '默认排序' : '最新在前').fontSize(13).fontColor('#7B8794')
                 .onClick(() => this.replyOrder = this.replyOrder === 0 ? 1 : 0)
             }.width('100%').padding({ left: 18, right: 18, top: 20, bottom: 12 })
@@ -839,6 +841,10 @@ struct TopicDetail {
                         this.replyComposerOpen = true;
                       }
                     })
+                    if (hasReplyReferences(reply.content)) {
+                      Text('查看评论').fontSize(13).fontColor(this.themeColor).margin({ left: 16 })
+                        .onClick(() => router.pushUrl({ url: 'pages/RelatedReplies', params: { topicId: this.topicId, replyId: reply.id } }))
+                    }
                     Blank()
                     if (!this.isSelf(reply.member?.username)) {
                       Text('隐藏').fontSize(13).fontColor('#9AA0A6').margin({ right: 16 }).onClick(() => this.ignoreReply(reply.id))
