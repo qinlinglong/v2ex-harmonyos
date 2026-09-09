@@ -81,8 +81,10 @@ struct Settings {
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
         Row() { Text('内置浏览器').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
-        Row() { Text('自动签到').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.autoCheckin = !this.autoCheckin) }
-          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
+        if (this.cachedMemberJson.trim().length > 0) {
+          Row() { Text('自动签到').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.autoCheckin = !this.autoCheckin) }
+            .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
+        }
         if (this.cachedMemberJson.trim().length > 0) {
           Row() { Text('消息通知').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.msgPush ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.msgPush = !this.msgPush) }
             .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
