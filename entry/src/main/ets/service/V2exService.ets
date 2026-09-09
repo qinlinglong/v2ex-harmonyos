@@ -1079,7 +1079,7 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
-  static async writeTopic(title: string, content: string, nodeName: string): Promise<boolean> {
+  static async writeTopic(title: string, content: string, nodeName: string, syntax: string = 'default'): Promise<boolean> {
     const html: string = await V2exService.get('/write', true);
     const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
     if (!onceMatch) return false;
@@ -1088,7 +1088,7 @@ export class V2exService {
       const response: http.HttpResponse = await request.request(`${V2exService.base()}/write`, {
         method: http.RequestMethod.POST,
         header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/write` },
-        extraData: `title=${V2exService.formValue(title)}&content=${V2exService.formValue(content)}&node_name=${V2exService.formValue(nodeName)}&syntax=default&once=${V2exService.formValue(onceMatch[1])}`,
+        extraData: `title=${V2exService.formValue(title)}&content=${V2exService.formValue(content)}&node_name=${V2exService.formValue(nodeName)}&syntax=${V2exService.formValue(syntax === 'markdown' ? 'markdown' : 'default')}&once=${V2exService.formValue(onceMatch[1])}`,
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING

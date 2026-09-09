@@ -2,7 +2,7 @@ import { router } from '@kit.ArkUI';
 import { picker } from '@kit.CoreFileKit';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeAccentText, themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeAccentText, themeBackground, themeBodyText, themeInputBackground, themeMutedText, themeOnColor, themePrimaryText, themeSurface } from '../common/Theme';
 
 interface PreviewPart { kind: string; value: string; label?: string; }
 
@@ -46,6 +46,7 @@ struct WriteTopic {
   @State editing: boolean = false;
   @State editAllowed: boolean = false;
   @State editPermissionChecked: boolean = false;
+  @StorageLink('v2exTopicSyntax') syntax: string = 'default';
   @StorageLink('v2exImgurClientId') imgurClientId: string = '';
   @StorageLink('v2exImageBed') imageBed: string = 'bilibili';
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
@@ -101,8 +102,8 @@ struct WriteTopic {
     this.submitting = true; this.status = '正在发布…';
     try {
       const ok: boolean = this.editing
-        ? await V2exService.editTopic(this.topicId, this.title.trim(), this.content.trim(), 'default', this.node.trim())
-        : await V2exService.writeTopic(this.title.trim(), this.content.trim(), this.node.trim());
+        ? await V2exService.editTopic(this.topicId, this.title.trim(), this.content.trim(), this.syntax, this.node.trim())
+        : await V2exService.writeTopic(this.title.trim(), this.content.trim(), this.node.trim(), this.syntax);
       this.status = ok ? (this.editing ? '保存成功' : '发布成功') : '操作失败，请先登录';
       if (ok) setTimeout(() => router.back(), 500);
     } catch (_) { this.status = '发布失败，请先登录'; }
@@ -181,6 +182,11 @@ struct WriteTopic {
                 }.scrollable(ScrollDirection.Horizontal).width('100%').height(42).margin({ top: 8 })
               }.width('100%')
             }
+            Row() {
+              Text('语法').fontSize(14).fontColor(themeMutedText(this.darkMode)).margin({ right: 12 })
+              Button('V2EX 原生').fontSize(13).backgroundColor(this.syntax === 'default' ? this.themeColor : themeInputBackground(this.darkMode)).fontColor(this.syntax === 'default' ? themeOnColor(this.themeColor) : themePrimaryText(this.darkMode)).onClick(() => this.syntax = 'default')
+              Button('Markdown').fontSize(13).margin({ left: 8 }).backgroundColor(this.syntax === 'markdown' ? this.themeColor : themeInputBackground(this.darkMode)).fontColor(this.syntax === 'markdown' ? themeOnColor(this.themeColor) : themePrimaryText(this.darkMode)).onClick(() => this.syntax = 'markdown')
+            }.width('100%')
           }
           if (this.preview) {
             Column() {
@@ -200,7 +206,7 @@ struct WriteTopic {
               }, (part: PreviewPart, index: number) => `preview-${part.kind}-${index}-${part.value.substring(0, 12)}`)
             }.width('100%').padding(18).backgroundColor(themeSurface(this.darkMode))
           } else {
-            TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16).fontColor(themePrimaryText(this.darkMode))
+            TextArea({ placeholder: this.syntax === 'markdown' ? '支持 Markdown 的主题正文' : '支持 V2EX 原生格式的主题正文', text: this.content }).width('100%').height(360).fontSize(16).fontColor(themePrimaryText(this.darkMode))
               .onChange((value: string) => this.content = value)
           }
           if (this.status.length > 0) Text(this.status).fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode))
