@@ -1,7 +1,4 @@
 import { router } from '@kit.ArkUI';
-import { http } from '@kit.NetworkKit';
-import { image } from '@kit.ImageKit';
-import { textRecognition } from '@kit.CoreVisionKit';
 import { V2exService, V2exSigninInfo } from '../service/V2exService';
 import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 import { V2exMember } from '../model/V2exModels';
@@ -11,7 +8,6 @@ import { V2exMember } from '../model/V2exModels';
 struct Login {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exDarkMode') darkMode: boolean = false;
-  @StorageLink('v2exDomain') domain: string = 'https://www.v2ex.com';
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   @State username: string = '';
   @State password: string = '';
@@ -24,12 +20,9 @@ struct Login {
   @State loading: boolean = true;
   @State limited: boolean = false;
   @State submitting: boolean = false;
-  @State recognizing: boolean = false;
   private signinInfo: V2exSigninInfo | undefined = undefined;
 
   aboutToAppear(): void { this.loadSigninInfo(); }
-
-  private siteBase(): string { return this.domain.replace(/\/$/, ''); }
 
   private async loadSigninInfo(): Promise<void> {
     this.loading = true;
@@ -45,61 +38,6 @@ struct Login {
       this.captchaUrl = '';
       this.status = error instanceof Error ? error.message : '获取验证码失败，请检查网络';
     } finally { this.loading = false; }
-  }
-
-  private async captchaBuffer(): Promise<ArrayBuffer> {
-    if (this.captchaUrl.length === 0) throw new Error('验证码图片尚未加载');
-    const request: http.HttpRequest = http.createHttp();
-    try {
-      const response: http.HttpResponse = await request.request(this.captchaUrl, {
-        method: http.RequestMethod.GET,
-        header: { 'Cookie': V2exService.sessionCookie(), 'Referer': `${this.siteBase()}/signin` },
-        connectTimeout: 10000,
-        readTimeout: 15000,
-        expectDataType: http.HttpDataType.ARRAY_BUFFER
-      });
-      if (response.responseCode < 200 || response.responseCode >= 300 || !(response.result instanceof ArrayBuffer)) {
-        throw new Error('验证码图片下载失败');
-      }
-      return response.result;
-    } finally { request.destroy(); }
-  }
-
-  private async recognizeCaptcha(): Promise<void> {
-    if (this.recognizing || this.captchaUrl.length === 0) return;
-    this.recognizing = true;
-    this.status = '正在识别验证码…';
-    let source: image.ImageSource | undefined;
-    let pixelMap: image.PixelMap | undefined;
-    try {
-      source = image.createImageSource(await this.captchaBuffer());
-      if (!source) throw new Error('验证码图片解码失败');
-      pixelMap = await source.createPixelMap({ desiredSize: { width: 1280, height: 320 }, desiredPixelFormat: image.PixelMapFormat.RGBA_8888 });
-      if (!await textRecognition.init()) throw new Error('此设备未提供 OCR 模型');
-      let result: textRecognition.TextRecognitionResult | undefined;
-      let lastError: Error | undefined;
-      for (let attempt: number = 0; attempt < 2 && result === undefined; attempt += 1) {
-        try { result = await textRecognition.recognizeText({ pixelMap }, { isDirectionDetectionSupported: false }); }
-        catch (error) {
-          lastError = error instanceof Error ? error : new Error(String(error));
-          if (attempt === 0) await new Promise<void>((resolve: () => void) => setTimeout(resolve, 350));
-        }
-      }
-      if (result === undefined) throw lastError ?? new Error('验证码识别失败');
-      const compact: string = result.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-      const candidates: RegExpMatchArray | null = result.value.toUpperCase().match(/[A-Z0-9]{4}/g);
-      const candidate: string = compact.length === 4 ? compact : (candidates?.[0] ?? compact.substring(0, 4));
-      if (!/^[A-Z0-9]{4}$/.test(candidate)) throw new Error('未识别到 4 位验证码，请点击图片刷新后重试');
-      this.code = candidate;
-      this.status = `已识别：${candidate}`;
-    } catch (error) {
-      this.status = error instanceof Error ? `${error.message}，请手动输入` : '验证码识别失败，请手动输入';
-    } finally {
-      if (pixelMap) await pixelMap.release();
-      if (source) await source.release();
-      try { await textRecognition.release(); } catch (_) { /* OCR may be unavailable on this device. */ }
-      this.recognizing = false;
-    }
   }
 
   private async submitSignin(): Promise<void> {
@@ -151,8 +89,6 @@ struct Login {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.twoFactorOnce.length > 0 ? '两步验证' : '登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-        if (this.twoFactorOnce.length === 0) Text(this.recognizing ? '识别中…' : '识别验证码').fontSize(13).fontColor(this.themeColor)
-          .enabled(!this.recognizing && !this.loading).padding({ left: 10, right: 14 }).onClick(() => this.recognizeCaptcha())
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       if (this.twoFactorOnce.length > 0) {
         Scroll() {

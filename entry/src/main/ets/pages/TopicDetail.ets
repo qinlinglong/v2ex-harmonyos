@@ -464,33 +464,6 @@ struct TopicDetail {
     try { return JSON.parse(this.ignoredReplyIdsJson) as number[]; } catch (_) { return []; }
   }
 
-  private replyDepth(reply: V2exReply, index: number): number {
-    if (!reply.member?.username || index <= 0) return 0;
-    const source: V2exReply[] = this.orderedReplies();
-    // H5 uses references in the form "@name #floor". Resolve that floor
-    // first; falling back to the latest earlier reply by name keeps older
-    // replies that only contain "@name" readable as a conversation.
-    const explicit: RegExpMatchArray | null = reply.content.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)\s*#?(\d+)?/g);
-    if (!explicit || explicit.length === 0) return 0;
-    for (const reference of explicit) {
-      const match: RegExpMatchArray | null = reference.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)\s*#?(\d+)?/);
-      const name: string = match?.[1]?.toLowerCase() ?? '';
-      const floor: number = Number(match?.[2] ?? 0);
-      if (floor > 0) {
-        const targetIndex: number = source.findIndex((item: V2exReply) => item.no === floor && item.member?.username?.toLowerCase() === name);
-        if (targetIndex >= 0 && targetIndex < index) return Math.min(3, this.replyDepth(source[targetIndex], targetIndex) + 1);
-      }
-    }
-    const names: string[] = explicit.map((item: string) => item.substring(1).split(/\s/)[0].toLowerCase());
-    for (let i: number = index - 1; i >= 0; i--) {
-      const previous: V2exReply = source[i];
-      if (previous.member?.username && names.indexOf(previous.member.username.toLowerCase()) >= 0) {
-        return Math.min(3, this.replyDepth(previous, i) + 1);
-      }
-    }
-    return 0;
-  }
-
   private orderedReplies(): V2exReply[] {
     const ignored: number[] = this.ignoredReplyIds();
     const list: V2exReply[] = this.replies.filter((reply: V2exReply) => ignored.indexOf(reply.id) < 0);
@@ -883,7 +856,7 @@ struct TopicDetail {
                     }
                   }.width('100%').margin({ top: 10 })
                 }
-              }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
+              }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16, right: 16, top: 16, bottom: 16 })
                 .backgroundColor(this.surface()).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
             if (this.replies.length > 0) {

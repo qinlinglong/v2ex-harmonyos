@@ -62,7 +62,7 @@ export class V2exService {
     return V2exService.mergeCookieHeaders(webCookie, nativeCookie);
   }
 
-  /** Return the current session cookie for native image/OCR requests. */
+  /** Return the current session cookie for native image requests. */
   static sessionCookie(): string { return V2exService.cookie(); }
 
   private static mergeCookieHeaders(...headers: string[]): string {
@@ -108,11 +108,11 @@ export class V2exService {
   }
 
   private static formInputName(html: string, label: string, fallback: string): string {
-    const inputs: RegExpMatchArray | null = html.match(/<input\\b[^>]*>/gi);
+    const inputs: RegExpMatchArray | null = html.match(/<input\b[^>]*>/gi);
     const hint: RegExp = new RegExp(`(?:${label})`, 'i');
     if (inputs) {
       for (const input of inputs) {
-        const name: RegExpMatchArray | null = input.match(/\\bname=["']([^"']+)["']/i);
+        const name: RegExpMatchArray | null = input.match(/\bname=["']([^"']+)["']/i);
         if (name?.[1] && hint.test(input)) return name[1];
       }
     }
