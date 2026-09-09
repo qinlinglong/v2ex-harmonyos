@@ -654,7 +654,7 @@ struct TopicDetail {
                       Text(`${this.topic.views} 点击`).fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ left: 12 })
                     }
                   }.margin({ top: 7 })
-                }.margin({ left: 12 }).layoutWeight(1).alignItems(HorizontalAlign.Start)
+                }.margin({ left: 18 }).layoutWeight(1).alignItems(HorizontalAlign.Start)
               }.width('100%')
               Text(this.topic.title).fontSize(21).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
                 .lineHeight(30).margin({ top: 16 })

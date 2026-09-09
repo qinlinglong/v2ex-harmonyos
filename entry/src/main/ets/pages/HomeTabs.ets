@@ -59,6 +59,12 @@ struct HomeTabs {
 
   private contains(key: string): boolean { return this.selected.some((item: HomeTabOption) => item.key === key); }
 
+  private orderedItems(): HomeTabOption[] {
+    const selectedKeys: string[] = this.selected.map((item: HomeTabOption) => item.key);
+    const unselected: HomeTabOption[] = ALL_HOME_TABS.filter((item: HomeTabOption) => selectedKeys.indexOf(item.key) < 0);
+    return this.editing ? this.selected.concat(unselected) : ALL_HOME_TABS;
+  }
+
   private toggle(item: HomeTabOption): void {
     if (this.contains(item.key)) {
       if (this.selected.length <= 1) return;
@@ -94,13 +100,15 @@ struct HomeTabs {
         Column() {
           Text(this.editing ? '点击板块可添加或移除，使用箭头调整顺序' : '点击板块进入对应内容')
             .fontSize(13).fontColor(themeMutedText(this.darkMode)).width('100%').margin({ bottom: 12 })
-          ForEach(ALL_HOME_TABS, (item: HomeTabOption) => {
+          ForEach(this.orderedItems(), (item: HomeTabOption) => {
             Row() {
               Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? themePrimaryText(this.darkMode) : themeMutedText(this.darkMode)).layoutWeight(1)
               if (this.editing && this.contains(item.key)) {
                 Button('↑').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).margin({ right: 6 })
+                  .hitTestBehavior(HitTestMode.Block)
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), -1))
                 Button('↓').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).margin({ right: 6 })
+                  .hitTestBehavior(HitTestMode.Block)
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), 1))
               }
               Button(this.contains(item.key) ? (this.editing ? '移除' : '已添加') : '添加').fontSize(12).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).enabled(this.editing)

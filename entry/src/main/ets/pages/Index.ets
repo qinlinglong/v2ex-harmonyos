@@ -348,7 +348,7 @@ struct Index {
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
         Stack() {
-          Text('节点').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
+          Image($r('app.media.ic_nodes')).width(25).height(25).fillColor(themeAccentText(this.themeColor, this.darkMode))
         }.width(56).height(64).align(Alignment.Center).onClick(() => router.pushUrl({ url: 'pages/NavNodes' }))
         Stack() {
           Image($r('app.media.ic_mail')).width(24).height(24).fillColor(themeAccentText(this.themeColor, this.darkMode))
@@ -485,6 +485,11 @@ struct Index {
         }.width('100%').height('100%')
       }
     }.width('100%').height('100%')
+      .gesture(PanGesture({ direction: PanDirection.Horizontal, distance: 48 })
+        .onActionEnd((event: GestureEvent) => {
+          if (this.drawerOpen || Math.abs(event.offsetX) < 80) return;
+          this.shiftTab(event.offsetX < 0 ? 1 : -1);
+        }))
   }
 
   @Builder
