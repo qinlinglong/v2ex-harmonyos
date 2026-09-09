@@ -25,6 +25,8 @@ export interface V2exTopic {
   replies: number;
   last_modified: number;
   last_touched: number;
+  /** Human-readable last-reply time from rendered topic lists. */
+  lastTouchedLabel?: string;
   node?: V2exNode;
   member?: V2exMember;
   editable?: boolean;

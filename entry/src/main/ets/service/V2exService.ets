@@ -214,8 +214,11 @@ export class V2exService {
     }
   }
 
-  static async topics(kind: 'latest' | 'hot' = 'latest'): Promise<V2exTopic[]> {
-    const path: string = kind === 'hot' ? '/api/topics/hot.json?limit=100' : '/api/topics/latest.json?limit=100';
+  static async topics(kind: 'latest' | 'hot' = 'latest', page: number = 1): Promise<V2exTopic[]> {
+    const normalizedPage: number = Math.max(1, page);
+    const path: string = normalizedPage === 1
+      ? (kind === 'hot' ? '/api/topics/hot.json?limit=100' : '/api/topics/latest.json?limit=100')
+      : (kind === 'hot' ? `/?tab=hot&p=${normalizedPage}` : `/recent?p=${normalizedPage}`);
     try {
       const parsed: V2exTopic[] = JSON.parse(await V2exService.get(path)) as V2exTopic[];
       if (!Array.isArray(parsed)) throw new Error('主题接口响应格式错误');
@@ -228,7 +231,7 @@ export class V2exService {
     } catch (_) {
       // The public JSON feed can be rate-limited. Keep the home tab useful by
       // falling back to the same rendered pages used by the reference client.
-      const htmlPath: string = kind === 'hot' ? '/?tab=hot' : '/recent';
+      const htmlPath: string = kind === 'hot' ? `/?tab=hot${normalizedPage > 1 ? `&p=${normalizedPage}` : ''}` : `/recent${normalizedPage > 1 ? `?p=${normalizedPage}` : ''}`;
       return V2exService.parseRichTopicItems(await V2exService.get(htmlPath));
     }
   }
@@ -238,8 +241,11 @@ export class V2exService {
    * are rendered on the site home page rather than exposed through the public
    * JSON API, so parse the same HTML cells used by the reference client.
    */
-  static async topicsForTab(tab: string): Promise<V2exTopic[]> {
-    const path: string = tab === 'changes' ? '/changes' : `/?tab=${encodeURIComponent(tab)}`;
+  static async topicsForTab(tab: string, page: number = 1): Promise<V2exTopic[]> {
+    const normalizedPage: number = Math.max(1, page);
+    const path: string = tab === 'changes'
+      ? `/changes${normalizedPage > 1 ? `?p=${normalizedPage}` : ''}`
+      : `/?tab=${encodeURIComponent(tab)}${normalizedPage > 1 ? `&p=${normalizedPage}` : ''}`;
     const authenticated: boolean = tab === 'members';
     const html: string = await V2exService.get(path, authenticated);
     if (authenticated && !V2exService.signedInHtml(html)) throw new Error('请先登录');
@@ -733,13 +739,16 @@ export class V2exService {
         const nodeMatch: RegExpMatchArray | null = context.match(/class=["'][^"']*\bnode\b[^"']*["'][^>]*href=["']\/go\/([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i)
           ?? context.match(/href=["']\/go\/([^"']+)["'][^>]*class=["'][^"']*\bnode\b[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
         const countMatch: RegExpMatchArray | null = context.match(/class=["'][^"']*\bcount_(?:livid|orange)\b[^"']*["'][^>]*>([\d,]+)<\/a>/i);
+        const timeMatch: RegExpMatchArray | null = context.match(/<span[^>]+title=["']([^"']+)["'][^>]*>([^<]*(?:ago|前)[^<]*)<\/span>/i);
+        const parsedTouched: number = timeMatch ? Math.floor(Date.parse(timeMatch[1]) / 1000) : 0;
         const topic: V2exTopic = {
           id,
           title: V2exService.cleanHtml(match[2]),
           content: '',
           replies: countMatch ? Number(countMatch[1].replace(/,/g, '')) : 0,
           last_modified: 0,
-          last_touched: 0,
+          last_touched: parsedTouched > 0 ? parsedTouched : 0,
+          lastTouchedLabel: timeMatch ? V2exService.cleanHtml(timeMatch[2]) : undefined,
           member: memberMatch ? { username: V2exService.cleanHtml(memberMatch[2]), avatar_large: V2exService.assetUrl(avatarMatch?.[1] ?? '') } : undefined,
           node: nodeMatch ? { name: V2exService.cleanHtml(nodeMatch[1]), title: V2exService.cleanHtml(nodeMatch[2]) } : undefined
         } as V2exTopic;

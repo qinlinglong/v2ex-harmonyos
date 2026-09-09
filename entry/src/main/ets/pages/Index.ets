@@ -12,6 +12,19 @@ function relativeTime(unix: number): string {
   return `${Math.floor(seconds / 86400)}天前`;
 }
 
+function localizedTopicTime(label: string | undefined, unix: number): string {
+  if (!label || label.trim().length === 0) return relativeTime(unix);
+  const value: string = label.trim();
+  const minutes: RegExpMatchArray | null = value.match(/(\d+)\s*(?:mins?|minutes?|分钟)/i);
+  if (minutes) return `${minutes[1]}分钟前`;
+  const hours: RegExpMatchArray | null = value.match(/(\d+)\s*(?:hours?|小时)/i);
+  if (hours) return `${hours[1]}小时前`;
+  const days: RegExpMatchArray | null = value.match(/(\d+)\s*(?:days?|天)/i);
+  if (days) return `${days[1]}天前`;
+  if (/just now|刚刚/i.test(value)) return '刚刚';
+  return relativeTime(unix);
+}
+
 interface HomeTabItem {
   title: string;
   key: string;
@@ -61,6 +74,9 @@ struct Index {
   @State searchText: string = '';
   @State nodeQuery: string = '';
   @State tabs: HomeTabItem[] = DEFAULT_HOME_TABS.slice();
+  @State topicPage: number = 1;
+  @State loadingMoreTopics: boolean = false;
+  @State noMoreTopics: boolean = false;
 
   aboutToAppear(): void {
     this.readHomeTabs();
@@ -111,20 +127,24 @@ struct Index {
     if (this.loading) return;
     this.loading = true;
     this.errorText = '';
-    try { this.topics = await V2exService.topics(kind); }
+    this.topicPage = 1;
+    this.noMoreTopics = false;
+    try { this.topics = await V2exService.topics(kind, 1); }
     catch (_) { this.errorText = '暂时无法连接 V2EX，请稍后重试'; }
     finally { this.loading = false; }
   }
 
   private selectTab(index: number): void {
     this.selectedTab = index;
+    this.topicPage = 1;
+    this.noMoreTopics = false;
     const tab: HomeTabItem = this.activeTab();
     if (tab.type === 'latest') this.loadTopics('latest');
     else if (tab.type === 'hot') this.loadTopics('hot');
     else if (tab.type === 'nodes' && this.nodes.length === 0) this.loadNodes();
     else if (tab.type === 'xna' && this.xnaTopics.length === 0) this.loadXna();
-    else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
-    else if (tab.type === 'members') this.loadTopicsForTab(tab.key);
+    else if (tab.type === 'tab') this.loadTopicsForTab(tab.key, 1);
+    else if (tab.type === 'members') this.loadTopicsForTab(tab.key, 1);
     else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
   }
 
@@ -142,13 +162,31 @@ struct Index {
     finally { this.loading = false; }
   }
 
-  private async loadTopicsForTab(name: string): Promise<void> {
+  private async loadTopicsForTab(name: string, page: number = 1): Promise<void> {
     if (this.loading) return;
     this.loading = true;
     this.errorText = '';
-    try { this.topics = await V2exService.topicsForTab(name); }
+    try { this.topics = await V2exService.topicsForTab(name, page); this.topicPage = page; }
     catch (_) { this.errorText = '板块内容加载失败，请稍后重试'; }
     finally { this.loading = false; }
+  }
+
+  private async loadMoreHomeTopics(): Promise<void> {
+    if (this.loading || this.loadingMoreTopics || this.noMoreTopics || !this.isTopicTab()) return;
+    const tab: HomeTabItem = this.activeTab();
+    if (tab.type === 'nodes' || tab.type === 'xna') return;
+    this.loadingMoreTopics = true;
+    try {
+      const nextPage: number = this.topicPage + 1;
+      let next: V2exTopic[] = [];
+      if (tab.type === 'hot') next = await V2exService.topics('hot', nextPage);
+      else if (tab.type === 'latest') next = await V2exService.topics('latest', nextPage);
+      else next = await V2exService.topicsForTab(tab.key, nextPage);
+      const unique: V2exTopic[] = next.filter((item: V2exTopic) => this.topics.findIndex((old: V2exTopic) => old.id === item.id) < 0);
+      if (unique.length === 0) this.noMoreTopics = true;
+      else { this.topics = this.topics.concat(unique); this.topicPage = nextPage; }
+    } catch (_) { /* retain the current page on transient failures */ }
+    finally { this.loadingMoreTopics = false; }
   }
 
   private visibleTopics(): V2exTopic[] {
@@ -242,7 +280,7 @@ struct Index {
             Text(topic.member?.username ?? '匿名').fontSize(12).fontColor(themeMutedText(this.darkMode))
               .onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
               .hitTestBehavior(HitTestMode.Block)
-            Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(11).fontColor(themeMutedText(this.darkMode)).margin({ top: 3 })
+            Text(`${localizedTopicTime(topic.lastTouchedLabel, topic.last_touched)} · ${topic.replies} 回复`).fontSize(11).fontColor(themeMutedText(this.darkMode)).margin({ top: 3 })
           }.alignItems(HorizontalAlign.Start).margin({ left: 8 })
           Blank()
           Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode))
@@ -381,6 +419,7 @@ struct Index {
       } else {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+            .onReachEnd(() => this.loadMoreHomeTopics())
             .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
           if (state === RefreshStatus.Refresh) {
