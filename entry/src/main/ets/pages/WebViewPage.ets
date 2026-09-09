@@ -18,6 +18,10 @@ struct WebViewPage {
     this.title = String(params?.['title'] ?? '浏览器');
   }
 
+  aboutToDisappear(): void {
+    try { webview.WebCookieManager.saveCookieSync(); } catch (_) { /* best effort */ }
+  }
+
   build() {
     Column() {
       Row() {
