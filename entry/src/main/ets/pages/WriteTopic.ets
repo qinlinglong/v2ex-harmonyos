@@ -2,7 +2,7 @@ import { router } from '@kit.ArkUI';
 import { picker } from '@kit.CoreFileKit';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeBodyText, themeInputBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
 
 interface PreviewPart { kind: string; value: string; label?: string; }
 
@@ -154,20 +154,20 @@ struct WriteTopic {
         Image($r('app.media.ic_image')).width(22).height(22).fillColor(this.themeColor).margin({ right: 16 })
           .onClick(() => this.insertImage())
         Image($r('app.media.ic_send')).width(22).height(22)
-          .fillColor(this.submitting || (this.editing && !this.editAllowed) ? '#9AA0A6' : this.themeColor)
+          .fillColor(this.submitting || (this.editing && !this.editAllowed) ? themeMutedText(this.darkMode) : this.themeColor)
           .opacity(this.submitting || (this.editing && !this.editAllowed) ? 0.5 : 1)
           .onClick(() => { if (!this.submitting) this.submit(); })
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(themeSurface(this.darkMode))
       Scroll() {
         Column({ space: 14 }) {
           if (!this.preview) {
-            TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
+            TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
               .onChange((value: string) => this.title = value)
-            TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
+            TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
               .onChange((value: string) => this.node = value)
             if (!this.editing && this.nodeSuggestions().length > 0) {
               Column() {
-                Text('节点建议').fontSize(13).fontColor('#8A97A6').width('100%')
+                Text('节点建议').fontSize(13).fontColor(themeMutedText(this.darkMode)).width('100%')
                 Scroll() {
                   Row() {
                     ForEach(this.nodeSuggestions(), (item: V2exNode) => Text(`${item.title}  ${item.name}`).fontSize(13).fontColor(this.themeColor)

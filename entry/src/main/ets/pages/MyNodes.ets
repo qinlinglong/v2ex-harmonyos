@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -68,7 +68,7 @@ struct MyNodes {
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0) Column() {
-        Text(this.status).fontSize(15).fontColor('#7B8794')
+        Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode))
         Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => router.pushUrl({ url: 'pages/Login' }))
       }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else {

@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeInputBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -67,7 +67,7 @@ struct NavNodes {
         }
         Text(node.title).fontSize(14).fontColor(themePrimaryText(this.darkMode)).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 8 })
-        Text(node.name).fontSize(11).fontColor('#8A97A6').maxLines(1)
+        Text(node.name).fontSize(11).fontColor(themeMutedText(this.darkMode)).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 3 })
       }.width('100%').padding({ top: 12, bottom: 12 }).backgroundColor(themeSurface(this.darkMode))
     }.onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
@@ -80,19 +80,19 @@ struct NavNodes {
         Text('节点导航').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
       }.height(60).width('100%').padding({ right: 10 }).backgroundColor(themeSurface(this.darkMode))
-      TextInput({ placeholder: '搜索节点', text: this.query }).width('92%').height(44).fontSize(14).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
+      TextInput({ placeholder: '搜索节点', text: this.query }).width('92%').height(44).fontSize(14).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
         .margin({ top: 10, bottom: 8 }).onChange((value: string) => this.query = value)
       Scroll() {
         Row() {
           ForEach(this.groups, (item: string, index: number) => Text(item).fontSize(14)
-            .fontColor(this.group === index ? this.themeColor : '#7B8794')
+            .fontColor(this.group === index ? this.themeColor : themeSecondaryText(this.darkMode))
             .padding({ left: 14, right: 14, top: 8, bottom: 8 })
-            .backgroundColor(this.group === index ? '#EAF1F8' : Color.Transparent)
+            .backgroundColor(this.group === index ? (this.darkMode ? '#26313D' : '#EAF1F8') : Color.Transparent)
             .borderRadius(16).margin({ right: 8 }).onClick(() => this.group = index), (item: string) => item)
         }.padding({ left: 18, right: 18 })
       }.scrollable(ScrollDirection.Horizontal).width('100%').height(42)
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 30 })
-      else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 36 })
+      else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 36 })
       else Grid() {
         ForEach(this.visibleNodes(), (node: V2exNode) => this.nodeCard(node), (node: V2exNode) => node.name)
       }.columnsTemplate('1fr 1fr 1fr').rowsGap(1).columnsGap(1).layoutWeight(1).width('100%').padding(1)

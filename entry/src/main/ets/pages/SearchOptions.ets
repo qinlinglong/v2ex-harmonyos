@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themeInputBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -32,9 +32,9 @@ struct SearchOptions {
             .width('100%').padding(18).backgroundColor(themeSurface(this.darkMode)).margin({ top: 1 })
         }
         Text('发帖日期范围（可选）').fontSize(17).fontWeight(FontWeight.Medium).fontColor(themePrimaryText(this.darkMode)).width('100%').margin({ top: 22, bottom: 14 })
-        TextInput({ placeholder: '起始日期 YYYY-MM-DD', text: this.gte }).width('100%').height(46).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
+        TextInput({ placeholder: '起始日期 YYYY-MM-DD', text: this.gte }).width('100%').height(46).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
           .onChange((value: string) => this.gte = value)
-        TextInput({ placeholder: '结束日期 YYYY-MM-DD', text: this.lte }).width('100%').height(46).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
+        TextInput({ placeholder: '结束日期 YYYY-MM-DD', text: this.lte }).width('100%').height(46).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
           .margin({ top: 1 }).onChange((value: string) => this.lte = value)
         Text('搜索服务').fontSize(17).fontWeight(FontWeight.Medium).fontColor(themePrimaryText(this.darkMode)).width('100%').margin({ top: 22, bottom: 14 })
         Row() { Text('Sov2ex').fontColor(themePrimaryText(this.darkMode)).layoutWeight(1); Button(this.source === 'sov2ex' ? '已选择' : '选择').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.source = 'sov2ex') }

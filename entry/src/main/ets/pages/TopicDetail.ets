@@ -4,6 +4,7 @@ import { pasteboard } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
+import { themeMutedText, themeSecondaryText } from '../common/Theme';
 
 interface MarkdownTable { headers: string[]; rows: string[][]; }
 interface DetailPart { kind: string; value: string; label?: string; table?: MarkdownTable; }
@@ -618,7 +619,7 @@ struct TopicDetail {
       if (this.loading) {
         LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 32 })
       } else if (this.errorText.length > 0) {
-        Text(this.errorText).fontSize(15).fontColor('#7B8794').margin({ top: 40 })
+        Text(this.errorText).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 40 })
       } else if (this.topic) {
         Column() {
           Scroll() {
@@ -648,9 +649,9 @@ struct TopicDetail {
                     }
                   }
                   Row() {
-                    Text(`${Math.max(this.topic.replies, this.replies.length)} 条回复`).fontSize(13).fontColor('#7B8794')
+                    Text(`${Math.max(this.topic.replies, this.replies.length)} 条回复`).fontSize(13).fontColor(themeSecondaryText(this.darkMode))
                     if (this.topic.views !== undefined) {
-                      Text(`${this.topic.views} 点击`).fontSize(13).fontColor('#7B8794').margin({ left: 12 })
+                      Text(`${this.topic.views} 点击`).fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ left: 12 })
                     }
                   }.margin({ top: 7 })
                 }.margin({ left: 12 }).layoutWeight(1).alignItems(HorizontalAlign.Start)
@@ -732,7 +733,7 @@ struct TopicDetail {
                 Row() {
                   Text(this.favorited ? '★' : '☆').fontSize(18).fontColor(this.favorited ? '#D69E00' : this.themeColor)
                   if ((this.topic.likes ?? 0) > 0) {
-                    Text(`${this.topic.likes}`).fontSize(13).fontColor(this.favorited ? '#D69E00' : '#66727F').margin({ left: 3 })
+                    Text(`${this.topic.likes}`).fontSize(13).fontColor(this.favorited ? '#D69E00' : themeSecondaryText(this.darkMode)).margin({ left: 3 })
                   }
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
                   .backgroundColor(this.darkMode ? (this.favorited ? '#5C4A18' : '#26313D') : (this.favorited ? '#FFF7D6' : '#F3F6FA')).borderRadius(21)
@@ -741,14 +742,14 @@ struct TopicDetail {
                   Row() {
                     Image($r('app.media.ic_heart')).width(18).height(18).fillColor(this.thanked ? '#D05A73' : this.themeColor)
                     if ((this.topic.thanks ?? 0) > 0) {
-                      Text(`${this.topic.thanks}`).fontSize(13).fontColor(this.thanked ? '#D05A73' : '#66727F').margin({ left: 3 })
+                      Text(`${this.topic.thanks}`).fontSize(13).fontColor(this.thanked ? '#D05A73' : themeSecondaryText(this.darkMode)).margin({ left: 3 })
                     }
                   }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
                     .backgroundColor(this.darkMode ? (this.thanked ? '#5A2634' : '#26313D') : (this.thanked ? '#FFF0F3' : '#F3F6FA')).borderRadius(21)
                     .onClick(() => this.action('thank'))
                 }
                 Row() {
-                  Text('▲').fontSize(15).fontColor(this.voteState === 1 ? this.themeColor : '#66727F')
+                  Text('▲').fontSize(15).fontColor(this.voteState === 1 ? this.themeColor : themeSecondaryText(this.darkMode))
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
                   .backgroundColor(this.darkMode ? (this.voteState === 1 ? '#243C58' : '#26313D') : (this.voteState === 1 ? '#EAF3FF' : '#F3F6FA')).borderRadius(21)
                   .onClick(async () => {
@@ -756,7 +757,7 @@ struct TopicDetail {
                     if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
                   })
                 Row() {
-                  Text('▼').fontSize(15).fontColor(this.voteState === -1 ? '#66727F' : '#8A97A6')
+                  Text('▼').fontSize(15).fontColor(this.voteState === -1 ? themeSecondaryText(this.darkMode) : themeMutedText(this.darkMode))
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
                   .backgroundColor(this.darkMode ? (this.voteState === -1 ? '#36404B' : '#26313D') : (this.voteState === -1 ? '#E9EDF2' : '#F3F6FA')).borderRadius(21)
                   .onClick(async () => {
@@ -768,7 +769,7 @@ struct TopicDetail {
             Row() {
               Text(`回复（${Math.max(this.topic.replies, this.replies.length)}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
               Blank()
-              Text(this.replyOrder === 0 ? '默认排序' : '最新在前').fontSize(13).fontColor('#7B8794')
+              Text(this.replyOrder === 0 ? '默认排序' : '最新在前').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
                 .onClick(() => this.replyOrder = this.replyOrder === 0 ? 1 : 0)
             }.width('100%').padding({ left: 18, right: 18, top: 20, bottom: 12 })
             ForEach(this.orderedReplies(), (reply: V2exReply, index: number) => {
@@ -790,11 +791,11 @@ struct TopicDetail {
                       .border({ width: 1, color: this.themeColor }).borderRadius(3).margin({ left: 4 })
                   }
                   Blank()
-                  Text(`#${this.replyFloor(reply, index)}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 10 })
+                  Text(`#${this.replyFloor(reply, index)}`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ right: 10 })
                   if (reply.createdLabel && reply.createdLabel.length > 0) {
-                    Text(reply.createdLabel).fontSize(12).fontColor('#9AA0A6')
+                    Text(reply.createdLabel).fontSize(12).fontColor(themeMutedText(this.darkMode))
                   } else if (reply.created > 0) {
-                    Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
+                    Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor(themeMutedText(this.darkMode))
                   }
                 }.width('100%')
                 if (this.editingReplyId === reply.id) {
@@ -803,7 +804,7 @@ struct TopicDetail {
                   Row() {
                     if (this.editingReplyStatus.length > 0) Text(this.editingReplyStatus).fontSize(12).fontColor(this.themeColor)
                     Blank()
-                    Text('取消').fontSize(13).fontColor('#7B8794').margin({ right: 16 }).onClick(() => this.editingReplyId = 0)
+                    Text('取消').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ right: 16 }).onClick(() => this.editingReplyId = 0)
                     Button('保存').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.saveReplyEdit())
                   }.width('100%').margin({ top: 8 })
                 } else {
@@ -863,7 +864,7 @@ struct TopicDetail {
                         .fontSize(13).fontColor(this.themeColor)
                         .onClick(() => { if (!this.isSelf(reply.member?.username)) this.thankReply(reply.id); })
                     }
-                    Text('回复').fontSize(13).fontColor('#7B8794').margin({ left: 16 }).onClick(() => {
+                    Text('回复').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ left: 16 }).onClick(() => {
                       if (reply.member?.username) {
                         this.replyText = `@${reply.member.username} `;
                         this.replyComposerOpen = true;
@@ -875,10 +876,10 @@ struct TopicDetail {
                     }
                     Blank()
                     if (!this.isSelf(reply.member?.username)) {
-                      Text('隐藏').fontSize(13).fontColor('#9AA0A6').margin({ right: 16 }).onClick(() => this.ignoreReply(reply.id))
+                      Text('隐藏').fontSize(13).fontColor(themeMutedText(this.darkMode)).margin({ right: 16 }).onClick(() => this.ignoreReply(reply.id))
                     }
                     if (this.canEditReply(reply)) {
-                      Text('编辑').fontSize(13).fontColor('#7B8794').onClick(() => this.beginEditReply(reply))
+                      Text('编辑').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).onClick(() => this.beginEditReply(reply))
                     }
                   }.width('100%').margin({ top: 10 })
                 }
@@ -887,7 +888,7 @@ struct TopicDetail {
             }, (reply: V2exReply) => `${reply.id}`)
             if (this.replies.length > 0) {
               Row() {
-                if (this.replyMoreStatus.length > 0) Text(this.replyMoreStatus).fontSize(13).fontColor('#8A97A6')
+                if (this.replyMoreStatus.length > 0) Text(this.replyMoreStatus).fontSize(13).fontColor(themeMutedText(this.darkMode))
                 if (!this.noMoreReplies) Button(this.loadingMoreReplies ? '加载中…' : '加载更多回复').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White)
                   .onClick(() => this.loadMoreReplies())
               }.width('100%').padding(18).justifyContent(FlexAlign.Center)
@@ -906,7 +907,7 @@ struct TopicDetail {
                 Blank()
                 Text('@ 回复对象').fontSize(13).fontColor(this.themeColor).margin({ right: 14 })
                   .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
-                Text('取消').fontSize(13).fontColor('#7B8794').margin({ right: 14 })
+                Text('取消').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ right: 14 })
                   .onClick(() => { if (!this.replying) this.replyComposerOpen = false; })
                 Button(this.replying ? '发送中' : '发送').height(36).backgroundColor(this.themeColor).fontColor(Color.White)
                   .fontSize(13).onClick(() => this.submitReply())
@@ -915,7 +916,7 @@ struct TopicDetail {
           } else {
             Row() {
               Text(this.replyStatus.length > 0 ? this.replyStatus : '写下你的回复…').fontSize(14)
-                .fontColor(this.replyStatus.length > 0 ? this.themeColor : '#8A97A6').layoutWeight(1).maxLines(1)
+                .fontColor(this.replyStatus.length > 0 ? this.themeColor : themeMutedText(this.darkMode)).layoutWeight(1).maxLines(1)
               Text('回复').fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
             }.width('100%').height(48).padding({ left: 18, right: 18 }).backgroundColor(this.surface())
               .onClick(() => this.replyComposerOpen = true)

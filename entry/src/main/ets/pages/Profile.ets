@@ -1,6 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exMember, V2exMemberRelations, V2exReply, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
+import { themeMutedText, themeSecondaryText } from '../common/Theme';
 
 function decodeHtmlEntities(value: string): string {
   return value.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
@@ -153,11 +154,11 @@ struct Profile {
             .hitTestBehavior(HitTestMode.Block)
         Column() {
           Text(topic.member?.username ?? '匿名').fontSize(12)
-            .fontColor('#8A97A6')
+            .fontColor(themeMutedText(this.darkMode))
           Text(topic.title).fontSize(16).fontColor(this.primaryText()).maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 3 })
           Text(`${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12)
-            .fontColor('#8A97A6').margin({ top: 5 })
+            .fontColor(themeMutedText(this.darkMode)).margin({ top: 5 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start).margin({ left: 10 })
       }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(this.surface())
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
@@ -172,7 +173,7 @@ struct Profile {
         Text(replyPreview(reply.content)).fontSize(15).fontColor(this.bodyText()).lineHeight(23).maxLines(4)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).copyOption(CopyOptions.LocalDevice)
           .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
-        Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
+        Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 7 })
       }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
     }.onClick(() => {
       const topicId: number = this.replyTopicId(reply);
@@ -197,7 +198,7 @@ struct Profile {
                 if (this.member.avatar_large) Image(this.member.avatar_large).width(76).height(76).borderRadius(38).objectFit(ImageFit.Cover)
               }
               Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).margin({ top: 12 })
-              Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor('#7B8794').margin({ top: 6 })
+              Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 6 })
               if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor(this.themeColor).margin({ top: 6 })
                 .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
               if (!this.isSelf()) {
@@ -209,9 +210,9 @@ struct Profile {
               if (this.status.length > 0 && this.status !== '加载中…') Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })
             }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(this.surface())
             Row() {
-              Text('主题').fontColor(this.tab === 0 ? this.themeColor : '#7B8794').fontSize(15)
+              Text('主题').fontColor(this.tab === 0 ? this.themeColor : themeSecondaryText(this.darkMode)).fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 0)
-              Text('回复').fontColor(this.tab === 1 ? this.themeColor : '#7B8794').fontSize(15)
+              Text('回复').fontColor(this.tab === 1 ? this.themeColor : themeSecondaryText(this.darkMode)).fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 1)
             }.width('100%').height(52).backgroundColor(this.surface())
             if (this.tab === 0) {
@@ -224,7 +225,7 @@ struct Profile {
           }.width('100%')
         }.layoutWeight(1).width('100%')
       } else {
-        Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 48 })
+        Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 48 })
       }
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(this.pageBackground())
   }

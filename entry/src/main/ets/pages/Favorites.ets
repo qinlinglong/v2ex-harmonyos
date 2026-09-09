@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -78,10 +78,10 @@ struct Favorites {
           }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
             .hitTestBehavior(HitTestMode.Block)
         Column() {
-          Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6')
+            Text(topic.member?.username ?? '匿名').fontSize(12).fontColor(themeMutedText(this.darkMode))
           Text(topic.title).fontSize(16).fontColor(themePrimaryText(this.darkMode)).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
             .margin({ top: 3 })
-          Text(`${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 5 })
+          Text(`${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 5 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start).margin({ left: 10 })
       }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(themeSurface(this.darkMode))
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
@@ -96,7 +96,7 @@ struct Favorites {
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0 && this.topics.length === 0) Column() {
-        Text(this.status).fontSize(15).fontColor('#7B8794')
+        Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode))
         Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => router.pushUrl({ url: 'pages/Login' }))
       }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else {
@@ -104,7 +104,7 @@ struct Favorites {
           List({ space: 1 }) {
             ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
             ListItem() {
-              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
+              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor(themeMutedText(this.darkMode))
               if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadMore())
             }
           }.onReachEnd(() => this.loadMore())

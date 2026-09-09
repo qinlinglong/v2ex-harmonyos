@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exReply } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeBodyText, themeInputBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -54,10 +54,10 @@ struct SearchReplyMember {
         Text('选择回复对象').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).layoutWeight(1)
         Text('确定').fontSize(15).fontColor(this.themeColor).onClick(() => this.confirm())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(themeSurface(this.darkMode))
-      TextInput({ placeholder: '搜索用户名或回复内容', text: this.query }).width('100%').height(48).margin({ top: 1 }).padding(14).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
+      TextInput({ placeholder: '搜索用户名或回复内容', text: this.query }).width('100%').height(48).margin({ top: 1 }).padding(14).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
         .onChange((value: string) => this.query = value).backgroundColor(themeSurface(this.darkMode))
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
-      else if (this.status.length > 0 || this.visibleReplies().length === 0) Text(this.status || '暂无搜索结果').fontSize(15).fontColor('#8A97A6').margin({ top: 42 })
+      else if (this.status.length > 0 || this.visibleReplies().length === 0) Text(this.status || '暂无搜索结果').fontSize(15).fontColor(themeMutedText(this.darkMode)).margin({ top: 42 })
       else List({ space: 1 }) {
         ForEach(this.visibleReplies(), (reply: V2exReply) => ListItem() {
           Row() {

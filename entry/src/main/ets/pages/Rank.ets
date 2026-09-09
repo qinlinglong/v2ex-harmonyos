@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exMember } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -33,15 +33,15 @@ struct Rank {
         Blank()
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Row() {
-        Text('财富排行').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : '#7B8794')
+        Text('财富排行').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : themeSecondaryText(this.darkMode))
           .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => { if (this.mode !== 0) { this.mode = 0; this.load(); } })
-        Text('消费排行').fontSize(15).fontColor(this.mode === 1 ? this.themeColor : '#7B8794')
+        Text('消费排行').fontSize(15).fontColor(this.mode === 1 ? this.themeColor : themeSecondaryText(this.darkMode))
           .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => { if (this.mode !== 1) { this.mode = 1; this.load(); } })
       }.height(48).width('100%').backgroundColor(themeSurface(this.darkMode))
       if (this.loading) {
         LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       } else if (this.status.length > 0) {
-        Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 48 })
+        Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 48 })
       } else {
         List({ space: 1 }) {
           ForEach(this.members, (member: V2exMember, index: number) => ListItem() {

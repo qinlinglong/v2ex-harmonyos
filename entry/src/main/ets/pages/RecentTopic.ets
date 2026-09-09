@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeBackground, themeInputBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -89,10 +89,10 @@ struct RecentTopic {
           }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
             .hitTestBehavior(HitTestMode.Block)
         Column() {
-          Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6')
+            Text(topic.member?.username ?? '匿名').fontSize(12).fontColor(themeMutedText(this.darkMode))
           Text(topic.title).fontSize(16).fontColor(themePrimaryText(this.darkMode)).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
             .margin({ top: 3 })
-          Text(`${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 5 })
+          Text(`${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 5 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start).margin({ left: 10 })
       }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(themeSurface(this.darkMode))
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
@@ -105,11 +105,11 @@ struct RecentTopic {
         TextInput({ placeholder: '搜索最近浏览主题', text: this.query }).layoutWeight(1).height(40).fontSize(14)
           .backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).padding({ left: 12, right: 12 }).margin({ right: 10 })
           .onChange((value: string) => this.query = value)
-        Text('✕').fontSize(18).fontColor('#7B8794').width(42).height(40).textAlign(TextAlign.Center)
+        Text('✕').fontSize(18).fontColor(themeSecondaryText(this.darkMode)).width(42).height(40).textAlign(TextAlign.Center)
           .onClick(() => this.clearAll())
       }.height(64).width('100%').padding({ left: 16, right: 12 }).backgroundColor(themeSurface(this.darkMode))
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
-      else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 42 })
+      else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 42 })
       else {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`) }

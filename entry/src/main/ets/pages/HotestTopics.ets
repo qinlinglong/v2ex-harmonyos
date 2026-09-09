@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 function isoDay(offset: number): string {
   const value: Date = new Date(Date.now() + offset * 86400000);
@@ -75,7 +75,7 @@ struct HotestTopics {
         Text(`${index + 1}`).fontSize(18).fontWeight(FontWeight.Bold).fontColor('#D07A3A').width(40).textAlign(TextAlign.Center)
         Column() {
           Text(topic.title).fontSize(16).fontColor(themePrimaryText(this.darkMode)).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text(`${topic.member?.username ?? '匿名'} · ${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 7 })
+          Text(`${topic.member?.username ?? '匿名'} · ${topic.node?.title ?? 'V2EX'} · ${topic.replies} 回复`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 7 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start)
       }.width('100%').padding({ left: 12, right: 18, top: 15, bottom: 15 }).backgroundColor(themeSurface(this.darkMode))
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: topic.id } }))
@@ -95,7 +95,7 @@ struct HotestTopics {
           .onClick(() => this.shiftDate(1))
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
-      else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor('#7B8794').margin({ top: 42 })
+      else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 42 })
       else Refresh({ refreshing: this.loading }) {
         List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic, index: number) => this.row(topic, index), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')
       }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })

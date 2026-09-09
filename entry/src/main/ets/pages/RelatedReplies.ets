@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exReply } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeBodyText, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeBodyText, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 interface ReplyReference {
   username: string;
@@ -135,30 +135,30 @@ struct RelatedReplies {
         Blank()
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Row() {
-        Text(this.relatedOnly ? '智能模式' : '显示全部回复').fontSize(14).fontColor('#7B8794').layoutWeight(1)
+        Text(this.relatedOnly ? '智能模式' : '显示全部回复').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).layoutWeight(1)
         Button(this.relatedOnly ? '查看全部' : '智能模式').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.relatedOnly = !this.relatedOnly)
       }.width('100%').padding(16).backgroundColor(themeSurface(this.darkMode)).margin({ top: 1 })
       if (this.referenceNames().length > 1) {
         Scroll() {
           Row({ space: 18 }) {
             ForEach(this.referenceNames(), (name: string) => {
-              Text(`@${name}`).fontSize(14).fontColor(this.selectedReference.toLowerCase() === name.toLowerCase() || (this.selectedReference.length === 0 && name === this.referenceNames()[0]) ? this.themeColor : '#7B8794')
+              Text(`@${name}`).fontSize(14).fontColor(this.selectedReference.toLowerCase() === name.toLowerCase() || (this.selectedReference.length === 0 && name === this.referenceNames()[0]) ? this.themeColor : themeSecondaryText(this.darkMode))
                 .onClick(() => this.selectedReference = name)
             }, (name: string) => `reference-${name}`)
           }.padding({ left: 16, right: 16, top: 10, bottom: 10 })
         }.scrollable(ScrollDirection.Horizontal).width('100%').backgroundColor(themeSurface(this.darkMode))
       }
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
-      else if (this.visibleReplies().length === 0) Text('没有检测到关联回复').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
+      else if (this.visibleReplies().length === 0) Text('没有检测到关联回复').fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 48 })
       else List({ space: 1 }) {
         ForEach(this.visibleReplies(), (reply: V2exReply, index: number) => ListItem() {
           Column() {
             Row() {
               Text(reply.member?.username ?? '匿名').fontSize(14).fontColor(this.themeColor)
               Blank()
-              Text(`#${this.replyFloor(reply, index)}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 12 })
-              if (reply.createdLabel && reply.createdLabel.length > 0) Text(reply.createdLabel).fontSize(12).fontColor('#9AA0A6')
-              if ((reply.thanks ?? 0) > 0) Text(`${reply.thanks} 感谢`).fontSize(12).fontColor('#9AA0A6').margin({ left: 8 })
+              Text(`#${this.replyFloor(reply, index)}`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ right: 12 })
+              if (reply.createdLabel && reply.createdLabel.length > 0) Text(reply.createdLabel).fontSize(12).fontColor(themeMutedText(this.darkMode))
+              if ((reply.thanks ?? 0) > 0) Text(`${reply.thanks} 感谢`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ left: 8 })
             }.width('100%')
             Text(reply.content).fontSize(15).fontColor(themeBodyText(this.darkMode)).lineHeight(23).margin({ top: 8 })
             Text('回复').fontSize(13).fontColor(this.themeColor).margin({ top: 10 }).onClick(() => this.replyTo(reply))

@@ -1,6 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
+import { themeMutedText, themeSecondaryText } from '../common/Theme';
 
 function age(unix: number): string {
   if (!unix) return '';
@@ -118,11 +119,11 @@ struct NodeTopics {
           }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
             .hitTestBehavior(HitTestMode.Block)
         Column() {
-          Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6')
+          Text(topic.member?.username ?? '匿名').fontSize(12).fontColor(themeMutedText(this.darkMode))
           Text(topic.title).fontSize(16).fontColor(this.primaryText()).maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 3 })
           Text(`${age(topic.last_touched)} · ${topic.replies} 回复`)
-            .fontSize(12).fontColor('#8A97A6').margin({ top: 5 })
+            .fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 5 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start).margin({ left: 10 })
       }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 })
         .backgroundColor(this.surface())
@@ -136,7 +137,7 @@ struct NodeTopics {
           .onClick(() => router.back())
         Column() {
           Text(titleOrName(this.title, this.name)).fontSize(19).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
-          Text(this.name).fontSize(12).fontColor('#8A97A6').margin({ top: 2 })
+          Text(this.name).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 2 })
         }.alignItems(HorizontalAlign.Start)
         Blank()
         Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
@@ -146,7 +147,7 @@ struct NodeTopics {
         LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 36 })
       } else if (this.status.length > 0 && this.topics.length === 0) {
         Column() {
-          Text(this.status).fontSize(15).fontColor('#7B8794')
+          Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode))
           Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 12 }).onClick(() => this.load())
         }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       } else {
@@ -154,7 +155,7 @@ struct NodeTopics {
           List({ space: 1 }) {
             ForEach(this.topics, (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`)
             ListItem() {
-              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
+              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor(themeMutedText(this.darkMode))
               if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadMore())
             }.width('100%').padding(18).align(Alignment.Center)
           }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMore())

@@ -1,5 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
+import { themeMutedText } from '../common/Theme';
 
 @Entry
 @Component
@@ -74,9 +75,9 @@ struct Settings {
             .margin({ right: 14 }).border({ width: this.themeColor === color ? 3 : 0, color: Color.White })
             .onClick(() => this.themeColor = color), (color: string) => color)
         }.margin({ top: 18 })
-        Text('主题会保存在本机，下次启动继续使用。').fontSize(13).fontColor('#8A97A6').margin({ top: 18 })
+        Text('主题会保存在本机，下次启动继续使用。').fontSize(13).fontColor(themeMutedText(this.darkMode)).margin({ top: 18 })
         Row() {
-          TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(44).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
+          TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(44).fontColor(this.primaryText()).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
             .onChange((value: string) => this.customColor = value)
           Button('应用').margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => {
             const value: string = this.customColor.trim();
@@ -126,7 +127,7 @@ struct Settings {
         Row() { Text('域名配置').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('V2EX').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ConfigureDomain' }))
-        Row() { Text('当前版本').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('1.0.0').fontSize(14).fontColor('#8A97A6') }
+        Row() { Text('当前版本').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('1.0.0').fontSize(14).fontColor(themeMutedText(this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
           Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('退出').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => {

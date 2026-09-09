@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -48,19 +48,19 @@ struct BlackList {
           .onClick(() => this.tab === 0 ? this.clearUsers() : this.clearTopics())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(themeSurface(this.darkMode))
       Row() {
-        Text('屏蔽用户').fontSize(15).fontColor(this.tab === 0 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center)
+        Text('屏蔽用户').fontSize(15).fontColor(this.tab === 0 ? this.themeColor : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center)
           .onClick(() => this.tab = 0)
-        Text('忽略主题').fontSize(15).fontColor(this.tab === 1 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center)
+        Text('忽略主题').fontSize(15).fontColor(this.tab === 1 ? this.themeColor : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center)
           .onClick(() => this.tab = 1)
       }.height(50).width('100%').backgroundColor(themeSurface(this.darkMode))
       if (this.tab === 0) {
-        if (this.users.length === 0) Text('暂无屏蔽用户').fontSize(15).fontColor('#8A97A6').margin({ top: 42 })
+        if (this.users.length === 0) Text('暂无屏蔽用户').fontSize(15).fontColor(themeMutedText(this.darkMode)).margin({ top: 42 })
         else List({ space: 1 }) { ForEach(this.users, (username: string) => ListItem() {
           Row() { Text(username).fontSize(16).layoutWeight(1); Text('查看资料').fontSize(13).fontColor(this.themeColor) }
             .width('100%').padding(16).backgroundColor(themeSurface(this.darkMode))
         }.onClick(() => router.pushUrl({ url: 'pages/Profile', params: { username } })), (username: string) => username) }.layoutWeight(1).width('100%')
       } else {
-        if (this.topics.length === 0) Text('暂无忽略主题').fontSize(15).fontColor('#8A97A6').margin({ top: 42 })
+        if (this.topics.length === 0) Text('暂无忽略主题').fontSize(15).fontColor(themeMutedText(this.darkMode)).margin({ top: 42 })
         else List({ space: 1 }) { ForEach(this.topics, (id: number) => ListItem() {
           Row() { Text(`主题 #${id}`).fontSize(16).layoutWeight(1); Text('查看').fontSize(13).fontColor(this.themeColor) }
             .width('100%').padding(16).backgroundColor(themeSurface(this.darkMode))

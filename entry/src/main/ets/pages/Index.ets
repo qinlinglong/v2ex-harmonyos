@@ -1,6 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
+import { themeMutedText, themeSecondaryText } from '../common/Theme';
 
 function relativeTime(unix: number): string {
   if (!unix) return '';
@@ -238,10 +239,10 @@ struct Index {
           }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
             .hitTestBehavior(HitTestMode.Block)
           Column() {
-            Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6')
+            Text(topic.member?.username ?? '匿名').fontSize(12).fontColor(themeMutedText(this.darkMode))
               .onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
               .hitTestBehavior(HitTestMode.Block)
-            Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(11).fontColor('#8A97A6').margin({ top: 3 })
+            Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(11).fontColor(themeMutedText(this.darkMode)).margin({ top: 3 })
           }.alignItems(HorizontalAlign.Start).margin({ left: 8 })
           Blank()
           Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
@@ -283,14 +284,14 @@ struct Index {
           .hitTestBehavior(HitTestMode.Block)
         Column() {
           Row() {
-            Text(topic.member?.username ?? '匿名').fontSize(13).fontColor(this.visitedXna().indexOf(topic.url ?? '') >= 0 ? '#7B8794' : this.primaryText())
+            Text(topic.member?.username ?? '匿名').fontSize(13).fontColor(this.visitedXna().indexOf(topic.url ?? '') >= 0 ? themeSecondaryText(this.darkMode) : this.primaryText())
             if (topic.node?.title) {
               Text(topic.node.title).fontSize(11).fontColor(this.themeColor)
                 .padding({ left: 8, right: 8, top: 2, bottom: 2 })
                 .backgroundColor(this.darkMode ? '#26313D' : '#EEF3F8').borderRadius(8).margin({ left: 8 })
             }
           }.width('100%')
-          Text(topic.title).fontSize(15).fontColor(this.visitedXna().indexOf(topic.url ?? '') >= 0 ? '#7B8794' : this.primaryText())
+          Text(topic.title).fontSize(15).fontColor(this.visitedXna().indexOf(topic.url ?? '') >= 0 ? themeSecondaryText(this.darkMode) : this.primaryText())
             .fontWeight(FontWeight.Medium).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 3 })
         }.layoutWeight(1).alignItems(HorizontalAlign.Start).margin({ left: 10 })
       }.width('100%').padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(this.surface())
@@ -315,7 +316,7 @@ struct Index {
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(this.surface())
       Row() {
         TextInput({ placeholder: '搜索主题、节点或用户', text: this.searchText })
-          .layoutWeight(1).height(42).fontSize(14).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
+          .layoutWeight(1).height(42).fontSize(14).fontColor(this.primaryText()).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
         Stack() {
@@ -327,7 +328,7 @@ struct Index {
           Row() {
             ForEach(this.tabs, (tab: HomeTabItem, index: number) => {
               Column() {
-                Text(tab.title).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : '#7B8794')
+                Text(tab.title).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : themeSecondaryText(this.darkMode))
                   .maxLines(1)
                 Row().height(3).width(28).backgroundColor(this.selectedTab === index ? this.themeColor : Color.Transparent)
                   .borderRadius(2).margin({ top: 7 })
@@ -344,7 +345,7 @@ struct Index {
       if (this.isTopicTab() && this.loading && this.topics.length === 0) {
         LoadingProgress().width(28).height(28).color(this.themeColor).margin({ top: 36 })
       } else if (this.isTopicTab() && this.errorText.length > 0 && this.topics.length === 0) {
-        Column() { Text(this.errorText).fontSize(15).fontColor(this.darkMode ? '#AAB7C4' : '#7B8794'); Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 14 }).onClick(() => {
+        Column() { Text(this.errorText).fontSize(15).fontColor(themeSecondaryText(this.darkMode)); Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 14 }).onClick(() => {
           const tab: HomeTabItem = this.activeTab();
           if (tab.type === 'hot') this.loadTopics('hot');
           else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
@@ -356,12 +357,12 @@ struct Index {
       } else if (this.activeTab().type === 'nodes') {
         Column() {
           Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).margin({ top: 18, bottom: 12 })
-          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
+          TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor(this.primaryText()).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
             .onChange((value: string) => this.nodeQuery = value).margin({ bottom: 10 })
           Refresh({ refreshing: this.loading }) {
             List({ space: 1 }) {
               ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
-                Row() { Text(node.title).fontSize(16).fontColor(this.primaryText()); Blank(); Text(node.name).fontSize(13).fontColor('#8A97A6') }
+                Row() { Text(node.title).fontSize(16).fontColor(this.primaryText()); Blank(); Text(node.name).fontSize(13).fontColor(themeMutedText(this.darkMode)) }
                   .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(this.surface())
                   .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
               }, (node: V2exNode) => node.name)
@@ -370,17 +371,17 @@ struct Index {
         }.layoutWeight(1).width('100%')
       } else if (this.activeTab().type === 'xna') {
         if (this.xnaTopics.length === 0 && !this.loading) {
-          Text('暂无 VXNA 内容').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
+          Text('暂无 VXNA 内容').fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 48 })
         } else {
           Refresh({ refreshing: this.loading }) {
             List({ space: 1 }) { ForEach(this.xnaTopics, (topic: V2exTopic) => this.xnaCard(topic), (topic: V2exTopic) => `${topic.id}`) }
-              .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
+              .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
           }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadXna(); })
         }
       } else {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
-            .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: '#EEF1F4' })
+            .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
           if (state === RefreshStatus.Refresh) {
             const tab: HomeTabItem = this.activeTab();
@@ -405,7 +406,7 @@ struct Index {
                     if (this.currentMember.avatar_large) Image(this.currentMember.avatar_large).width(40).height(40).borderRadius(20).objectFit(ImageFit.Cover)
                   }
                   Blank()
-                  Text('个人主页 ›').fontSize(14).fontColor('#7B8794')
+                  Text('个人主页 ›').fontSize(14).fontColor(themeSecondaryText(this.darkMode))
                 }
                   .width('100%').onClick(() => {
                     this.drawerOpen = false;
@@ -442,7 +443,7 @@ struct Index {
   drawerItem(label: string, page: string) {
     Row() {
       Text(label).fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
-      Text('›').fontSize(22).fontColor('#9AA0A6')
+      Text('›').fontSize(22).fontColor(themeMutedText(this.darkMode))
     }.width('100%').padding({ left: 20, right: 20, top: 16, bottom: 16 }).backgroundColor(this.surface()).margin({ top: 1 })
       .onClick(() => this.openDrawerPage(page))
   }

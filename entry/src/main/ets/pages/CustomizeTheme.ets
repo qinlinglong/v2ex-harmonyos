@@ -1,4 +1,5 @@
 import { router } from '@kit.ArkUI';
+import { themeMutedText } from '../common/Theme';
 
 @Entry
 @Component
@@ -25,12 +26,12 @@ struct CustomizeTheme {
           Flex({ wrap: FlexWrap.Wrap }) {
             ForEach(this.colors, (color: string) => Row() {
               Column().width(42).height(42).borderRadius(21).backgroundColor(color)
-              Text(color).fontSize(12).fontColor('#66727F').margin({ left: 8 })
+              Text(color).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ left: 8 })
             }.width('50%').height(58).onClick(() => this.themeColor = color), (color: string) => color)
           }.width('100%')
           Text('自定义颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).width('100%').margin({ top: 22, bottom: 12 })
           Row() {
-            TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(46).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
+            TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(46).fontColor(this.primaryText()).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
               .onChange((value: string) => this.customColor = value)
             Button('应用').margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => {
               if (/^#[0-9A-Fa-f]{6}$/.test(this.customColor.trim())) this.themeColor = this.customColor.trim();
@@ -42,7 +43,7 @@ struct CustomizeTheme {
               .onClick(() => this.darkMode = !this.darkMode)
           }.width('100%').padding({ top: 18, bottom: 18 }).margin({ top: 12 })
           Text('主题设置会保存到本机，并应用到首页、详情、节点、个人中心和设置页面。')
-            .fontSize(13).fontColor('#8A97A6').lineHeight(21).width('100%').margin({ top: 18 })
+            .fontSize(13).fontColor(themeMutedText(this.darkMode)).lineHeight(21).width('100%').margin({ top: 18 })
         }.width('100%').padding(20)
       }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(this.pageBackground())

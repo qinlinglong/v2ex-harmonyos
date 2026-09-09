@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
 
 interface HomeTabOption {
   title: string;
@@ -93,7 +93,7 @@ struct HomeTabs {
       Scroll() {
         Column() {
           Text(this.editing ? '点击板块可添加或移除，使用箭头调整顺序' : '点击板块进入对应内容')
-            .fontSize(13).fontColor('#8A97A6').width('100%').margin({ bottom: 12 })
+            .fontSize(13).fontColor(themeMutedText(this.darkMode)).width('100%').margin({ bottom: 12 })
           ForEach(ALL_HOME_TABS, (item: HomeTabOption) => {
             Row() {
               Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? themePrimaryText(this.darkMode) : '#9AA3AD').layoutWeight(1)
@@ -108,7 +108,7 @@ struct HomeTabs {
             }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 })
               .backgroundColor(themeSurface(this.darkMode)).margin({ bottom: 1 })
           }, (item: HomeTabOption) => item.key)
-          Text('至少保留一个首页板块。设置会保存在本机。').fontSize(12).fontColor('#8A97A6').margin({ top: 16 })
+          Text('至少保留一个首页板块。设置会保存在本机。').fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 16 })
         }.width('100%').padding(16)
       }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
