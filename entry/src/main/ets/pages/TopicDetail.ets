@@ -888,7 +888,7 @@ struct TopicDetail {
             if (this.replies.length > 0) {
               Row() {
                 if (this.replyMoreStatus.length > 0) Text(this.replyMoreStatus).fontSize(13).fontColor('#8A97A6')
-                if (!this.noMoreReplies) Button(this.loadingMoreReplies ? '加载中…' : '加载更多回复').fontSize(13)
+                if (!this.noMoreReplies) Button(this.loadingMoreReplies ? '加载中…' : '加载更多回复').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White)
                   .onClick(() => this.loadMoreReplies())
               }.width('100%').padding(18).justifyContent(FlexAlign.Center)
             }

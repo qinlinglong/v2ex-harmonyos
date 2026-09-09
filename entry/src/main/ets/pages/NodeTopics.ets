@@ -155,7 +155,7 @@ struct NodeTopics {
             ForEach(this.topics, (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`)
             ListItem() {
               if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
-              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadMore())
             }.width('100%').padding(18).align(Alignment.Center)
           }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMore())
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {

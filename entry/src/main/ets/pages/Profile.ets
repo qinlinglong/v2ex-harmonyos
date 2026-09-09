@@ -202,8 +202,8 @@ struct Profile {
                 .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
               if (!this.isSelf()) {
                 Row() {
-                  Button(this.followed ? '已关注' : '关注').layoutWeight(1).onClick(() => this.toggleMemberAction(this.followed ? 'unfollow' : 'follow'))
-                  Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).onClick(() => this.toggleMemberAction(this.blocked ? 'unblock' : 'block'))
+                  Button(this.followed ? '已关注' : '关注').layoutWeight(1).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.toggleMemberAction(this.followed ? 'unfollow' : 'follow'))
+                  Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.toggleMemberAction(this.blocked ? 'unblock' : 'block'))
                 }.width('80%').margin({ top: 16 })
               }
               if (this.status.length > 0 && this.status !== '加载中…') Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })

@@ -136,7 +136,7 @@ struct RelatedReplies {
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Row() {
         Text(this.relatedOnly ? '智能模式' : '显示全部回复').fontSize(14).fontColor('#7B8794').layoutWeight(1)
-        Button(this.relatedOnly ? '查看全部' : '智能模式').fontSize(13).onClick(() => this.relatedOnly = !this.relatedOnly)
+        Button(this.relatedOnly ? '查看全部' : '智能模式').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.relatedOnly = !this.relatedOnly)
       }.width('100%').padding(16).backgroundColor(themeSurface(this.darkMode)).margin({ top: 1 })
       if (this.referenceNames().length > 1) {
         Scroll() {

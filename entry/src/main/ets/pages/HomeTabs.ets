@@ -98,12 +98,12 @@ struct HomeTabs {
             Row() {
               Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? themePrimaryText(this.darkMode) : '#9AA3AD').layoutWeight(1)
               if (this.editing && this.contains(item.key)) {
-                Button('↑').fontSize(12).width(42).height(32).margin({ right: 6 })
+                Button('↑').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(Color.White).margin({ right: 6 })
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), -1))
-                Button('↓').fontSize(12).width(42).height(32).margin({ right: 6 })
+                Button('↓').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(Color.White).margin({ right: 6 })
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), 1))
               }
-              Button(this.contains(item.key) ? (this.editing ? '移除' : '已添加') : '添加').fontSize(12).enabled(this.editing)
+              Button(this.contains(item.key) ? (this.editing ? '移除' : '已添加') : '添加').fontSize(12).backgroundColor(this.themeColor).fontColor(Color.White).enabled(this.editing)
                 .onClick(() => this.toggle(item))
             }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 })
               .backgroundColor(themeSurface(this.darkMode)).margin({ bottom: 1 })

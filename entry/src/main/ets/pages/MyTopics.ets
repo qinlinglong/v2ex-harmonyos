@@ -97,7 +97,7 @@ struct MyTopics {
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0 && this.topics.length === 0) Column() {
         Text(this.status).fontSize(15).fontColor('#7B8794')
-        Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
+        Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => router.pushUrl({ url: 'pages/Login' }))
       }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else {
         Refresh({ refreshing: this.loading }) {
@@ -105,7 +105,7 @@ struct MyTopics {
             ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
             ListItem() {
               if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
-              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadMore())
             }
           }.onReachEnd(() => this.loadMore())
             .layoutWeight(1).width('100%')
