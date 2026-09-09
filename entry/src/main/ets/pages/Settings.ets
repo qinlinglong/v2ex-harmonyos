@@ -58,14 +58,14 @@ struct Settings {
         .height(60).width('100%').backgroundColor(this.surface())
       Scroll() {
         Column() {
-        Row() { Text('内容解析').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).onClick(() => this.parseContent = !this.parseContent) }
+        Row() { Text('内容解析').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.parseContent = !this.parseContent) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
-        Row() { Text('内置浏览器').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
+        Row() { Text('内置浏览器').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
-        Row() { Text('自动签到').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).onClick(() => this.autoCheckin = !this.autoCheckin) }
+        Row() { Text('自动签到').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.autoCheckin = !this.autoCheckin) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
-          Row() { Text('消息通知').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.msgPush ? '已开启' : '已关闭').fontSize(13).onClick(() => this.msgPush = !this.msgPush) }
+          Row() { Text('消息通知').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.msgPush ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.msgPush = !this.msgPush) }
             .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         }
         Text('主题颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).width('100%')
@@ -78,7 +78,7 @@ struct Settings {
         Row() {
           TextInput({ placeholder: '#RRGGBB', text: this.customColor }).layoutWeight(1).height(44).fontColor(this.primaryText()).placeholderColor('#8A97A6').backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
             .onChange((value: string) => this.customColor = value)
-          Button('应用').margin({ left: 10 }).onClick(() => {
+          Button('应用').margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => {
             const value: string = this.customColor.trim();
             if (/^#[0-9A-Fa-f]{6}$/.test(value)) this.themeColor = value;
           })
@@ -104,9 +104,9 @@ struct Settings {
         Row() { Text('首页板块').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('显示与顺序').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
-        Row() { Text('清除最近浏览').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.recentTopicsCacheJson = '[]'; this.status = '最近浏览已清除'; }) }
+        Row() { Text('清除最近浏览').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => { this.recentJson = '[]'; this.recentTopicsCacheJson = '[]'; this.status = '最近浏览已清除'; }) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
-        Row() { Text('清除缓存').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).onClick(() => this.clearCache()) }
+        Row() { Text('清除缓存').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.clearCache()) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         Row() { Text('问题反馈').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('GitHub').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
@@ -129,7 +129,7 @@ struct Settings {
         Row() { Text('当前版本').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('1.0.0').fontSize(14).fontColor('#8A97A6') }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
-          Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('退出').fontSize(13).onClick(() => {
+          Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('退出').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => {
             try {
               webview.WebCookieManager.clearAllCookiesSync();
               this.cachedMemberJson = '';
