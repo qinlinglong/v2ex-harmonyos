@@ -114,6 +114,9 @@ struct Login {
               Text('登录受限').fontSize(28).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
               Text('由于当前 IP 在短时间内的登录尝试次数太多，暂时不能继续尝试，可能需要等待最多 1 天。').fontSize(15).fontColor(themeBodyText(this.darkMode)).width('100%').lineHeight(24).margin({ top: 10 })
               Button(this.loading ? '重试中…' : '重试').width('100%').height(48).margin({ top: 24 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.loadSigninInfo())
+              Text('打开 H5 登录').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
+                .width('100%').textAlign(TextAlign.Center).margin({ top: 18 })
+                .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '登录 V2EX', url: 'https://www.v2ex.com/signin' } }))
             } else {
               Text('登录 V2EX').fontSize(26).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
               Text('使用用户名或电子邮件地址登录。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 6, bottom: 22 })
