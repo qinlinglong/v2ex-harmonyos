@@ -41,6 +41,7 @@ struct HomeTabs {
   @StorageLink('v2exHomeTabs') tabsJson: string = JSON.stringify(DEFAULT_HOME_TABS);
   @State selected: HomeTabOption[] = [];
   @State editing: boolean = false;
+  @State status: string = '';
 
   aboutToAppear(): void { this.readTabs(); }
 
@@ -84,6 +85,12 @@ struct HomeTabs {
     items[next] = current;
     this.selected = items;
     this.save();
+    this.status = '顺序已更新';
+  }
+
+  private moveByKey(key: string, delta: number): void {
+    const index: number = this.selected.findIndex((entry: HomeTabOption) => entry.key === key);
+    if (index >= 0) this.move(index, delta);
   }
 
   build() {
@@ -106,10 +113,10 @@ struct HomeTabs {
               if (this.editing && this.contains(item.key)) {
                 Button('↑').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).margin({ right: 6 })
                   .hitTestBehavior(HitTestMode.Block)
-                  .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), -1))
+                  .onClick(() => this.moveByKey(item.key, -1))
                 Button('↓').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).margin({ right: 6 })
                   .hitTestBehavior(HitTestMode.Block)
-                  .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), 1))
+                  .onClick(() => this.moveByKey(item.key, 1))
               }
               Button(this.contains(item.key) ? (this.editing ? '移除' : '已添加') : '添加').fontSize(12).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).enabled(this.editing)
                 .onClick(() => this.toggle(item))
@@ -117,6 +124,7 @@ struct HomeTabs {
               .backgroundColor(themeSurface(this.darkMode)).margin({ bottom: 1 })
           }, (item: HomeTabOption) => item.key)
           Text('至少保留一个首页板块。设置会保存在本机。').fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 16 })
+          if (this.status.length > 0) Text(this.status).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8 })
         }.width('100%').padding(16)
       }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
