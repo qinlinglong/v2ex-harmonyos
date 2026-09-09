@@ -109,6 +109,22 @@ struct Login {
     }
   }
 
+  private applyWebTheme(): void {
+    const background: string = this.darkMode ? '#0F141A' : '#FFFFFF';
+    const surface: string = this.darkMode ? '#18202A' : '#FFFFFF';
+    const input: string = this.darkMode ? '#26313D' : '#F1F4F7';
+    const text: string = this.darkMode ? '#F2F5F8' : '#202124';
+    const muted: string = this.darkMode ? '#AAB7C4' : '#7B8794';
+    const css: string = `body { background:${background} !important; color:${text} !important; }
+      body * { color:${text}; }
+      a, .fade, .small, .normal { color:${muted} !important; }
+      input, textarea, select { background:${input} !important; color:${text} !important; border-color:${muted} !important; }
+      button, input[type=submit], .button { background:${this.themeColor} !important; color:#FFFFFF !important; border-color:${this.themeColor} !important; }
+      .box, .cell, .content, .topic_content { background:${surface} !important; color:${text} !important; }`;
+    const script: string = `(() => { let style = document.getElementById('v2ex-native-theme'); if (!style) { style = document.createElement('style'); style.id = 'v2ex-native-theme'; document.head.appendChild(style); } style.textContent = ${JSON.stringify(css)}; return 'ok'; })()`;
+    this.controller.runJavaScript(script).catch(() => { /* The page may have navigated away. */ });
+  }
+
   build() {
     Column() {
       Row() {
@@ -126,6 +142,7 @@ struct Login {
       Web({ src: `${this.domain.replace(/\/$/, '')}/signin`, controller: this.controller })
         .javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%')
         .onPageEnd((event: OnPageEndEvent) => {
+          this.applyWebTheme();
           if (event.url.indexOf(this.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')) >= 0 && event.url.indexOf('/signin') < 0 &&
             event.url.indexOf('/recover') < 0) {
             setTimeout(() => router.back(), 300);
