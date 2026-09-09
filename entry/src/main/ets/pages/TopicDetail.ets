@@ -896,7 +896,7 @@ struct TopicDetail {
               }.width('100%').padding(18).justifyContent(FlexAlign.Center)
             }
           }.width('100%').constraintSize({ minHeight: '100%' })
-          }.layoutWeight(1).width('100%')
+          }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMoreReplies())
           if (this.replyComposerOpen) {
             Column() {
               TextArea({ placeholder: '发送你的评论', text: this.replyText }).width('100%').height(72).fontSize(15)
