@@ -121,7 +121,9 @@ struct Login {
               }
               TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.code = value)
               if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).width('100%').lineHeight(20).margin({ top: 12 })
-              Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).enabled(!this.loading && !this.submitting).onClick(() => this.submitSignin())
+              Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White)
+                .enabled(!this.loading && !this.submitting && this.signinInfo !== undefined && !this.limited)
+                .onClick(() => this.submitSignin())
               Row() {
                 Text(this.agreed ? '☑' : '□').fontSize(21).fontColor(this.themeColor).margin({ right: 8 })
                 Text('我已阅读并同意').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
