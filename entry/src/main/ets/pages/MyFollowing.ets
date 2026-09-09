@@ -94,7 +94,7 @@ struct MyFollowing {
   }
 
   private async loadMore(): Promise<void> {
-    if (this.loadingMore || this.noMore || this.selectedMember.length > 0) return;
+    if (this.loading || this.loadingMore || this.noMore || this.selectedMember.length > 0) return;
     this.loadingMore = true;
     try {
       const next: V2exTopic[] = await V2exService.followingTopics(this.page + 1);

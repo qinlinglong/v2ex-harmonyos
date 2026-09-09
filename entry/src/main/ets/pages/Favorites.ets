@@ -51,7 +51,7 @@ struct Favorites {
   }
 
   private async loadMore(): Promise<void> {
-    if (this.loadingMore || this.noMore) return;
+    if (this.loading || this.loadingMore || this.noMore) return;
     this.loadingMore = true;
     try {
       const next: V2exTopic[] = await V2exService.myFavorites(this.page + 1);

@@ -361,7 +361,7 @@ struct TopicDetail {
   }
 
   private async loadMoreReplies(): Promise<void> {
-    if (this.loadingMoreReplies || this.noMoreReplies || this.topicId <= 0) return;
+    if (this.loading || this.loadingMoreReplies || this.noMoreReplies || this.topicId <= 0) return;
     this.loadingMoreReplies = true;
     try {
       const next: V2exReply[] = await V2exService.repliesPage(this.topicId, this.replyPage + 1);
