@@ -2,6 +2,7 @@ import { router } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
+import { systemShare } from '@kit.ShareKit';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
 import { themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
@@ -239,6 +240,21 @@ struct TopicDetail {
     if (this.topic?.url && this.topic.url.length > 0) return this.topic.url;
     const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
     return `${configured.replace(/\/$/, '')}/t/${this.topicId}`;
+  }
+
+  private replyShareUrl(reply: V2exReply): string {
+    const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
+    const page: number = Math.max(1, Math.ceil(Math.max(1, reply.no ?? 1) / 100));
+    return `${configured.replace(/\/$/, '')}/t/${this.topicId}?p=${page}#r_${reply.id}`;
+  }
+
+  private async shareLink(url: string, title: string): Promise<void> {
+    try {
+      const data = new systemShare.SharedData({ utd: 'general.hyperlink', content: url, title, label: 'HYPERLINK' });
+      const controller = new systemShare.ShareController(data);
+      const context = getContext(this) as common.UIAbilityContext;
+      await controller.show(context, {});
+    } catch (_) { this.actionStatus = '分享失败，请稍后重试'; }
   }
 
   private async copyTopicLink(): Promise<void> {
@@ -584,6 +600,7 @@ struct TopicDetail {
         Text('⋮').fontSize(28).fontColor(this.primaryText()).width(44).height(44).textAlign(TextAlign.Center)
           .bindMenu([
             { value: '复制主题链接', action: () => this.copyTopicLink() },
+            { value: '分享主题', action: () => this.shareLink(this.topicShareUrl(), this.topic?.title ?? 'V2EX 主题') },
             { value: '在浏览器打开', action: () => this.openLink(this.topicShareUrl()) },
             { value: this.favorited ? '取消收藏主题' : '收藏主题', action: () => this.action('favorite') },
             { value: '编辑主题', enabled: this.topic?.editable === true && this.isSelf(this.topic?.member?.username), action: () => {
@@ -853,6 +870,8 @@ struct TopicDetail {
                         this.replyComposerOpen = true;
                       }
                     })
+                    Text('分享').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ left: 16 })
+                      .onClick(() => this.shareLink(this.replyShareUrl(reply), reply.content))
                     if (hasReplyReferences(reply.content)) {
                       Text('查看评论').fontSize(13).fontColor(this.themeColor).margin({ left: 16 })
                         .onClick(() => router.pushUrl({ url: 'pages/RelatedReplies', params: { topicId: this.topicId, replyId: reply.id } }))
