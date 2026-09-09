@@ -402,41 +402,26 @@ struct Index {
           Text('节点浏览').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).margin({ top: 18, bottom: 12 })
           TextInput({ placeholder: '搜索节点', text: this.nodeQuery }).width('92%').height(44).fontSize(14).fontColor(this.primaryText()).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
             .onChange((value: string) => this.nodeQuery = value).margin({ bottom: 10 })
-          Refresh({ refreshing: this.loading }) {
-            List({ space: 1 }) {
-              ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
-                Row() { Text(node.title).fontSize(16).fontColor(this.primaryText()); Blank(); Text(node.name).fontSize(13).fontColor(themeMutedText(this.darkMode)) }
-                  .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(this.surface())
-                  .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
-              }, (node: V2exNode) => node.name)
-            }.layoutWeight(1).width('100%')
-          }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadNodes(); })
+          List({ space: 1 }) {
+            ForEach(this.visibleNodes(), (node: V2exNode) => ListItem() {
+              Row() { Text(node.title).fontSize(16).fontColor(this.primaryText()); Blank(); Text(node.name).fontSize(13).fontColor(themeMutedText(this.darkMode)) }
+                .width('100%').padding({ left: 20, right: 20, top: 15, bottom: 15 }).backgroundColor(this.surface())
+                .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
+            }, (node: V2exNode) => node.name)
+          }.layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%')
       } else if (this.activeTab().type === 'xna') {
         if (this.xnaTopics.length === 0 && !this.loading) {
           Text('暂无 VXNA 内容').fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 48 })
         } else {
-          Refresh({ refreshing: this.loading }) {
-            List({ space: 1 }) { ForEach(this.xnaTopics, (topic: V2exTopic) => this.xnaCard(topic), (topic: V2exTopic) => `${topic.id}`) }
-              .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
-          }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.loadXna(); })
+          List({ space: 1 }) { ForEach(this.xnaTopics, (topic: V2exTopic) => this.xnaCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+            .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
         }
       } else {
-        Refresh({ refreshing: this.loading }) {
-          List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
-            .onReachEnd(() => this.loadMoreHomeTopics())
-            .onScrollIndex((_start: number, end: number) => { if (end >= this.visibleTopics().length - 2) this.loadMoreHomeTopics(); })
-            .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
-        }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
-          if (state === RefreshStatus.Refresh) {
-            const tab: HomeTabItem = this.activeTab();
-            if (tab.type === 'hot') this.loadTopics('hot');
-            else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
-            else if (tab.type === 'members') this.loadTopicsForTab(tab.key);
-            else if (tab.type === 'node') this.loadTopicsForNode(tab.key);
-            else this.loadTopics('latest');
-          }
-        })
+        List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+          .onReachEnd(() => this.loadMoreHomeTopics())
+          .onScrollIndex((_start: number, end: number) => { if (end >= this.visibleTopics().length - 2) this.loadMoreHomeTopics(); })
+          .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
       }
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
       if (this.drawerOpen) {
