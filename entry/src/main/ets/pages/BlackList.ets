@@ -1,10 +1,12 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
+import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
 struct BlackList {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exBlockedUsers') blockedUsersJson: string = '[]';
   @StorageLink('v2exIgnoredTopicIds') ignoredTopicsJson: string = '[]';
   @State tab: number = 0;
@@ -40,31 +42,31 @@ struct BlackList {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('屏蔽列表').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('屏蔽列表').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
         Image($r('app.media.ic_delete')).width(22).height(22).fillColor(this.themeColor).margin({ right: 8 })
           .onClick(() => this.tab === 0 ? this.clearUsers() : this.clearTopics())
-      }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
+      }.height(60).width('100%').padding({ right: 18 }).backgroundColor(themeSurface(this.darkMode))
       Row() {
         Text('屏蔽用户').fontSize(15).fontColor(this.tab === 0 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center)
           .onClick(() => this.tab = 0)
         Text('忽略主题').fontSize(15).fontColor(this.tab === 1 ? this.themeColor : '#7B8794').layoutWeight(1).textAlign(TextAlign.Center)
           .onClick(() => this.tab = 1)
-      }.height(50).width('100%').backgroundColor(Color.White)
+      }.height(50).width('100%').backgroundColor(themeSurface(this.darkMode))
       if (this.tab === 0) {
         if (this.users.length === 0) Text('暂无屏蔽用户').fontSize(15).fontColor('#8A97A6').margin({ top: 42 })
         else List({ space: 1 }) { ForEach(this.users, (username: string) => ListItem() {
           Row() { Text(username).fontSize(16).layoutWeight(1); Text('查看资料').fontSize(13).fontColor(this.themeColor) }
-            .width('100%').padding(16).backgroundColor(Color.White)
+            .width('100%').padding(16).backgroundColor(themeSurface(this.darkMode))
         }.onClick(() => router.pushUrl({ url: 'pages/Profile', params: { username } })), (username: string) => username) }.layoutWeight(1).width('100%')
       } else {
         if (this.topics.length === 0) Text('暂无忽略主题').fontSize(15).fontColor('#8A97A6').margin({ top: 42 })
         else List({ space: 1 }) { ForEach(this.topics, (id: number) => ListItem() {
           Row() { Text(`主题 #${id}`).fontSize(16).layoutWeight(1); Text('查看').fontSize(13).fontColor(this.themeColor) }
-            .width('100%').padding(16).backgroundColor(Color.White)
+            .width('100%').padding(16).backgroundColor(themeSurface(this.darkMode))
         }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id } })), (id: number) => `${id}`) }.layoutWeight(1).width('100%')
       }
       if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ bottom: 12 })
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }

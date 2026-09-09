@@ -342,9 +342,9 @@ struct Index {
         }.width(48).height('100%').backgroundColor(this.surface()).onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
       }.width('100%').height(52).backgroundColor(this.surface())
       if (this.isTopicTab() && this.loading && this.topics.length === 0) {
-        LoadingProgress().width(28).height(28).color('#4F7CAC').margin({ top: 36 })
+        LoadingProgress().width(28).height(28).color(this.themeColor).margin({ top: 36 })
       } else if (this.isTopicTab() && this.errorText.length > 0 && this.topics.length === 0) {
-        Column() { Text(this.errorText).fontSize(15).fontColor('#7B8794'); Text('点击重试').fontSize(14).fontColor('#4F7CAC').margin({ top: 14 }).onClick(() => {
+        Column() { Text(this.errorText).fontSize(15).fontColor(this.darkMode ? '#AAB7C4' : '#7B8794'); Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 14 }).onClick(() => {
           const tab: HomeTabItem = this.activeTab();
           if (tab.type === 'hot') this.loadTopics('hot');
           else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);

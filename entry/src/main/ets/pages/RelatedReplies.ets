@@ -1,6 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exReply } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
+import { themeBackground, themeBodyText, themePrimaryText, themeSurface } from '../common/Theme';
 
 interface ReplyReference {
   username: string;
@@ -39,6 +40,7 @@ function replyReferences(value: string): ReplyReference[] {
 @Component
 struct RelatedReplies {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
   @State relatedOnly: boolean = true;
@@ -129,13 +131,13 @@ struct RelatedReplies {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('评论回复').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('评论回复').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-      }.height(60).width('100%').backgroundColor(Color.White)
+      }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Row() {
         Text(this.relatedOnly ? '智能模式' : '显示全部回复').fontSize(14).fontColor('#7B8794').layoutWeight(1)
         Button(this.relatedOnly ? '查看全部' : '智能模式').fontSize(13).onClick(() => this.relatedOnly = !this.relatedOnly)
-      }.width('100%').padding(16).backgroundColor(Color.White).margin({ top: 1 })
+      }.width('100%').padding(16).backgroundColor(themeSurface(this.darkMode)).margin({ top: 1 })
       if (this.referenceNames().length > 1) {
         Scroll() {
           Row({ space: 18 }) {
@@ -144,7 +146,7 @@ struct RelatedReplies {
                 .onClick(() => this.selectedReference = name)
             }, (name: string) => `reference-${name}`)
           }.padding({ left: 16, right: 16, top: 10, bottom: 10 })
-        }.scrollable(ScrollDirection.Horizontal).width('100%').backgroundColor(Color.White)
+        }.scrollable(ScrollDirection.Horizontal).width('100%').backgroundColor(themeSurface(this.darkMode))
       }
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.visibleReplies().length === 0) Text('没有检测到关联回复').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
@@ -158,11 +160,11 @@ struct RelatedReplies {
               if (reply.createdLabel && reply.createdLabel.length > 0) Text(reply.createdLabel).fontSize(12).fontColor('#9AA0A6')
               if ((reply.thanks ?? 0) > 0) Text(`${reply.thanks} 感谢`).fontSize(12).fontColor('#9AA0A6').margin({ left: 8 })
             }.width('100%')
-            Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
+            Text(reply.content).fontSize(15).fontColor(themeBodyText(this.darkMode)).lineHeight(23).margin({ top: 8 })
             Text('回复').fontSize(13).fontColor(this.themeColor).margin({ top: 10 }).onClick(() => this.replyTo(reply))
-          }.width('100%').padding(16).backgroundColor(Color.White)
+          }.width('100%').padding(16).backgroundColor(themeSurface(this.darkMode))
         }, (reply: V2exReply) => `${reply.id}`)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }

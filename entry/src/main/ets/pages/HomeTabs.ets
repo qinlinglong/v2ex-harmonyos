@@ -1,4 +1,5 @@
 import { router } from '@kit.ArkUI';
+import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 interface HomeTabOption {
   title: string;
@@ -36,6 +37,7 @@ const DEFAULT_HOME_TABS: HomeTabOption[] = [
 @Component
 struct HomeTabs {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exHomeTabs') tabsJson: string = JSON.stringify(DEFAULT_HOME_TABS);
   @State selected: HomeTabOption[] = [];
   @State editing: boolean = false;
@@ -83,18 +85,18 @@ struct HomeTabs {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
           .onClick(() => router.back())
-        Text('首页板块').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('首页板块').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
         Text(this.editing ? '完成' : '编辑').fontSize(15).fontColor(this.themeColor)
           .onClick(() => this.editing = !this.editing)
-      }.height(60).width('100%').padding({ left: 8, right: 16 }).backgroundColor(Color.White)
+      }.height(60).width('100%').padding({ left: 8, right: 16 }).backgroundColor(themeSurface(this.darkMode))
       Scroll() {
         Column() {
           Text(this.editing ? '点击板块可添加或移除，使用箭头调整顺序' : '点击板块进入对应内容')
             .fontSize(13).fontColor('#8A97A6').width('100%').margin({ bottom: 12 })
           ForEach(ALL_HOME_TABS, (item: HomeTabOption) => {
             Row() {
-              Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? '#202124' : '#9AA3AD').layoutWeight(1)
+              Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? themePrimaryText(this.darkMode) : '#9AA3AD').layoutWeight(1)
               if (this.editing && this.contains(item.key)) {
                 Button('↑').fontSize(12).width(42).height(32).margin({ right: 6 })
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), -1))
@@ -104,11 +106,11 @@ struct HomeTabs {
               Button(this.contains(item.key) ? (this.editing ? '移除' : '已添加') : '添加').fontSize(12).enabled(this.editing)
                 .onClick(() => this.toggle(item))
             }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 })
-              .backgroundColor(Color.White).margin({ bottom: 1 })
+              .backgroundColor(themeSurface(this.darkMode)).margin({ bottom: 1 })
           }, (item: HomeTabOption) => item.key)
           Text('至少保留一个首页板块。设置会保存在本机。').fontSize(12).fontColor('#8A97A6').margin({ top: 16 })
         }.width('100%').padding(16)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }

@@ -1,11 +1,13 @@
 import { router } from '@kit.ArkUI';
 import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
+import { themeBackground, themeInputBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
 struct NavNodes {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exNodesCache') cacheJson: string = '[]';
   @State nodes: V2exNode[] = [];
   @State query: string = '';
@@ -63,11 +65,11 @@ struct NavNodes {
             .width(48).height(48).textAlign(TextAlign.Center).backgroundColor(this.themeColor).borderRadius(24)
           if (node.avatar_large) Image(node.avatar_large).width(48).height(48).borderRadius(24).objectFit(ImageFit.Cover)
         }
-        Text(node.title).fontSize(14).fontColor('#202124').maxLines(1)
+        Text(node.title).fontSize(14).fontColor(themePrimaryText(this.darkMode)).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 8 })
         Text(node.name).fontSize(11).fontColor('#8A97A6').maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 3 })
-      }.width('100%').padding({ top: 12, bottom: 12 }).backgroundColor(Color.White)
+      }.width('100%').padding({ top: 12, bottom: 12 }).backgroundColor(themeSurface(this.darkMode))
     }.onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
   }
 
@@ -75,10 +77,10 @@ struct NavNodes {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('节点导航').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('节点导航').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-      }.height(60).width('100%').padding({ right: 10 }).backgroundColor(Color.White)
-      TextInput({ placeholder: '搜索节点', text: this.query }).width('92%').height(44).fontSize(14).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
+      }.height(60).width('100%').padding({ right: 10 }).backgroundColor(themeSurface(this.darkMode))
+      TextInput({ placeholder: '搜索节点', text: this.query }).width('92%').height(44).fontSize(14).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
         .margin({ top: 10, bottom: 8 }).onChange((value: string) => this.query = value)
       Scroll() {
         Row() {
@@ -94,6 +96,6 @@ struct NavNodes {
       else Grid() {
         ForEach(this.visibleNodes(), (node: V2exNode) => this.nodeCard(node), (node: V2exNode) => node.name)
       }.columnsTemplate('1fr 1fr 1fr').rowsGap(1).columnsGap(1).layoutWeight(1).width('100%').padding(1)
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }

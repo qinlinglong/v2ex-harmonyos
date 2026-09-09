@@ -198,7 +198,7 @@ struct Profile {
               }
               Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).margin({ top: 12 })
               Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor('#7B8794').margin({ top: 6 })
-              if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor('#4F7CAC').margin({ top: 6 })
+              if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor(this.themeColor).margin({ top: 6 })
                 .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
               if (!this.isSelf()) {
                 Row() {

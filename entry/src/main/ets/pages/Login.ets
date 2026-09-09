@@ -3,11 +3,13 @@ import { webview } from '@kit.ArkWeb';
 import { http } from '@kit.NetworkKit';
 import { image } from '@kit.ImageKit';
 import { textRecognition } from '@kit.CoreVisionKit';
+import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
 struct Login {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exDomain') domain: string = 'https://www.v2ex.com';
   private controller: webview.WebviewController = new webview.WebviewController();
   @State captchaStatus: string = '';
@@ -111,15 +113,15 @@ struct Login {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
         Text(this.recognizingCaptcha ? '识别中…' : '识别验证码').fontSize(13).fontColor(this.themeColor)
           .padding({ left: 10, right: 14 }).enabled(!this.recognizingCaptcha)
           .onClick(() => this.recognizeCaptcha())
-      }.height(60).width('100%').backgroundColor(Color.White)
+      }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       if (this.captchaStatus.length > 0) {
         Text(this.captchaStatus).fontSize(12).fontColor(this.themeColor).width('100%')
-          .padding({ left: 16, right: 16, top: 5, bottom: 5 }).backgroundColor('#EEF4FB')
+          .padding({ left: 16, right: 16, top: 5, bottom: 5 }).backgroundColor(this.darkMode ? '#26313D' : '#EEF4FB')
       }
       Web({ src: `${this.domain.replace(/\/$/, '')}/signin`, controller: this.controller })
         .javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%')
@@ -129,6 +131,6 @@ struct Login {
             setTimeout(() => router.back(), 300);
           }
         })
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }

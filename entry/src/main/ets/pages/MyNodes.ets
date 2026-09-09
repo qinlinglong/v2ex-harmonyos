@@ -1,10 +1,13 @@
 import { router } from '@kit.ArkUI';
 import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
+import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
 struct MyNodes {
+  @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exMyNodesCache') cacheJson: string = '[]';
   @State nodes: V2exNode[] = [];
   @State loading: boolean = true;
@@ -49,7 +52,7 @@ struct MyNodes {
             .textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(22)
           if (node.avatar_large) Image(node.avatar_large).width(44).height(44).borderRadius(22).objectFit(ImageFit.Cover)
         }
-        Text(node.title).fontSize(13).fontColor('#202124').margin({ top: 6 }).maxLines(1)
+        Text(node.title).fontSize(13).fontColor(themePrimaryText(this.darkMode)).margin({ top: 6 }).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
       }.width('100%').height(96).justifyContent(FlexAlign.Center)
         .onClick(() => router.pushUrl({ url: 'pages/NodeTopics', params: { name: node.name, title: node.title } }))
@@ -59,11 +62,11 @@ struct MyNodes {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('节点收藏').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('节点收藏').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
-      if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
+      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
+      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0) Column() {
         Text(this.status).fontSize(15).fontColor('#7B8794')
         Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
@@ -76,6 +79,6 @@ struct MyNodes {
             .padding(12).scrollBar(BarState.Off)
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }

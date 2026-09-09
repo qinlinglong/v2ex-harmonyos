@@ -616,7 +616,7 @@ struct TopicDetail {
           ], { placement: Placement.BottomRight })
       }.height(60).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
       if (this.loading) {
-        LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 32 })
+        LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 32 })
       } else if (this.errorText.length > 0) {
         Text(this.errorText).fontSize(15).fontColor('#7B8794').margin({ top: 40 })
       } else if (this.topic) {

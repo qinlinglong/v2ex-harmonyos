@@ -1,10 +1,13 @@
 import { router } from '@kit.ArkUI';
 import { V2exNotification } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
+import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
 struct Notifications {
+  @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exNotificationsCache') cacheJson: string = '[]';
   @State items: V2exNotification[] = [];
   @State loading: boolean = true;
@@ -86,26 +89,26 @@ struct Notifications {
           if (item.avatar) Image(item.avatar).width(40).height(40).borderRadius(20).objectFit(ImageFit.Cover)
         }
         Column() {
-          Text(item.username).fontSize(14).fontColor('#4F7CAC')
+            Text(item.username).fontSize(14).fontColor(this.themeColor)
           Row() {
-            Text(item.topicTitle).fontSize(15).fontColor('#202124').maxLines(2)
+            Text(item.topicTitle).fontSize(15).fontColor(themePrimaryText(this.darkMode)).maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
             Image($r('app.media.ic_delete')).width(18).height(18).fillColor('#C05A73').margin({ left: 10 })
               .onClick(() => this.remove(item)).hitTestBehavior(HitTestMode.Block)
           }.width('100%').margin({ top: 6 })
         }.alignItems(HorizontalAlign.Start).margin({ left: 12 }).layoutWeight(1)
-      }.width('100%').padding({ left: 18, right: 18, top: 15, bottom: 15 }).backgroundColor(Color.White)
+      }.width('100%').padding({ left: 18, right: 18, top: 15, bottom: 15 }).backgroundColor(themeSurface(this.darkMode))
     }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: item.topicId } }))
   }
 
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor('#4F7CAC').width(46).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('未读提醒').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('未读提醒').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
-      if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
+      }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
+      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.status.length > 0 && this.items.length === 0) Column() {
         Text(this.status).fontSize(15).fontColor('#7B8794')
         Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
@@ -122,6 +125,6 @@ struct Notifications {
             .layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }

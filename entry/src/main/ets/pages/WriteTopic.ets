@@ -2,6 +2,7 @@ import { router } from '@kit.ArkUI';
 import { picker } from '@kit.CoreFileKit';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
+import { themeBackground, themeBodyText, themeInputBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 interface PreviewPart { kind: string; value: string; label?: string; }
 
@@ -34,6 +35,7 @@ function previewText(value: string): string {
 @Component
 struct WriteTopic {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @State title: string = '';
   @State node: string = 'v2ex';
   @State content: string = '';
@@ -145,7 +147,7 @@ struct WriteTopic {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold).fontColor('#202124')
+        Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
         Image($r('app.media.ic_preview')).width(22).height(22).fillColor(this.themeColor).margin({ right: 16 })
           .onClick(() => this.preview = !this.preview)
@@ -155,13 +157,13 @@ struct WriteTopic {
           .fillColor(this.submitting || (this.editing && !this.editAllowed) ? '#9AA0A6' : this.themeColor)
           .opacity(this.submitting || (this.editing && !this.editAllowed) ? 0.5 : 1)
           .onClick(() => { if (!this.submitting) this.submit(); })
-      }.height(60).width('100%').padding({ right: 18 }).backgroundColor(Color.White)
+      }.height(60).width('100%').padding({ right: 18 }).backgroundColor(themeSurface(this.darkMode))
       Scroll() {
         Column({ space: 14 }) {
           if (!this.preview) {
-            TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
+            TextInput({ placeholder: '主题标题', text: this.title }).height(52).width('100%').fontSize(17).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
               .onChange((value: string) => this.title = value)
-            TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor('#202124').placeholderColor('#8A97A6').backgroundColor('#F1F4F7')
+            TextInput({ placeholder: '节点名称，例如 v2ex', text: this.node }).height(48).width('100%').fontSize(15).fontColor(themePrimaryText(this.darkMode)).placeholderColor('#8A97A6').backgroundColor(themeInputBackground(this.darkMode))
               .onChange((value: string) => this.node = value)
             if (!this.editing && this.nodeSuggestions().length > 0) {
               Column() {
@@ -169,7 +171,7 @@ struct WriteTopic {
                 Scroll() {
                   Row() {
                     ForEach(this.nodeSuggestions(), (item: V2exNode) => Text(`${item.title}  ${item.name}`).fontSize(13).fontColor(this.themeColor)
-                      .padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(Color.White).borderRadius(16).margin({ right: 8 })
+                      .padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(themeSurface(this.darkMode)).borderRadius(16).margin({ right: 8 })
                       .onClick(() => this.node = item.name), (item: V2exNode) => item.name)
                   }
                 }.scrollable(ScrollDirection.Horizontal).width('100%').height(42).margin({ top: 8 })
@@ -178,7 +180,7 @@ struct WriteTopic {
           }
           if (this.preview) {
             Column() {
-              Text(this.title || '（无标题）').fontSize(22).fontWeight(FontWeight.Bold).fontColor('#202124')
+              Text(this.title || '（无标题）').fontSize(22).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
               ForEach(previewParts(this.content || '（无正文）'), (part: PreviewPart) => {
                 if (part.kind === 'image') {
                   Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 })
@@ -188,18 +190,18 @@ struct WriteTopic {
                     .decoration({ type: TextDecorationType.Underline, color: this.themeColor }).margin({ top: 20 })
                     .onClick(() => this.openPreviewLink(part.value))
                 } else {
-                  Text(previewText(part.value)).fontSize(16).fontColor('#30343B').lineHeight(26)
+                  Text(previewText(part.value)).fontSize(16).fontColor(themeBodyText(this.darkMode)).lineHeight(26)
                     .margin({ top: 20 }).textAlign(TextAlign.Start)
                 }
               }, (part: PreviewPart, index: number) => `preview-${part.kind}-${index}-${part.value.substring(0, 12)}`)
-            }.width('100%').padding(18).backgroundColor(Color.White)
+            }.width('100%').padding(18).backgroundColor(themeSurface(this.darkMode))
           } else {
-            TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16).fontColor('#202124')
+            TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16).fontColor(themePrimaryText(this.darkMode))
               .onChange((value: string) => this.content = value)
           }
-          if (this.status.length > 0) Text(this.status).fontSize(14).fontColor('#4F7CAC')
+          if (this.status.length > 0) Text(this.status).fontSize(14).fontColor(this.themeColor)
         }.width('100%').padding(18)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
+    }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }
