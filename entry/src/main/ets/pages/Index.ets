@@ -487,7 +487,8 @@ struct Index {
               Row() {
                 Text('夜间模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
                 Button() {
-                  Text(this.darkMode ? '☀︎' : '☾').fontSize(21).fontColor(themeOnColor(this.themeColor)).textAlign(TextAlign.Center)
+                  if (this.darkMode) Image($r('app.media.ic_dark_sun')).width(20).height(20).objectFit(ImageFit.Contain)
+                  else Image($r('app.media.ic_dark_moon')).width(20).height(20).objectFit(ImageFit.Contain)
                 }
                   .width(56).height(32).borderRadius(16).backgroundColor(this.themeColor)
                   .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })

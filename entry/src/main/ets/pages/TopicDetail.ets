@@ -694,7 +694,9 @@ struct TopicDetail {
                 }.margin({ left: 18 }).layoutWeight(1).alignItems(HorizontalAlign.Start)
               }.width('100%')
               Text(this.topic.title).fontSize(21).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
-                .lineHeight(30).margin({ top: 16 })
+                .lineHeight(30).margin({ top: 16 }).copyOption(CopyOptions.LocalDevice)
+                .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE).editMenuOptions(this.selectionMenu(this.topic.title))
+              if (this.base64Result.length > 0 && this.base64Source === this.topic.title) this.base64Card()
               if (this.topic.editable === true && this.isSelf(this.topic.member?.username)) {
                 Button('编辑主题').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).backgroundColor(Color.Transparent)
                   .margin({ top: 4 }).onClick(() => router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } }))
