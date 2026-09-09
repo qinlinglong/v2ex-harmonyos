@@ -125,6 +125,11 @@ struct Login {
     this.controller.runJavaScript(script).catch(() => { /* The page may have navigated away. */ });
   }
 
+  onPageShow(): void {
+    this.applyWebTheme();
+    setTimeout(() => this.applyWebTheme(), 800);
+  }
+
   build() {
     Column() {
       Row() {
@@ -143,6 +148,7 @@ struct Login {
         .javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%')
         .onPageEnd((event: OnPageEndEvent) => {
           this.applyWebTheme();
+          setTimeout(() => this.applyWebTheme(), 800);
           if (event.url.indexOf(this.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')) >= 0 && event.url.indexOf('/signin') < 0 &&
             event.url.indexOf('/recover') < 0) {
             setTimeout(() => router.back(), 300);
