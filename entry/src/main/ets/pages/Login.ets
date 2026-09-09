@@ -112,7 +112,7 @@ struct Login {
           Column() {
             if (this.limited) {
               Text('登录受限').fontSize(28).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
-              Text('由于当前 IP 在短时间内的登录尝试次数太多，暂时不能继续尝试。').fontSize(15).fontColor(themeBodyText(this.darkMode)).width('100%').lineHeight(24).margin({ top: 10 })
+              Text('由于当前 IP 在短时间内的登录尝试次数太多，暂时不能继续尝试，可能需要等待最多 1 天。').fontSize(15).fontColor(themeBodyText(this.darkMode)).width('100%').lineHeight(24).margin({ top: 10 })
               Button(this.loading ? '重试中…' : '重试').width('100%').height(48).margin({ top: 24 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.loadSigninInfo())
             } else {
               Text('登录 V2EX').fontSize(26).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
