@@ -39,8 +39,11 @@ struct CustomizeTheme {
           }.width('100%')
           Row() {
             Text('深色模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
-            Button() { Text(this.darkMode ? '☀' : '☾').fontSize(22).fontColor(themeOnColor(this.themeColor)) }
-              .width(48).height(38).backgroundColor(this.themeColor)
+            Button() {
+              if (this.darkMode) Image($r('app.media.ic_sun')).width(18).height(18).fillColor(themeOnColor(this.themeColor))
+              else Image($r('app.media.ic_moon')).width(18).height(18).fillColor(themeOnColor(this.themeColor))
+            }
+              .width(56).height(32).borderRadius(16).backgroundColor(this.themeColor)
               .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
           }.width('100%').padding({ top: 18, bottom: 18 }).margin({ top: 12 })
           Text('主题设置会保存到本机，并应用到首页、详情、节点、个人中心和设置页面。')

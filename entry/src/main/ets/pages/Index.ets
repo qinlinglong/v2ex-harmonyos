@@ -461,8 +461,11 @@ struct Index {
               this.drawerItem('最近浏览', 'RecentTopic')
               Row() {
                 Text('夜间模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
-                Button() { Text(this.darkMode ? '☀' : '☾').fontSize(22).fontColor(themeOnColor(this.themeColor)) }
-                  .width(48).height(38).backgroundColor(this.themeColor)
+                Button() {
+                  if (this.darkMode) Image($r('app.media.ic_sun')).width(18).height(18).fillColor(themeOnColor(this.themeColor))
+                  else Image($r('app.media.ic_moon')).width(18).height(18).fillColor(themeOnColor(this.themeColor))
+                }
+                  .width(56).height(32).borderRadius(16).backgroundColor(this.themeColor)
                   .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
               }.width('100%').padding({ left: 20, right: 20, top: 12, bottom: 12 }).backgroundColor(this.surface()).margin({ top: 1 })
               this.drawerItem('更多选项', 'Settings')
