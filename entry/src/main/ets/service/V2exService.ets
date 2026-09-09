@@ -7,6 +7,13 @@ import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply,
 const API_BASE: string = 'https://www.v2ex.com';
 
 export class V2exService {
+  // Node metadata is shared by the home page, node navigation and hot-topic
+  // pages. Keep a short-lived in-memory copy and coalesce concurrent requests
+  // so opening several menu entries does not trigger duplicate full downloads.
+  private static nodesMemory: V2exNode[] = [];
+  private static nodesLoadedAt: number = 0;
+  private static nodesRequest: Promise<V2exNode[]> | undefined = undefined;
+
   private static base(): string {
     try {
       const configured: string = (AppStorage.get<string>('v2exDomain') ?? '').trim().replace(/\/$/, '');
@@ -60,6 +67,18 @@ export class V2exService {
     if (/class=["'][^"']*problem|操作失败|请先登录|登录失败|验证码错误/i.test(body)) return false;
     if (body.indexOf('/signin') >= 0 && !V2exService.signedInHtml(body)) return false;
     return true;
+  }
+
+  /** Return the rendered H5 block for one reply only. */
+  private static replyBlock(html: string, replyId: number): string {
+    const match: RegExpMatchArray | null = html.match(new RegExp(`id=["']r_${replyId}["'][\\s\\S]*?(?=id=["']r_\\d+["']|$)`, 'i'));
+    return match?.[0] ?? '';
+  }
+
+  /** V2EX places edit links in each reply's own block. Never inspect the full page. */
+  private static replyIsEditable(html: string, replyId: number): boolean {
+    const block: string = V2exService.replyBlock(html, replyId);
+    return block.length > 0 && new RegExp(`/edit/reply/${replyId}(?:[?"'\\s])`, 'i').test(block);
   }
   private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
@@ -187,9 +206,26 @@ export class V2exService {
   }
 
   static async nodes(): Promise<V2exNode[]> {
-    const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
-    (data ?? []).forEach((item: V2exNode) => { if (item.avatar_large) item.avatar_large = V2exService.assetUrl(item.avatar_large); });
-    return data ?? [];
+    const now: number = Date.now();
+    if (V2exService.nodesMemory.length > 0 && now - V2exService.nodesLoadedAt < 15 * 60 * 1000) {
+      return V2exService.nodesMemory;
+    }
+    if (V2exService.nodesRequest) return V2exService.nodesRequest;
+    V2exService.nodesRequest = (async (): Promise<V2exNode[]> => {
+      const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
+      (data ?? []).forEach((item: V2exNode) => { if (item.avatar_large) item.avatar_large = V2exService.assetUrl(item.avatar_large); });
+      const result: V2exNode[] = data ?? [];
+      if (result.length > 0) {
+        V2exService.nodesMemory = result;
+        V2exService.nodesLoadedAt = Date.now();
+      }
+      return result;
+    })();
+    try {
+      return await V2exService.nodesRequest;
+    } finally {
+      V2exService.nodesRequest = undefined;
+    }
   }
 
   static async topicsForNode(name: string): Promise<V2exTopic[]> {
@@ -575,9 +611,8 @@ export class V2exService {
         const replies: V2exReply[] = parsed as V2exReply[];
         replies.forEach((reply: V2exReply) => {
           V2exService.normalizeMember(reply.member);
-          reply.editable = pageHtml.indexOf(`/edit/reply/${reply.id}`) >= 0;
-          const blockMatch: RegExpMatchArray | null = pageHtml.match(new RegExp(`id=["']r_${reply.id}["']([\\s\\S]*?)(?=id=["']r_\\d+["']|$)`, 'i'));
-          const block: string = blockMatch?.[1] ?? '';
+          reply.editable = V2exService.replyIsEditable(pageHtml, reply.id);
+          const block: string = V2exService.replyBlock(pageHtml, reply.id);
           reply.thanked = /class=["'][^"']*thanked/i.test(block);
           reply.op = /class=["'][^"']*badge[^"']*op/i.test(block);
           reply.mod = /class=["'][^"']*badge[^"']*mod/i.test(block);
@@ -598,7 +633,8 @@ export class V2exService {
         content: V2exService.cleanHtml(match[4]),
         created: 0,
         member: { username: match[3], avatar_large: V2exService.assetUrl(match[2]) },
-        editable: html.indexOf(`/edit/reply/${replyId}`) >= 0,
+        no: Number((block.match(/class=["'][^"']*no[^"']*["'][^>]*>\s*(\d+)/i)?.[1] ?? '0')) || undefined,
+        editable: V2exService.replyIsEditable(html, replyId),
         thanked: /class=["'][^"']*thanked/i.test(block),
         op: /class=["'][^"']*badge[^"']*op/i.test(block),
         mod: /class=["'][^"']*badge[^"']*mod/i.test(block)

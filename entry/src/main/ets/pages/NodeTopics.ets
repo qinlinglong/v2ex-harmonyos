@@ -15,6 +15,7 @@ function age(unix: number): string {
 struct NodeTopics {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exDarkMode') darkMode: boolean = false;
+  @StorageLink('v2exNodeTopicsCache') cacheJson: string = '{}';
   @State name: string = '';
   @State title: string = '';
   @State topics: V2exTopic[] = [];
@@ -32,19 +33,41 @@ struct NodeTopics {
     const params = router.getParams() as Record<string, Object> | undefined;
     this.name = String(params?.['name'] ?? '');
     this.title = String(params?.['title'] ?? this.name);
+    this.restoreCache();
     this.load();
   }
 
+  private restoreCache(): void {
+    if (this.name.length === 0) return;
+    try {
+      const cache: Record<string, V2exTopic[]> = JSON.parse(this.cacheJson) as Record<string, V2exTopic[]>;
+      const cached: V2exTopic[] | undefined = cache[this.name];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.topics = cached;
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
+
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.topics.length > 0;
+    this.loading = !hasCached;
     this.status = '';
     this.page = 1;
     try {
-      this.topics = await V2exService.topicsForNode(this.name);
-      this.nodeFavorited = await V2exService.nodeFavorited(this.name);
+      const results: [V2exTopic[], boolean] = await Promise.all([
+        V2exService.topicsForNode(this.name), V2exService.nodeFavorited(this.name)
+      ]);
+      this.topics = results[0];
+      this.nodeFavorited = results[1];
+      try {
+        const cache: Record<string, V2exTopic[]> = JSON.parse(this.cacheJson) as Record<string, V2exTopic[]>;
+        cache[this.name] = this.topics;
+        this.cacheJson = JSON.stringify(cache);
+      } catch (_) { /* cache failures do not affect the page */ }
       if (this.topics.length === 0) this.status = '该节点暂无主题';
     } catch (_) {
-      this.status = '节点主题加载失败';
+      if (!hasCached) this.status = '节点主题加载失败';
     } finally {
       this.loading = false;
     }
@@ -56,7 +79,15 @@ struct NodeTopics {
     try {
       const next: V2exTopic[] = await V2exService.topicsForNodePage(this.name, this.page + 1);
       if (next.length === 0) this.status = '没有更多主题';
-      else { this.topics = this.topics.concat(next); this.page += 1; }
+      else {
+        this.topics = this.topics.concat(next);
+        try {
+          const cache: Record<string, V2exTopic[]> = JSON.parse(this.cacheJson) as Record<string, V2exTopic[]>;
+          cache[this.name] = this.topics;
+          this.cacheJson = JSON.stringify(cache);
+        } catch (_) { /* cache failures do not affect the page */ }
+        this.page += 1;
+      }
     } catch (_) { this.status = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }

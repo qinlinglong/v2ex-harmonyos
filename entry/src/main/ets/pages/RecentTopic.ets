@@ -6,27 +6,66 @@ import { V2exTopic } from '../model/V2exModels';
 @Component
 struct RecentTopic {
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
+  @StorageLink('v2exRecentTopicsCache') cacheJson: string = '[]';
   @State topics: V2exTopic[] = [];
   @State loading: boolean = true;
   @State status: string = '';
   @State query: string = '';
+  private loadedRecentJson: string = '';
 
-  aboutToAppear(): void { this.load(); }
+  aboutToAppear(): void {
+    this.restoreCache();
+    this.loadedRecentJson = this.recentJson;
+    this.load();
+  }
 
-  onPageShow(): void { if (!this.loading) this.load(); }
+  onPageShow(): void {
+    // A topic detail updates recentJson. Refresh only when that list changed;
+    // simply returning to this page should keep the cached list on screen.
+    if (this.loadedRecentJson !== this.recentJson) this.load();
+  }
+
+  private restoreCache(): void {
+    try {
+      const cached: V2exTopic[] = JSON.parse(this.cacheJson) as V2exTopic[];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.topics = cached;
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
 
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.topics.length > 0;
+    this.loading = !hasCached;
     this.status = '';
-    this.topics = [];
     try {
       const ids: number[] = JSON.parse(this.recentJson) as number[];
-      for (const id of ids) {
-        try { this.topics.push(await V2exService.topic(id)); } catch (_) { /* topic may be removed */ }
-      }
+      const results: Array<V2exTopic | undefined> = await Promise.all(ids.map(async (id: number): Promise<V2exTopic | undefined> => {
+        try { return await V2exService.topic(id); } catch (_) { return undefined; }
+      }));
+      const loaded: V2exTopic[] = [];
+      results.forEach((topic: V2exTopic | undefined) => {
+        if (topic) loaded.push(topic);
+      });
+      this.topics = loaded;
+      this.loadedRecentJson = this.recentJson;
+      this.cacheJson = JSON.stringify(loaded);
       if (this.topics.length === 0) this.status = '暂无浏览记录';
-    } catch (_) { this.status = '浏览记录读取失败'; }
+    } catch (_) {
+      if (!hasCached) this.status = '浏览记录读取失败';
+    }
     finally { this.loading = false; }
+  }
+
+  private clearAll(): void {
+    this.recentJson = '[]';
+    this.cacheJson = '[]';
+    this.topics = [];
+    this.query = '';
+    this.status = '暂无浏览记录';
+    this.loadedRecentJson = this.recentJson;
+    this.loading = false;
   }
 
   private visibleTopics(): V2exTopic[] {
@@ -34,12 +73,6 @@ struct RecentTopic {
     if (text.length === 0) return this.topics;
     return this.topics.filter((topic: V2exTopic) =>
       topic.title.toLowerCase().includes(text) || (topic.member?.username ?? '').toLowerCase().includes(text));
-  }
-
-  private clearAll(): void {
-    this.recentJson = '[]';
-    this.query = '';
-    this.load();
   }
 
   @Builder

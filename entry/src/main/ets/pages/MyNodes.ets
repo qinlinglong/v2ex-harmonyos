@@ -5,19 +5,38 @@ import { V2exService } from '../service/V2exService';
 @Entry
 @Component
 struct MyNodes {
+  @StorageLink('v2exMyNodesCache') cacheJson: string = '[]';
   @State nodes: V2exNode[] = [];
   @State loading: boolean = true;
   @State status: string = '';
 
-  aboutToAppear(): void { this.load(); }
+  aboutToAppear(): void {
+    this.restoreCache();
+    this.load();
+  }
+
+  private restoreCache(): void {
+    try {
+      const cached: V2exNode[] = JSON.parse(this.cacheJson) as V2exNode[];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.nodes = cached;
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
 
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.nodes.length > 0;
+    this.loading = !hasCached;
     this.status = '';
     try {
-      this.nodes = await V2exService.myNodes();
+      const fresh: V2exNode[] = await V2exService.myNodes();
+      this.nodes = fresh;
+      this.cacheJson = JSON.stringify(fresh);
       if (this.nodes.length === 0) this.status = '暂无已加入节点或尚未登录';
-    } catch (_) { this.status = '请先登录 V2EX'; }
+    } catch (_) {
+      if (!hasCached) this.status = '请先登录 V2EX';
+    }
     finally { this.loading = false; }
   }
 

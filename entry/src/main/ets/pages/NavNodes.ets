@@ -6,6 +6,7 @@ import { V2exService } from '../service/V2exService';
 @Component
 struct NavNodes {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
+  @StorageLink('v2exNodesCache') cacheJson: string = '[]';
   @State nodes: V2exNode[] = [];
   @State query: string = '';
   @State loading: boolean = true;
@@ -13,15 +14,33 @@ struct NavNodes {
   @State group: number = 0;
   private readonly groups: string[] = ['全部节点', '开发工具', '设计产品', '生活兴趣'];
 
-  aboutToAppear(): void { this.load(); }
+  aboutToAppear(): void {
+    this.restoreCache();
+    this.load();
+  }
+
+  private restoreCache(): void {
+    try {
+      const cached: V2exNode[] = JSON.parse(this.cacheJson) as V2exNode[];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.nodes = cached;
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
 
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.nodes.length > 0;
+    this.loading = !hasCached;
     this.status = '';
     try {
-      this.nodes = await V2exService.nodes();
+      const fresh: V2exNode[] = await V2exService.nodes();
+      this.nodes = fresh;
+      this.cacheJson = JSON.stringify(fresh);
       if (this.nodes.length === 0) this.status = '暂无节点';
-    } catch (_) { this.status = '节点加载失败'; }
+    } catch (_) {
+      if (!hasCached) this.status = '节点加载失败';
+    }
     finally { this.loading = false; }
   }
 

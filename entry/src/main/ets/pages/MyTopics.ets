@@ -5,22 +5,41 @@ import { V2exTopic } from '../model/V2exModels';
 @Entry
 @Component
 struct MyTopics {
+  @StorageLink('v2exMyTopicsCache') cacheJson: string = '[]';
   @State topics: V2exTopic[] = [];
   @State loading: boolean = true;
   @State loadingMore: boolean = false;
   @State page: number = 1;
   @State status: string = '';
 
-  aboutToAppear(): void { this.load(); }
+  aboutToAppear(): void {
+    this.restoreCache();
+    this.load();
+  }
+
+  private restoreCache(): void {
+    try {
+      const cached: V2exTopic[] = JSON.parse(this.cacheJson) as V2exTopic[];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.topics = cached;
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
 
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.topics.length > 0;
+    this.loading = !hasCached;
     this.status = '';
     this.page = 1;
     try {
-      this.topics = await V2exService.myTopics(1);
+      const fresh: V2exTopic[] = await V2exService.myTopics(1);
+      this.topics = fresh;
+      this.cacheJson = JSON.stringify(fresh);
       if (this.topics.length === 0) this.status = '暂无主题或尚未登录';
-    } catch (_) { this.status = '请先登录 V2EX'; }
+    } catch (_) {
+      if (!hasCached) this.status = '请先登录 V2EX';
+    }
     finally { this.loading = false; }
   }
 
@@ -30,7 +49,11 @@ struct MyTopics {
     try {
       const next: V2exTopic[] = await V2exService.myTopics(this.page + 1);
       if (next.length === 0) this.status = '没有更多主题';
-      else { this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0)); this.page += 1; }
+      else {
+        this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0));
+        this.cacheJson = JSON.stringify(this.topics);
+        this.page += 1;
+      }
     } catch (_) { this.status = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }

@@ -12,19 +12,44 @@ function isoDay(offset: number): string {
 @Entry
 @Component
 struct HotestTopics {
+  @StorageLink('v2exHotestTopicsCache') cacheJson: string = '{}';
   @State topics: V2exTopic[] = [];
   @State loading: boolean = true;
   @State status: string = '';
   private date: string = isoDay(-1);
 
-  aboutToAppear(): void { this.load(); }
+  aboutToAppear(): void {
+    this.restoreCache();
+    this.load();
+  }
+
+  private restoreCache(): void {
+    try {
+      const cache: Record<string, V2exTopic[]> = JSON.parse(this.cacheJson) as Record<string, V2exTopic[]>;
+      const cached: V2exTopic[] | undefined = cache[this.date];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.topics = cached;
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
+
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.topics.length > 0;
+    this.loading = !hasCached;
     this.status = '';
     try {
-      this.topics = await V2exService.hotestTopics(this.date);
+      const fresh: V2exTopic[] = await V2exService.hotestTopics(this.date);
+      this.topics = fresh;
+      try {
+        const cache: Record<string, V2exTopic[]> = JSON.parse(this.cacheJson) as Record<string, V2exTopic[]>;
+        cache[this.date] = fresh;
+        this.cacheJson = JSON.stringify(cache);
+      } catch (_) { /* cache failures do not affect the page */ }
       if (this.topics.length === 0) this.status = '今天暂无热议数据';
-    } catch (_) { this.status = '热议加载失败'; }
+    } catch (_) {
+      if (!hasCached) this.status = '热议加载失败';
+    }
     finally { this.loading = false; }
   }
 
@@ -35,6 +60,8 @@ struct HotestTopics {
     const today: string = isoDay(0);
     if (next >= today) return;
     this.date = next;
+    this.topics = [];
+    this.restoreCache();
     this.load();
   }
 

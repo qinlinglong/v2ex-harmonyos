@@ -5,6 +5,7 @@ import { V2exTopic } from '../model/V2exModels';
 @Entry
 @Component
 struct MyFollowing {
+  @StorageLink('v2exFollowingCache') cacheJson: string = '[]';
   @State topics: V2exTopic[] = [];
   @State loading: boolean = true;
   @State loadingMore: boolean = false;
@@ -13,17 +14,37 @@ struct MyFollowing {
   @State members: string[] = [];
   @State selectedMember: string = '';
 
-  aboutToAppear(): void { this.load(); }
+  aboutToAppear(): void {
+    this.restoreCache();
+    this.load();
+  }
+
+  private restoreCache(): void {
+    try {
+      const cached: V2exTopic[] = JSON.parse(this.cacheJson) as V2exTopic[];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.topics = cached;
+        this.collectMembers();
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
+
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.topics.length > 0;
+    this.loading = !hasCached;
     this.status = '';
     this.page = 1;
     this.selectedMember = '';
     try {
-      this.topics = await V2exService.followingTopics(1);
+      const fresh: V2exTopic[] = await V2exService.followingTopics(1);
+      this.topics = fresh;
+      this.cacheJson = JSON.stringify(fresh);
       this.collectMembers();
       if (this.topics.length === 0) this.status = '暂无关注动态或尚未登录';
-    } catch (_) { this.status = '请先登录 V2EX'; }
+    } catch (_) {
+      if (!hasCached) this.status = '请先登录 V2EX';
+    }
     finally { this.loading = false; }
   }
 
@@ -45,7 +66,10 @@ struct MyFollowing {
       this.topics = username.length === 0
         ? await V2exService.followingTopics(1)
         : await V2exService.memberTopics(username);
-      if (username.length === 0) this.collectMembers();
+      if (username.length === 0) {
+        this.collectMembers();
+        this.cacheJson = JSON.stringify(this.topics);
+      }
       if (this.topics.length === 0) this.status = 'TA 最近没有发表主题';
     } catch (_) {
       this.status = username.length === 0 ? '请先登录 V2EX' : '主题加载失败';
@@ -63,7 +87,11 @@ struct MyFollowing {
     try {
       const next: V2exTopic[] = await V2exService.followingTopics(this.page + 1);
       if (next.length === 0) this.status = '没有更多动态';
-      else { this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0)); this.page += 1; }
+      else {
+        this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0));
+        this.cacheJson = JSON.stringify(this.topics);
+        this.page += 1;
+      }
     } catch (_) { this.status = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }

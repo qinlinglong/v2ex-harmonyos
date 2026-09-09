@@ -5,6 +5,7 @@ import { V2exService } from '../service/V2exService';
 @Entry
 @Component
 struct Notifications {
+  @StorageLink('v2exNotificationsCache') cacheJson: string = '[]';
   @State items: V2exNotification[] = [];
   @State loading: boolean = true;
   @State status: string = '';
@@ -12,16 +13,34 @@ struct Notifications {
   @State loadingMore: boolean = false;
   @State page: number = 1;
 
-  aboutToAppear(): void { this.load(); }
+  aboutToAppear(): void {
+    this.restoreCache();
+    this.load();
+  }
+
+  private restoreCache(): void {
+    try {
+      const cached: V2exNotification[] = JSON.parse(this.cacheJson) as V2exNotification[];
+      if (Array.isArray(cached) && cached.length > 0) {
+        this.items = cached;
+        this.loading = false;
+      }
+    } catch (_) { /* corrupt cache is ignored */ }
+  }
 
   private async load(): Promise<void> {
-    this.loading = true;
+    const hasCached: boolean = this.items.length > 0;
+    this.loading = !hasCached;
     this.status = '';
     this.page = 1;
     try {
-      this.items = await V2exService.notifications(1);
+      const fresh: V2exNotification[] = await V2exService.notifications(1);
+      this.items = fresh;
+      this.cacheJson = JSON.stringify(fresh);
       if (this.items.length === 0) this.status = '暂无通知或尚未登录';
-    } catch (_) { this.status = '请先登录 V2EX'; }
+    } catch (_) {
+      if (!hasCached) this.status = '请先登录 V2EX';
+    }
     finally { this.loading = false; }
   }
 
@@ -31,7 +50,11 @@ struct Notifications {
     try {
       const next: V2exNotification[] = await V2exService.notifications(this.page + 1);
       if (next.length === 0) this.status = '没有更多通知';
-      else { this.items = this.items.concat(next.filter((item: V2exNotification) => this.items.findIndex((old: V2exNotification) => old.id === item.id) < 0)); this.page += 1; }
+      else {
+        this.items = this.items.concat(next.filter((item: V2exNotification) => this.items.findIndex((old: V2exNotification) => old.id === item.id) < 0));
+        this.cacheJson = JSON.stringify(this.items);
+        this.page += 1;
+      }
     } catch (_) { this.status = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }
@@ -39,7 +62,10 @@ struct Notifications {
   private async remove(item: V2exNotification): Promise<void> {
     this.deletingId = item.id;
     const ok: boolean = await V2exService.notificationAction(item.id, 'delete');
-    if (ok) this.items = this.items.filter((value: V2exNotification) => value.id !== item.id);
+    if (ok) {
+      this.items = this.items.filter((value: V2exNotification) => value.id !== item.id);
+      this.cacheJson = JSON.stringify(this.items);
+    }
     else this.status = '删除失败，请先登录';
     this.deletingId = 0;
   }

@@ -66,6 +66,17 @@ export default class EntryAbility extends UIAbility {
       PersistentStorage.persistProp('v2exTopicCache', '{}');
       PersistentStorage.persistProp('v2exRepliesCache', '{}');
       PersistentStorage.persistProp('v2exProfileCache', '{}');
+      // Menu pages use cache-first rendering so reopening a page is instant
+      // while the same page refreshes quietly in the background.
+      PersistentStorage.persistProp('v2exMyNodesCache', '[]');
+      PersistentStorage.persistProp('v2exFavoritesCache', '[]');
+      PersistentStorage.persistProp('v2exNotificationsCache', '[]');
+      PersistentStorage.persistProp('v2exFollowingCache', '[]');
+      PersistentStorage.persistProp('v2exMyTopicsCache', '[]');
+      PersistentStorage.persistProp('v2exRecentTopicsCache', '[]');
+      PersistentStorage.persistProp('v2exHotestTopicsCache', '{}');
+      PersistentStorage.persistProp('v2exNodesCache', '[]');
+      PersistentStorage.persistProp('v2exNodeTopicsCache', '{}');
       AppStorage.setOrCreate('v2exSafeAreaTop', 0);
       AppStorage.setOrCreate('v2exSafeAreaBottom', 0);
       const uiContext = windowStage.getMainWindowSync().getUIContext();

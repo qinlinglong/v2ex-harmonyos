@@ -47,6 +47,8 @@ export interface V2exTopicStats {
 
 export interface V2exReply {
   id: number;
+  /** 1-based floor number from the rendered H5 page, when available. */
+  no?: number;
   content: string;
   created: number;
   member?: V2exMember;

@@ -24,7 +24,23 @@ struct RelatedReplies {
 
   private visibleReplies(): V2exReply[] {
     if (!this.relatedOnly) return this.replies;
-    return this.replies.filter((reply: V2exReply) => reply.content.indexOf('@') >= 0 || reply.content.indexOf('回复') >= 0);
+    if (this.replies.length === 0) return [];
+    // The H5 client treats a reply thread as a conversation between the
+    // author of the selected reply and the people explicitly mentioned in it.
+    // The old native filter matched any '@' anywhere, which mixed unrelated
+    // conversations together. With no explicit mention, keep the full list.
+    const anchor: V2exReply = this.replies.find((item: V2exReply) => /@[A-Za-z0-9_\-\u4e00-\u9fff]+/.test(item.content)) ?? this.replies[0];
+    const names: string[] = (anchor.content.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g) ?? [])
+      .map((value: string) => value.substring(1).toLowerCase());
+    if (names.length === 0) return this.replies;
+    const anchorName: string = anchor.member?.username?.toLowerCase() ?? '';
+    return this.replies.filter((reply: V2exReply) => {
+      const author: string = reply.member?.username?.toLowerCase() ?? '';
+      if (reply.id === anchor.id || names.indexOf(author) >= 0 || author === anchorName) return true;
+      const mentions: string[] = (reply.content.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g) ?? [])
+        .map((value: string) => value.substring(1).toLowerCase());
+      return mentions.indexOf(anchorName) >= 0 || mentions.some((name: string) => names.indexOf(name) >= 0);
+    });
   }
 
   build() {
