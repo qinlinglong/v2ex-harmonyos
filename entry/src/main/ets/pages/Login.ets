@@ -68,8 +68,9 @@ struct Login {
       this.status = '登录成功';
       setTimeout(() => router.back(), 250);
     } catch (error) {
-      this.status = error instanceof Error ? error.message : '登录失败，请检查输入';
+      const message: string = error instanceof Error ? error.message : '登录失败，请检查输入';
       await this.loadSigninInfo();
+      this.status = message;
     } finally { this.submitting = false; }
   }
 
