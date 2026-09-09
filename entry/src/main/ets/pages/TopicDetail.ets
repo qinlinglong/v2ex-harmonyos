@@ -823,6 +823,7 @@ struct TopicDetail {
                     if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(28).height(28).borderRadius(14).objectFit(ImageFit.Cover)
                   }.onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   Text(reply.member?.username ?? '匿名').fontSize(14).fontWeight(FontWeight.Medium).fontColor(themeAccentText(this.themeColor, this.darkMode))
+                    .margin({ left: 12 })
                     .onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   if (reply.mod === true) {
                     Text('MOD').fontSize(10).fontColor(Color.White).padding({ left: 5, right: 5, top: 1, bottom: 1 })
