@@ -433,9 +433,21 @@ struct TopicDetail {
   private replyDepth(reply: V2exReply, index: number): number {
     if (!reply.member?.username || index <= 0) return 0;
     const source: V2exReply[] = this.orderedReplies();
-    const explicit: RegExpMatchArray | null = reply.content.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g);
+    // H5 uses references in the form "@name #floor". Resolve that floor
+    // first; falling back to the latest earlier reply by name keeps older
+    // replies that only contain "@name" readable as a conversation.
+    const explicit: RegExpMatchArray | null = reply.content.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)\s*#?(\d+)?/g);
     if (!explicit || explicit.length === 0) return 0;
-    const names: string[] = explicit.map((item: string) => item.substring(1).toLowerCase());
+    for (const reference of explicit) {
+      const match: RegExpMatchArray | null = reference.match(/@([A-Za-z0-9_\-\u4e00-\u9fff]+)\s*#?(\d+)?/);
+      const name: string = match?.[1]?.toLowerCase() ?? '';
+      const floor: number = Number(match?.[2] ?? 0);
+      if (floor > 0) {
+        const targetIndex: number = source.findIndex((item: V2exReply) => item.no === floor && item.member?.username?.toLowerCase() === name);
+        if (targetIndex >= 0 && targetIndex < index) return Math.min(3, this.replyDepth(source[targetIndex], targetIndex) + 1);
+      }
+    }
+    const names: string[] = explicit.map((item: string) => item.substring(1).split(/\s/)[0].toLowerCase());
     for (let i: number = index - 1; i >= 0; i--) {
       const previous: V2exReply = source[i];
       if (previous.member?.username && names.indexOf(previous.member.username.toLowerCase()) >= 0) {
