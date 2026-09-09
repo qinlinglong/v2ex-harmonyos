@@ -17,6 +17,15 @@ struct Settings {
   @StorageLink('v2exBlockedKeywords') blockedKeywordsJson: string = '[]';
   @StorageLink('v2exBlockedUsers') blockedUsersJson: string = '[]';
   @StorageLink('v2exReplyMention') replyMention: string = '';
+  @StorageLink('v2exMyNodesCache') myNodesCacheJson: string = '[]';
+  @StorageLink('v2exFavoritesCache') favoritesCacheJson: string = '[]';
+  @StorageLink('v2exNotificationsCache') notificationsCacheJson: string = '[]';
+  @StorageLink('v2exFollowingCache') followingCacheJson: string = '[]';
+  @StorageLink('v2exMyTopicsCache') myTopicsCacheJson: string = '[]';
+  @StorageLink('v2exRecentTopicsCache') recentTopicsCacheJson: string = '[]';
+  @StorageLink('v2exHotestTopicsCache') hotestTopicsCacheJson: string = '{}';
+  @StorageLink('v2exNodesCache') nodesCacheJson: string = '[]';
+  @StorageLink('v2exNodeTopicsCache') nodeTopicsCacheJson: string = '{}';
   @State customColor: string = '#4F7CAC';
   @State status: string = '';
   private readonly colors: string[] = ['#4F7CAC', '#5B8C5A', '#C05A73', '#8B6FB0', '#D07A3A'];
@@ -32,6 +41,15 @@ struct Settings {
     this.blockedKeywordsJson = '[]';
     this.blockedUsersJson = '[]';
     this.replyMention = '';
+    this.myNodesCacheJson = '[]';
+    this.favoritesCacheJson = '[]';
+    this.notificationsCacheJson = '[]';
+    this.followingCacheJson = '[]';
+    this.myTopicsCacheJson = '[]';
+    this.recentTopicsCacheJson = '[]';
+    this.hotestTopicsCacheJson = '{}';
+    this.nodesCacheJson = '[]';
+    this.nodeTopicsCacheJson = '{}';
     this.status = '缓存已清除';
   }
   build() {
@@ -86,7 +104,7 @@ struct Settings {
         Row() { Text('首页板块').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('显示与顺序').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
-        Row() { Text('清除最近浏览').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.status = '最近浏览已清除'; }) }
+        Row() { Text('清除最近浏览').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).onClick(() => { this.recentJson = '[]'; this.recentTopicsCacheJson = '[]'; this.status = '最近浏览已清除'; }) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
         Row() { Text('清除缓存').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('清除').fontSize(13).onClick(() => this.clearCache()) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
