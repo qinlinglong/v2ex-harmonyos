@@ -57,6 +57,12 @@ struct RelatedReplies {
     try { this.replies = await V2exService.replies(this.topicId); } finally { this.loading = false; }
   }
 
+  private replyFloor(reply: V2exReply, renderedIndex: number): number {
+    if (reply.no !== undefined && reply.no > 0) return reply.no;
+    const sourceIndex: number = this.replies.findIndex((item: V2exReply) => item.id === reply.id);
+    return sourceIndex >= 0 ? sourceIndex + 1 : renderedIndex + 1;
+  }
+
   private visibleReplies(): V2exReply[] {
     if (!this.relatedOnly) return this.replies;
     if (this.replies.length === 0) return [];
@@ -89,7 +95,7 @@ struct RelatedReplies {
   private replyTo(reply: V2exReply): void {
     const username: string = reply.member?.username ?? '';
     if (username.length === 0) return;
-    const floor: number = reply.no ?? 0;
+    const floor: number = this.replyFloor(reply, this.visibleReplies().findIndex((item: V2exReply) => item.id === reply.id));
     AppStorage.set<string>('v2exReplyMention', `@${username}${floor > 0 ? ` #${floor}` : ''}`);
     router.back();
   }
@@ -113,7 +119,7 @@ struct RelatedReplies {
             Row() {
               Text(reply.member?.username ?? '匿名').fontSize(14).fontColor(this.themeColor)
               Blank()
-              Text(`#${reply.no ?? index + 1}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 12 })
+              Text(`#${this.replyFloor(reply, index)}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 12 })
               if (reply.createdLabel && reply.createdLabel.length > 0) Text(reply.createdLabel).fontSize(12).fontColor('#9AA0A6')
               if ((reply.thanks ?? 0) > 0) Text(`${reply.thanks} 感谢`).fontSize(12).fontColor('#9AA0A6').margin({ left: 8 })
             }.width('100%')

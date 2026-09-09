@@ -468,6 +468,12 @@ struct TopicDetail {
     return list;
   }
 
+  private replyFloor(reply: V2exReply, renderedIndex: number): number {
+    if (reply.no !== undefined && reply.no > 0) return reply.no;
+    const sourceIndex: number = this.replies.findIndex((item: V2exReply) => item.id === reply.id);
+    return sourceIndex >= 0 ? sourceIndex + 1 : renderedIndex + 1;
+  }
+
   private beginEditReply(reply: V2exReply): void {
     if (!this.canEditReply(reply)) {
       this.replyStatus = '当前回复不可编辑';
@@ -762,7 +768,7 @@ struct TopicDetail {
                       .border({ width: 1, color: this.themeColor }).borderRadius(3).margin({ left: 4 })
                   }
                   Blank()
-                  Text(`#${reply.no ?? index + 1}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 10 })
+                  Text(`#${this.replyFloor(reply, index)}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 10 })
                   if (reply.createdLabel && reply.createdLabel.length > 0) {
                     Text(reply.createdLabel).fontSize(12).fontColor('#9AA0A6')
                   } else if (reply.created > 0) {

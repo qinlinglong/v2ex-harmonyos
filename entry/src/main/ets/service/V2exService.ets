@@ -627,11 +627,13 @@ export class V2exService {
       const parsed: Object = JSON.parse(await repliesRequest) as Object;
       if (Array.isArray(parsed) && (parsed as V2exReply[]).length > 0) {
         const replies: V2exReply[] = parsed as V2exReply[];
-        replies.forEach((reply: V2exReply) => {
+        replies.forEach((reply: V2exReply, index: number) => {
           V2exService.normalizeMember(reply.member);
           reply.editable = V2exService.replyIsEditable(pageHtml, reply.id);
           const block: string = V2exService.replyBlock(pageHtml, reply.id);
-          reply.no = V2exService.replyNo(block) ?? reply.no;
+          // The JSON endpoint omits the floor. Keep the original API order as
+          // the fallback so reversing the display order never renumbers rows.
+          reply.no = V2exService.replyNo(block) ?? reply.no ?? index + 1;
           reply.createdLabel = V2exService.replyCreatedLabel(block) ?? reply.createdLabel;
           reply.thanks = V2exService.replyThanks(block) ?? reply.thanks;
           reply.thanked = /class=["'][^"']*thanked/i.test(block);
@@ -654,7 +656,7 @@ export class V2exService {
         content: V2exService.cleanHtml(match[4]),
         created: 0,
         member: { username: match[3], avatar_large: V2exService.assetUrl(match[2]) },
-        no: V2exService.replyNo(block),
+        no: V2exService.replyNo(block) ?? result.length + 1,
         createdLabel: V2exService.replyCreatedLabel(block),
         thanks: V2exService.replyThanks(block),
         editable: V2exService.replyIsEditable(html, replyId),
