@@ -83,10 +83,10 @@ struct Login {
       const code: string = result.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
       if (!/^[A-Z0-9]{4}$/.test(code)) throw new Error('未识别到 4 位验证码，请点击图片刷新后重试');
       const filled: string = await this.controller.runJavaScript(`(() => {
-        const input = Array.from(document.querySelectorAll('input')).find((item) => {
-          const element = item as HTMLInputElement;
-          return element.placeholder?.includes('code') || element.name.length > 20 && element.type === 'text';
-        }) as HTMLInputElement | undefined;
+        const inputs = Array.from(document.querySelectorAll('input')) as HTMLInputElement[];
+        const input = inputs.find((element) => /captcha|once|code|验证码/i.test(
+          [element.id, element.name, element.placeholder].join(' ')))
+          ?? inputs.filter((element) => element.type === 'text').slice(-1)[0];
         if (!input) return 'false';
         input.focus();
         input.value = '${code}';
