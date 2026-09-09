@@ -182,6 +182,7 @@ struct TopicDetail {
   @State ignored: boolean = false;
   @State base64Result: string = '';
   @State base64Source: string = '';
+  @State base64SelectedText: string = '';
   private topicId: number = 0;
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
@@ -238,10 +239,12 @@ struct TopicDetail {
         try {
           this.base64Result = this.decodeBase64Selection(selected);
           this.base64Source = source;
+          this.base64SelectedText = selected;
           this.actionStatus = 'Base64 解码完成';
         } catch (_) {
           this.base64Result = '';
           this.base64Source = '';
+          this.base64SelectedText = '';
           this.actionStatus = '选中的内容不是有效 Base64';
         }
         return true;
@@ -292,6 +295,7 @@ struct TopicDetail {
   @Builder
   private base64Card(): void {
     Column() {
+      Text(`选中内容：${this.base64SelectedText}`).fontSize(12).fontColor(themeMutedText(this.darkMode)).maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ bottom: 4 })
       Text('Base64 解码结果').fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ bottom: 4 })
       Text(this.base64Result).fontSize(15).fontColor(this.bodyText()).lineHeight(24)
         .width('100%').copyOption(CopyOptions.LocalDevice)
@@ -896,6 +900,7 @@ struct TopicDetail {
                       }.width('100%').margin({ top: 8 })
                     }
                   }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
+                  if (this.base64Result.length > 0 && this.base64Source.length > 0 && plainMarkdown(reply.content).indexOf(this.base64Source) >= 0) this.base64Card()
                   Row() {
                     if (!this.isSelf(reply.member?.username) || (reply.thanks ?? 0) > 0) {
                       Row() {
