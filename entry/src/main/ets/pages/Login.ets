@@ -34,7 +34,7 @@ struct Login {
       this.captchaUrl = info.captchaUrl;
       this.captchaImage = info.captchaUrl;
       this.limited = info.limited;
-      this.status = info.limited ? '当前 IP 暂时无法获取验证码，请稍后重试' : '';
+      this.status = info.limited ? '当前 IP 登录尝试次数过多，可能需要等待最多 1 天后重试' : '';
       if (!info.limited && info.captchaUrl.length > 0) {
         try { this.captchaImage = await V2exService.signinCaptcha(info.captchaUrl); }
         catch (_) { this.status = '验证码加载失败，请点击验证码区域重试'; }
