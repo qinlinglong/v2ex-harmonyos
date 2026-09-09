@@ -181,6 +181,7 @@ struct TopicDetail {
   @State replyMoreStatus: string = '';
   @State ignored: boolean = false;
   @State base64Result: string = '';
+  @State base64Source: string = '';
   private topicId: number = 0;
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
@@ -236,9 +237,11 @@ struct TopicDetail {
         }
         try {
           this.base64Result = this.decodeBase64Selection(selected);
+          this.base64Source = source;
           this.actionStatus = 'Base64 解码完成';
         } catch (_) {
           this.base64Result = '';
+          this.base64Source = '';
           this.actionStatus = '选中的内容不是有效 Base64';
         }
         return true;
@@ -284,6 +287,19 @@ struct TopicDetail {
       await pasteboard.getSystemPasteboard().setData(data);
       this.actionStatus = '解码结果已复制';
     } catch (_) { this.actionStatus = '复制失败'; }
+  }
+
+  @Builder
+  private base64Card(): void {
+    Column() {
+      Text('Base64 解码结果').fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ bottom: 4 })
+      Text(this.base64Result).fontSize(15).fontColor(this.bodyText()).lineHeight(24)
+        .width('100%').copyOption(CopyOptions.LocalDevice)
+        .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+      Button('复制解码结果').fontSize(13).fontColor(themeOnColor(this.themeColor)).backgroundColor(this.themeColor)
+        .margin({ top: 8 }).onClick(() => this.copyBase64Result())
+    }.width('100%').padding(10).backgroundColor(this.darkMode ? '#202A35' : '#F3F6FA')
+      .borderRadius(8).margin({ top: 8, bottom: 4 })
   }
 
   private async toggleIgnoredFromMenu(): Promise<void> {
@@ -699,10 +715,13 @@ struct TopicDetail {
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8 })
               ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
                 if (part.kind === 'code') {
-                  Text(part.value).fontSize(14).fontColor(this.bodyText()).lineHeight(22).fontFamily('monospace')
-                    .width('100%').padding(12).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
-                    .borderRadius(6).margin({ top: 16 }).copyOption(CopyOptions.LocalDevice)
-                    .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE).editMenuOptions(this.selectionMenu(part.value))
+                  Column() {
+                    Text(part.value).fontSize(14).fontColor(this.bodyText()).lineHeight(22).fontFamily('monospace')
+                      .width('100%').padding(12).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
+                      .borderRadius(6).margin({ top: 16 }).copyOption(CopyOptions.LocalDevice)
+                      .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE).editMenuOptions(this.selectionMenu(part.value))
+                    if (this.base64Result.length > 0 && this.base64Source === part.value) this.base64Card()
+                  }.width('100%')
                 } else if (part.kind === 'table' && part.table) {
                   Column({ space: 1 }) {
                     Row() {
@@ -729,29 +748,23 @@ struct TopicDetail {
                     .margin({ top: 14, bottom: 4 })
                     .onClick(() => this.openLink(part.value))
                 } else if (part.kind === 'link') {
-                  Text(part.label ?? part.value).fontSize(16).fontColor(themeAccentText(this.themeColor, this.darkMode)).lineHeight(26)
-                    .decoration({ type: TextDecorationType.Underline, color: themeAccentText(this.themeColor, this.darkMode) }).margin({ top: 20 })
-                    .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
-                    .editMenuOptions(this.selectionMenu(part.label ?? part.value))
-                    .onClick(() => this.openLink(part.value))
+                  Column() {
+                    Text(part.label ?? part.value).fontSize(16).fontColor(themeAccentText(this.themeColor, this.darkMode)).lineHeight(26)
+                      .decoration({ type: TextDecorationType.Underline, color: themeAccentText(this.themeColor, this.darkMode) }).margin({ top: 20 })
+                      .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                      .editMenuOptions(this.selectionMenu(part.label ?? part.value))
+                      .onClick(() => this.openLink(part.value))
+                    if (this.base64Result.length > 0 && this.base64Source === (part.label ?? part.value)) this.base64Card()
+                  }
                 } else {
-                  Text(plainMarkdown(part.value)).fontSize(16).fontColor(this.bodyText()).lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
-                    .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
-                    .editMenuOptions(this.selectionMenu(plainMarkdown(part.value)))
+                  Column() {
+                    Text(plainMarkdown(part.value)).fontSize(16).fontColor(this.bodyText()).lineHeight(26).margin({ top: 20 }).textAlign(TextAlign.Start)
+                      .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                      .editMenuOptions(this.selectionMenu(plainMarkdown(part.value)))
+                    if (this.base64Result.length > 0 && this.base64Source === plainMarkdown(part.value)) this.base64Card()
+                  }
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
-              if (this.base64Result.length > 0) {
-                Column() {
-                  Text('Base64 解码结果').fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ bottom: 4 })
-                  Text(this.base64Result).fontSize(15).fontColor(this.bodyText()).lineHeight(24)
-                    .width('100%').copyOption(CopyOptions.LocalDevice)
-                    .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
-                    .editMenuOptions(this.selectionMenu(this.base64Result))
-                  Button('复制解码结果').fontSize(13).fontColor(themeOnColor(this.themeColor)).backgroundColor(this.themeColor)
-                    .margin({ top: 8 }).onClick(() => this.copyBase64Result())
-                }.width('100%').padding(10).backgroundColor(this.darkMode ? '#202A35' : '#F3F6FA')
-                  .borderRadius(8).margin({ top: 12, bottom: 4 })
-              }
               Row({ space: 8 }) {
                 Row() {
                   Text(this.favorited ? '★' : '☆').fontSize(18).fontColor(this.favorited ? '#D69E00' : themeAccentText(this.themeColor, this.darkMode))
