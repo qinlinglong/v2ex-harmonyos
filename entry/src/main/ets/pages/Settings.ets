@@ -12,6 +12,7 @@ struct Settings {
   @StorageLink('v2exAutoCheckin') autoCheckin: boolean = true;
   @StorageLink('v2exMsgPush') msgPush: boolean = true;
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
+  @StorageLink('v2exNativeCookie') nativeCookie: string = '';
   @StorageLink('v2exRecentTopicIds') recentJson: string = '[]';
   @StorageLink('v2exIgnoredTopicIds') ignoredTopicsJson: string = '[]';
   @StorageLink('v2exIgnoredReplyIds') ignoredRepliesJson: string = '[]';
@@ -133,6 +134,10 @@ struct Settings {
           Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('退出').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => {
             try {
               webview.WebCookieManager.clearAllCookiesSync();
+              // Native sign-in stores the session separately from ArkWeb.
+              // Clear both stores so later permission checks cannot reuse a
+              // stale authenticated session after the user logs out.
+              this.nativeCookie = '';
               this.cachedMemberJson = '';
               this.status = '已退出登录';
             } catch (_) { this.status = '退出失败'; }
