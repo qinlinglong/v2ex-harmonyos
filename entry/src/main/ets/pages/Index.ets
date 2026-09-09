@@ -77,6 +77,7 @@ struct Index {
   @State topicPage: number = 1;
   @State loadingMoreTopics: boolean = false;
   @State noMoreTopics: boolean = false;
+  private homeScroller: ListScroller = new ListScroller();
 
   aboutToAppear(): void {
     applyThemeSystemBars(this.darkMode);
@@ -138,6 +139,10 @@ struct Index {
 
   private selectTab(index: number): void {
     this.selectedTab = index;
+    // Rebind the content list at its first item whenever the tab changes.
+    // Delay one frame so the conditional list has been rebuilt before the
+    // scroll command is applied.
+    setTimeout((): void => this.homeScroller.scrollToIndex(0, false), 0);
     this.topicPage = 1;
     this.noMoreTopics = false;
     const tab: HomeTabItem = this.activeTab();
@@ -438,7 +443,7 @@ struct Index {
             .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
         }
       } else {
-        List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
+        List({ space: 1, scroller: this.homeScroller }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
           .onReachEnd(() => this.loadMoreHomeTopics())
           .onScrollIndex((_start: number, end: number) => { if (end >= Math.max(0, this.visibleTopics().length - 8)) this.loadMoreHomeTopics(); })
           .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
@@ -495,7 +500,7 @@ struct Index {
         }.width('100%').height('100%')
       }
     }.width('100%').height('100%')
-      .gesture(PanGesture({ direction: PanDirection.Horizontal, distance: 48 })
+      .priorityGesture(PanGesture({ direction: PanDirection.Horizontal, distance: 48 })
         .onActionEnd((event: GestureEvent) => {
           if (this.drawerOpen || Math.abs(event.offsetX) < 80) return;
           this.shiftTab(event.offsetX < 0 ? 1 : -1);
