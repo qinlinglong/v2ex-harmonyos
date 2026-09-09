@@ -138,9 +138,11 @@ struct Settings {
         Row() { Text('主题屏蔽').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('管理').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/TopicBlockSettings' }))
-        Row() { Text('屏蔽列表').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('用户与忽略主题').fontSize(14).fontColor(this.themeColor) }
-          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
-          .onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
+        if (this.cachedMemberJson.trim().length > 0) {
+          Row() { Text('屏蔽列表').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('用户与忽略主题').fontSize(14).fontColor(this.themeColor) }
+            .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
+            .onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
+        }
         Row() { Text('图片上传').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('Imgur').fontSize(14).fontColor(this.themeColor) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ImgurConfig' }))
