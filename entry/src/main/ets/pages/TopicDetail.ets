@@ -569,9 +569,7 @@ struct TopicDetail {
         Text('⋮').fontSize(28).fontColor(this.primaryText()).width(44).height(44).textAlign(TextAlign.Center)
           .bindMenu([
             { value: '复制主题链接', action: () => this.copyTopicLink() },
-            { value: '在浏览器打开', action: () => this.openLink(this.topicShareUrl()) },
             { value: this.favorited ? '取消收藏主题' : '收藏主题', action: () => this.action('favorite') },
-            { value: '感谢作者', enabled: !this.isSelf(this.topic?.member?.username), action: () => this.action('thank') },
             { value: this.ignored ? '取消忽略主题' : '忽略主题', action: () => this.toggleIgnoredFromMenu() },
             { value: '举报主题', enabled: !this.isSelf(this.topic?.member?.username), action: () => this.action('report') }
           ], { placement: Placement.BottomRight })
