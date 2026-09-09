@@ -118,7 +118,7 @@ struct Login {
               Text('登录 V2EX').fontSize(26).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
               Text('使用用户名或电子邮件地址登录。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 6, bottom: 22 })
               Text('用户名').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%')
-              TextInput({ placeholder: '用户名或电子邮件地址', text: this.username }).width('100%').height(52).margin({ top: 6 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.username = value)
+              TextInput({ placeholder: '用户名或电子邮件地址', text: this.username }).width('100%').height(52).margin({ top: 6 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Email).onChange((value: string) => this.username = value)
               Text('密码').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 16 })
               TextInput({ placeholder: '请输入密码', text: this.password }).width('100%').height(52).margin({ top: 6 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Password).showPasswordIcon(true).onChange((value: string) => this.password = value)
               Text('你是机器人吗？').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 16 })
@@ -127,7 +127,7 @@ struct Login {
               } else {
                 Text('点击刷新验证码').width('100%').aspectRatio(4).margin({ top: 6 }).textAlign(TextAlign.Center).fontColor(themeSecondaryText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).onClick(() => this.loadSigninInfo())
               }
-              TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.code = value)
+              TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Email).onChange((value: string) => this.code = value)
               if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).width('100%').lineHeight(20).margin({ top: 12 })
               Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
                 .enabled(!this.loading && !this.submitting && this.signinInfo !== undefined && !this.limited)
