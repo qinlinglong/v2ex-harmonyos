@@ -66,6 +66,7 @@ export interface V2exReply {
 
 export interface V2exNotification {
   id: number;
+  once?: string;
   username: string;
   avatar?: string;
   topicId: number;

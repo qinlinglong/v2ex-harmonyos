@@ -598,10 +598,22 @@ export class V2exService {
     const html: string = await V2exService.get(`/notifications?p=${Math.max(1, page)}`, true);
     if (!V2exService.signedInHtml(html)) throw new Error('请先登录');
     const result: V2exNotification[] = [];
-    const pattern: RegExp = /id=["']n_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+    const pattern: RegExp = /id=["']n_(\d+)["']([\s\S]*?)(?=id=["']n_\d+["']|$)/gi;
     let match: RegExpExecArray | null = pattern.exec(html);
     while (match !== null) {
-      result.push({ id: Number(match[1]), avatar: V2exService.assetUrl(match[2]), username: match[3], topicId: Number(match[4]), topicTitle: V2exService.cleanHtml(match[5]) });
+      const block: string = match[2];
+      const avatarMatch: RegExpMatchArray | null = block.match(/<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["']/i);
+      const topicMatch: RegExpMatchArray | null = block.match(/<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
+      if (avatarMatch && topicMatch) {
+        const deleteMatch: RegExpMatchArray | null = block.match(/href=["']\/delete\/notification\/\d+\?once=([^"']+)["']/i)
+          ?? block.match(/href=["'][^"']*\/delete\/notification\/\d+\?once=([^"']+)["']/i);
+        const createdMatch: RegExpMatchArray | null = block.match(/class=["'][^"']*\b(?:snow|fade)\b[^"']*["'][^>]*>([\s\S]*?)<\//i);
+        result.push({
+          id: Number(match[1]), once: deleteMatch?.[1], avatar: V2exService.assetUrl(avatarMatch[1]), username: avatarMatch[2],
+          topicId: Number(topicMatch[1]), topicTitle: V2exService.cleanHtml(topicMatch[2]),
+          created: createdMatch ? V2exService.cleanHtml(createdMatch[1]) : undefined
+        });
+      }
       match = pattern.exec(html);
     }
     return result;
@@ -1091,15 +1103,21 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
-  static async notificationAction(notificationId: number, action: 'delete'): Promise<boolean> {
+  static async notificationAction(notificationId: number, action: 'delete', once: string = ''): Promise<boolean> {
     const html: string = await V2exService.get('/notifications', true);
-    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
-    if (!onceMatch) return false;
+    let onceValue: string = once;
+    if (onceValue.length === 0) {
+      const onceMatch: RegExpMatchArray | null = html.match(new RegExp(`/delete/notification/${notificationId}\\?once=([^"']+)`, 'i'))
+        ?? html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
+      onceValue = onceMatch?.[1] ?? '';
+    }
+    if (onceValue.length === 0) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/notification/${notificationId}?once=${V2exService.formValue(onceMatch[1])}`, {
-        method: http.RequestMethod.GET,
-        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/notifications` },
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/notification/${notificationId}?once=${V2exService.formValue(onceValue)}`, {
+        method: http.RequestMethod.POST,
+        extraData: '',
+        header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/notifications` },
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING

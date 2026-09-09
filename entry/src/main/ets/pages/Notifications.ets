@@ -71,7 +71,7 @@ struct Notifications {
   private async remove(item: V2exNotification): Promise<void> {
     this.deletingId = item.id;
     try {
-      const ok: boolean = await V2exService.notificationAction(item.id, 'delete');
+      const ok: boolean = await V2exService.notificationAction(item.id, 'delete', item.once);
       if (ok) {
         this.items = this.items.filter((value: V2exNotification) => value.id !== item.id);
         this.cacheJson = JSON.stringify(this.items);
