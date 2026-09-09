@@ -104,9 +104,6 @@ struct Settings {
             if (/^#[0-9A-Fa-f]{6}$/.test(value)) this.themeColor = value;
           })
         }.width('100%').margin({ top: 18 })
-        Row() { Text('主题设置').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('颜色与深色模式').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }
-          .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
-          .onClick(() => router.pushUrl({ url: 'pages/CustomizeTheme' }))
         Row() { Text('Markdown 帮助').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('编辑格式').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/GitHubMD' }))

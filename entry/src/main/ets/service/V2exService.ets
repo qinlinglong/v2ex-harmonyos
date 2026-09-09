@@ -636,19 +636,35 @@ export class V2exService {
     const raw: Object = JSON.parse(await V2exService.get(`https://v2exday.com/api.php?date=${encodeURIComponent(date)}`)) as Object;
     if (!Array.isArray(raw)) return [];
     const allNodes: V2exNode[] = await V2exService.nodes();
-    return (raw as Object[]).map((item: Object) => {
+    const topics: V2exTopic[] = await Promise.all((raw as Object[]).map(async (item: Object): Promise<V2exTopic> => {
       const value: Record<string, Object> = item as Record<string, Object>;
       const url: string = String(value['url'] ?? '');
       const idMatch: RegExpMatchArray | null = url.match(/\/t\/(\d+)/);
-      const replyMatch: RegExpMatchArray | null = url.match(/reply(\d+)/);
       const nodeTitle: string = String(value['node'] ?? '');
-      return {
+      const topic: V2exTopic = {
         id: Number(idMatch?.[1] ?? 0), title: String(value['title'] ?? ''), content: '',
-        replies: Number(replyMatch?.[1] ?? 0), last_modified: 0, last_touched: 0,
+        replies: 0, last_modified: 0, last_touched: 0,
         node: allNodes.find((node: V2exNode) => node.title === nodeTitle),
         member: { username: String(value['user'] ?? '') }
       } as V2exTopic;
-    }).filter((topic: V2exTopic) => topic.id > 0);
+      // v2exday does not include the reply count. Enrich each ranked topic
+      // from the public topic API so the historical list shows the same count
+      // as the topic detail page instead of displaying zero for every row.
+      if (topic.id > 0) {
+        try {
+          const parsed: V2exTopic[] = JSON.parse(await V2exService.get(`/api/topics/show.json?id=${topic.id}`)) as V2exTopic[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const remote: V2exTopic = parsed[0];
+            V2exService.normalizeTopic(remote);
+            topic.replies = remote.replies ?? 0;
+            topic.node = remote.node ?? topic.node;
+            topic.member = remote.member ?? topic.member;
+          }
+        } catch (_) { /* keep the ranked item visible if enrichment is rate-limited */ }
+      }
+      return topic;
+    }));
+    return topics.filter((topic: V2exTopic) => topic.id > 0);
   }
 
   static async topMembers(kind: 'rich' | 'player' = 'rich'): Promise<V2exMember[]> {

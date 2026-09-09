@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
-import { themeAccentText, themeMutedText, themeSecondaryText } from '../common/Theme';
+import { themeAccentText, themeMutedText, themeOnColor, themeSecondaryText } from '../common/Theme';
 
 function relativeTime(unix: number): string {
   if (!unix) return '';
@@ -346,6 +346,9 @@ struct Index {
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
         Stack() {
+          Text('节点').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
+        }.width(56).height(64).align(Alignment.Center).onClick(() => router.pushUrl({ url: 'pages/NavNodes' }))
+        Stack() {
           Image($r('app.media.ic_mail')).width(24).height(24).fillColor(themeAccentText(this.themeColor, this.darkMode))
         }.width(56).height(64).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
         Stack() {
@@ -468,7 +471,11 @@ struct Index {
               }
               this.drawerItem('历史最热', 'HotestTopics')
               this.drawerItem('最近浏览', 'RecentTopic')
-              this.drawerItem('节点导航', 'NavNodes')
+              Row() {
+                Text('夜间模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
+                Button(this.darkMode ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor)
+                  .fontColor(themeOnColor(this.themeColor)).onClick(() => this.darkMode = !this.darkMode)
+              }.width('100%').padding({ left: 20, right: 20, top: 12, bottom: 12 }).backgroundColor(this.surface()).margin({ top: 1 })
               this.drawerItem('更多选项', 'Settings')
             }.width('100%')
           }.width(300).height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
