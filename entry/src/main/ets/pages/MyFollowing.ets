@@ -164,6 +164,7 @@ struct MyFollowing {
             }
           }
         }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMore())
+          .onScrollIndex((_start: number, end: number) => { if (end >= this.topics.length - 2) this.loadMore(); })
       }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.reloadCurrent(); })
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }

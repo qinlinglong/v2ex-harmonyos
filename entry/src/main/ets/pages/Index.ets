@@ -425,6 +425,7 @@ struct Index {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
             .onReachEnd(() => this.loadMoreHomeTopics())
+            .onScrollIndex((_start: number, end: number) => { if (end >= this.visibleTopics().length - 2) this.loadMoreHomeTopics(); })
             .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
           if (state === RefreshStatus.Refresh) {

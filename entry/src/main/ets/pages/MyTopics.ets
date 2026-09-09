@@ -108,6 +108,7 @@ struct MyTopics {
               if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.loadMore())
             }
           }.onReachEnd(() => this.loadMore())
+            .onScrollIndex((_start: number, end: number) => { if (end >= this.topics.length - 2) this.loadMore(); })
             .layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }

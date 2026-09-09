@@ -6,7 +6,8 @@ export function applyThemeSystemBars(darkMode: boolean): void {
   try {
     const context = getContext() as common.UIAbilityContext;
     context.windowStage.getMainWindow().then((mainWindow: window.Window) => {
-      const surface: string = darkMode ? '#0F141A' : '#FFFFFF';
+      // Match the page canvas so the safe-area region has no visible strip.
+      const surface: string = darkMode ? '#0F141A' : '#F5F7FA';
       const content: string = darkMode ? '#F2F5F8' : '#202124';
       mainWindow.setWindowSystemBarProperties({
         statusBarColor: surface,
