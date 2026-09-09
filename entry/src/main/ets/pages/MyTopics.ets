@@ -11,6 +11,8 @@ struct MyTopics {
   @State loadingMore: boolean = false;
   @State page: number = 1;
   @State status: string = '';
+  @State noMore: boolean = false;
+  @State loadMoreStatus: string = '';
 
   aboutToAppear(): void {
     this.restoreCache();
@@ -32,6 +34,8 @@ struct MyTopics {
     this.loading = !hasCached;
     this.status = '';
     this.page = 1;
+    this.noMore = false;
+    this.loadMoreStatus = '';
     try {
       const fresh: V2exTopic[] = await V2exService.myTopics(1);
       this.topics = fresh;
@@ -44,17 +48,19 @@ struct MyTopics {
   }
 
   private async loadMore(): Promise<void> {
-    if (this.loadingMore) return;
+    if (this.loadingMore || this.noMore) return;
     this.loadingMore = true;
     try {
       const next: V2exTopic[] = await V2exService.myTopics(this.page + 1);
-      if (next.length === 0) this.status = '没有更多主题';
+      const unique: V2exTopic[] = next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0);
+      if (unique.length === 0) { this.noMore = true; this.loadMoreStatus = '没有更多主题'; }
       else {
-        this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0));
+        this.topics = this.topics.concat(unique);
         this.cacheJson = JSON.stringify(this.topics);
         this.page += 1;
+        this.loadMoreStatus = '';
       }
-    } catch (_) { this.status = '加载更多失败'; }
+    } catch (_) { this.loadMoreStatus = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }
 
@@ -86,7 +92,7 @@ struct MyTopics {
         Blank()
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
-      else if (this.status.length > 0) Column() {
+      else if (this.status.length > 0 && this.topics.length === 0) Column() {
         Text(this.status).fontSize(15).fontColor('#7B8794')
         Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
       }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
@@ -94,8 +100,11 @@ struct MyTopics {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) {
             ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
-            ListItem() { Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore()) }
-          }
+            ListItem() {
+              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
+            }
+          }.onReachEnd(() => this.loadMore())
             .layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }

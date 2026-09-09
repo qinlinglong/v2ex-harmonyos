@@ -173,6 +173,10 @@ struct TopicDetail {
   @State appendStatus: string = '';
   @State voteState: number = 0;
   @State replyOrder: number = 0;
+  @State replyPage: number = 1;
+  @State loadingMoreReplies: boolean = false;
+  @State noMoreReplies: boolean = false;
+  @State replyMoreStatus: string = '';
   @State ignored: boolean = false;
   @State base64Result: string = '';
   private topicId: number = 0;
@@ -327,11 +331,36 @@ struct TopicDetail {
     });
     const repliesTask: Promise<void> = V2exService.replies(this.topicId).then((loadedReplies: V2exReply[]) => {
       this.replies = loadedReplies;
+      this.replyPage = 1;
+      this.noMoreReplies = false;
+      this.replyMoreStatus = '';
       this.saveRepliesCache(this.topicId, loadedReplies);
     }).catch(() => {
       if (this.replies.length === 0) this.replyStatus = '回复暂时无法加载，可稍后重试';
     });
     await Promise.all([topicTask, repliesTask]);
+  }
+
+  private async loadMoreReplies(): Promise<void> {
+    if (this.loadingMoreReplies || this.noMoreReplies || this.topicId <= 0) return;
+    this.loadingMoreReplies = true;
+    try {
+      const next: V2exReply[] = await V2exService.repliesPage(this.topicId, this.replyPage + 1);
+      const unique: V2exReply[] = next.filter((reply: V2exReply) => this.replies.findIndex((item: V2exReply) => item.id === reply.id) < 0);
+      if (unique.length === 0) {
+        this.noMoreReplies = true;
+        this.replyMoreStatus = '没有更多回复';
+      } else {
+        this.replies = this.replies.concat(unique);
+        this.replyPage += 1;
+        this.replyMoreStatus = '';
+        this.saveRepliesCache(this.topicId, this.replies);
+      }
+    } catch (_) {
+      this.replyMoreStatus = '加载更多回复失败';
+    } finally {
+      this.loadingMoreReplies = false;
+    }
   }
 
   private restoreCache(): void {
@@ -636,13 +665,6 @@ struct TopicDetail {
                 Button(this.appendOpen ? '收起追加' : '追加内容').fontSize(13).fontColor(this.themeColor).backgroundColor(Color.Transparent)
                   .margin({ top: 4 }).onClick(() => this.appendOpen = !this.appendOpen)
               }
-              if (!this.isSelf(this.topic.member?.username)) {
-                Row() {
-                  Text(this.ignored ? '取消忽略' : '忽略主题').fontSize(13).fontColor('#7B8794').layoutWeight(1)
-                    .onClick(async () => { const nextIgnored: boolean = !this.ignored; const ok: boolean = await this.action(nextIgnored ? 'ignore' : 'unignore'); if (ok) { this.ignored = nextIgnored; this.setIgnoredTopic(nextIgnored); } })
-                  Text('举报').fontSize(13).fontColor('#C05A73').onClick(() => this.action('report'))
-                }.width('80%').margin({ top: 4 })
-              }
               if (this.appendOpen) {
                 TextArea({ placeholder: '追加内容', text: this.appendText }).width('100%').height(110).fontSize(15).fontColor(this.primaryText())
                   .onChange((value: string) => this.appendText = value)
@@ -744,7 +766,7 @@ struct TopicDetail {
               }.width('100%').margin({ top: 18 })
             }.width('100%').alignItems(HorizontalAlign.Start).padding(20).backgroundColor(this.surface())
             Row() {
-              Text(`回复（${this.replies.length}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
+              Text(`回复（${Math.max(this.topic.replies, this.replies.length)}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
               Blank()
               Text(this.replyOrder === 0 ? '默认排序' : '最新在前').fontSize(13).fontColor('#7B8794')
                 .onClick(() => this.replyOrder = this.replyOrder === 0 ? 1 : 0)
@@ -863,6 +885,13 @@ struct TopicDetail {
               }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16 + this.replyDepth(reply, index) * 20, right: 16, top: 16, bottom: 16 })
                 .backgroundColor(this.surface()).margin({ bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
+            if (this.replies.length > 0) {
+              Row() {
+                if (this.replyMoreStatus.length > 0) Text(this.replyMoreStatus).fontSize(13).fontColor('#8A97A6')
+                if (!this.noMoreReplies) Button(this.loadingMoreReplies ? '加载中…' : '加载更多回复').fontSize(13)
+                  .onClick(() => this.loadMoreReplies())
+              }.width('100%').padding(18).justifyContent(FlexAlign.Center)
+            }
           }.width('100%').constraintSize({ minHeight: '100%' })
           }.layoutWeight(1).width('100%')
           if (this.replyComposerOpen) {

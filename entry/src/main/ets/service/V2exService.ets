@@ -476,21 +476,42 @@ export class V2exService {
   private static parseRichTopicItems(html: string): V2exTopic[] {
     const result: V2exTopic[] = [];
     const seen: number[] = [];
-    const pattern: RegExp = /<div\s+class=["']cell item["'][^>]*>[\s\S]*?<a\s+href=["']\/member\/([^"']+)["'][^>]*>[\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][^>]*>[\s\S]*?class=["']item_title["'][\s\S]*?<a\s+href=["']\/t\/(\d+)(?:#[^"']+)?["'][^>]*>([\s\S]*?)<\/a>[\s\S]*?class=["']node["'][^>]*href=["']\/go\/([^"']+)["'][^>]*>([\s\S]*?)<\/a>[\s\S]*?class=["']count_livid["'][^>]*>([\d,]+)<\/a>/gi;
+    // Current H5 pages use cells such as `cell from_123 t_456` and put the
+    // topic link inside a `span.item_title`; older pages used `cell item`.
+    // Parse the topic anchors first, then read metadata from their containing
+    // cell so both layouts keep working.
+    const pattern: RegExp = /<a\s+href=["']\/t\/(\d+)(?:#[^"']+)?["'][^>]*>([\s\S]*?)<\/a>/gi;
     let match: RegExpExecArray | null = pattern.exec(html);
     while (match !== null) {
-      const id: number = Number(match[4]);
-      if (seen.indexOf(id) < 0) {
+      const prefix: string = html.substring(Math.max(0, match.index - 180), match.index);
+      const anchor: string = match[0];
+      if (anchor.indexOf('topic-link') < 0 && prefix.indexOf('item_title') < 0) {
+        match = pattern.exec(html);
+        continue;
+      }
+      const id: number = Number(match[1]);
+      if (id > 0 && seen.indexOf(id) < 0) {
         seen.push(id);
+        const cellStartMatch: RegExpMatchArray | null = html.substring(0, match.index).match(/<div\s+class=["']cell\b[^"']*["'][^>]*>/gi);
+        const cellStart: number = cellStartMatch && cellStartMatch.length > 0
+          ? (html.substring(0, match.index).lastIndexOf(cellStartMatch[cellStartMatch.length - 1]))
+          : Math.max(0, match.index - 2200);
+        const nextCell: number = html.indexOf('<div class="cell', match.index + match[0].length);
+        const context: string = html.substring(cellStart >= 0 ? cellStart : Math.max(0, match.index - 2200), nextCell > 0 ? nextCell : Math.min(html.length, match.index + 2600));
+        const memberMatch: RegExpMatchArray | null = context.match(/href=["']\/member\/([^"']+)["'][\s\S]{0,500}?<img[^>]+alt=["']([^"']+)["']/i);
+        const avatarMatch: RegExpMatchArray | null = context.match(/<img[^>]+src=["']([^"']+)["'][^>]*alt=["'][^"']+["']/i);
+        const nodeMatch: RegExpMatchArray | null = context.match(/class=["'][^"']*\bnode\b[^"']*["'][^>]*href=["']\/go\/([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i)
+          ?? context.match(/href=["']\/go\/([^"']+)["'][^>]*class=["'][^"']*\bnode\b[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
+        const countMatch: RegExpMatchArray | null = context.match(/class=["'][^"']*\bcount_(?:livid|orange)\b[^"']*["'][^>]*>([\d,]+)<\/a>/i);
         const topic: V2exTopic = {
           id,
-          title: V2exService.cleanHtml(match[5]),
+          title: V2exService.cleanHtml(match[2]),
           content: '',
-          replies: Number(match[8].replace(/,/g, '')),
+          replies: countMatch ? Number(countMatch[1].replace(/,/g, '')) : 0,
           last_modified: 0,
           last_touched: 0,
-          member: { username: V2exService.cleanHtml(match[3]), avatar_large: V2exService.assetUrl(match[2]) },
-          node: { name: V2exService.cleanHtml(match[6]), title: V2exService.cleanHtml(match[7]) }
+          member: memberMatch ? { username: V2exService.cleanHtml(memberMatch[2]), avatar_large: V2exService.assetUrl(avatarMatch?.[1] ?? '') } : undefined,
+          node: nodeMatch ? { name: V2exService.cleanHtml(nodeMatch[1]), title: V2exService.cleanHtml(nodeMatch[2]) } : undefined
         } as V2exTopic;
         V2exService.normalizeTopic(topic);
         result.push(topic);
@@ -613,6 +634,38 @@ export class V2exService {
     return fallbackTopic;
   }
 
+  private static parseReplyItems(html: string): V2exReply[] {
+    const result: V2exReply[] = [];
+    // H5 keeps each reply in its own `#r_ID` cell. Match the content first,
+    // then resolve the surrounding cell for floor, author and permissions.
+    const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<div\s+class=["'][^"']*\breply_content\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi;
+    let match: RegExpExecArray | null = pattern.exec(html);
+    while (match !== null) {
+      const replyId: number = Number(match[1]);
+      const blockMatch: RegExpMatchArray | null = html.match(new RegExp(`id=["']r_${replyId}["']([\\s\\S]*?)(?=id=["']r_\\d+["']|$)`, 'i'));
+      const block: string = blockMatch?.[1] ?? '';
+      const memberMatch: RegExpMatchArray | null = block.match(/<strong>[\s\S]*?href=["']\/member\/([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i)
+        ?? block.match(/<img[^>]+alt=["']([^"']+)["']/i);
+      const avatarMatch: RegExpMatchArray | null = block.match(/<img[^>]+src=["']([^"']+)["'][^>]*alt=["'][^"']+["']/i);
+      const username: string = memberMatch ? V2exService.cleanHtml(memberMatch[2] ?? memberMatch[1]) : '匿名';
+      result.push({
+        id: replyId,
+        content: V2exService.htmlContentToMarkdown(match[2]),
+        created: 0,
+        member: { username, avatar_large: V2exService.assetUrl(avatarMatch?.[1] ?? '') },
+        no: V2exService.replyNo(block) ?? result.length + 1,
+        createdLabel: V2exService.replyCreatedLabel(block),
+        thanks: V2exService.replyThanks(block),
+        editable: V2exService.replyIsEditable(html, replyId),
+        thanked: /class=["'][^"']*thanked/i.test(block),
+        op: /class=["'][^"']*badge[^"']*op/i.test(block),
+        mod: /class=["'][^"']*badge[^"']*mod/i.test(block)
+      });
+      match = pattern.exec(html);
+    }
+    return result;
+  }
+
   static async replies(id: number): Promise<V2exReply[]> {
     // The public replies API does not expose viewer-specific permissions.
     // Fetch the authenticated H5 page as well so editing is shown only while
@@ -644,29 +697,14 @@ export class V2exService {
       }
     } catch (_) { /* fall back to the HTML page */ }
     const html: string = pageHtml.length > 0 ? pageHtml : await V2exService.get(`/t/${id}`, true);
-    const result: V2exReply[] = [];
-    const pattern: RegExp = /id=["']r_(\d+)["'][\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["'][\s\S]*?<div class=["']reply_content["']>([\s\S]*?)<\/div>/gi;
-    let match: RegExpExecArray | null = pattern.exec(html);
-    while (match !== null) {
-      const replyId: number = Number(match[1]);
-      const blockMatch: RegExpMatchArray | null = html.match(new RegExp(`id=["']r_${replyId}["']([\\s\\S]*?)(?=id=["']r_\\d+["']|$)`, 'i'));
-      const block: string = blockMatch?.[1] ?? '';
-      result.push({
-        id: replyId,
-        content: V2exService.cleanHtml(match[4]),
-        created: 0,
-        member: { username: match[3], avatar_large: V2exService.assetUrl(match[2]) },
-        no: V2exService.replyNo(block) ?? result.length + 1,
-        createdLabel: V2exService.replyCreatedLabel(block),
-        thanks: V2exService.replyThanks(block),
-        editable: V2exService.replyIsEditable(html, replyId),
-        thanked: /class=["'][^"']*thanked/i.test(block),
-        op: /class=["'][^"']*badge[^"']*op/i.test(block),
-        mod: /class=["'][^"']*badge[^"']*mod/i.test(block)
-      });
-      match = pattern.exec(html);
-    }
-    return result;
+    return V2exService.parseReplyItems(html);
+  }
+
+  /** Fetch a later H5 reply page, preserving the floor numbers rendered by V2EX. */
+  static async repliesPage(id: number, page: number): Promise<V2exReply[]> {
+    if (page <= 1) return V2exService.replies(id);
+    const html: string = await V2exService.get(`/t/${id}?p=${Math.max(1, page)}`, true);
+    return V2exService.parseReplyItems(html);
   }
 
   static async reply(topicId: number, content: string): Promise<boolean> {

@@ -23,6 +23,8 @@ struct NodeTopics {
   @State status: string = '';
   @State page: number = 1;
   @State loadingMore: boolean = false;
+  @State noMore: boolean = false;
+  @State loadMoreStatus: string = '';
   @State nodeFavorited: boolean = false;
   @State actionStatus: string = '';
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
@@ -54,6 +56,8 @@ struct NodeTopics {
     this.loading = !hasCached;
     this.status = '';
     this.page = 1;
+    this.noMore = false;
+    this.loadMoreStatus = '';
     try {
       const results: [V2exTopic[], boolean] = await Promise.all([
         V2exService.topicsForNode(this.name), V2exService.nodeFavorited(this.name)
@@ -74,13 +78,16 @@ struct NodeTopics {
   }
 
   private async loadMore(): Promise<void> {
-    if (this.loadingMore) return;
+    if (this.loadingMore || this.noMore) return;
     this.loadingMore = true;
     try {
       const next: V2exTopic[] = await V2exService.topicsForNodePage(this.name, this.page + 1);
-      if (next.length === 0) this.status = '没有更多主题';
-      else {
-        this.topics = this.topics.concat(next);
+      const unique: V2exTopic[] = next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0);
+      if (unique.length === 0) {
+        this.noMore = true;
+        this.loadMoreStatus = '没有更多主题';
+      } else {
+        this.topics = this.topics.concat(unique);
         try {
           const cache: Record<string, V2exTopic[]> = JSON.parse(this.cacheJson) as Record<string, V2exTopic[]>;
           cache[this.name] = this.topics;
@@ -88,7 +95,7 @@ struct NodeTopics {
         } catch (_) { /* cache failures do not affect the page */ }
         this.page += 1;
       }
-    } catch (_) { this.status = '加载更多失败'; }
+    } catch (_) { this.loadMoreStatus = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }
 
@@ -137,7 +144,7 @@ struct NodeTopics {
       if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
       if (this.loading) {
         LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 36 })
-      } else if (this.status.length > 0) {
+      } else if (this.status.length > 0 && this.topics.length === 0) {
         Column() {
           Text(this.status).fontSize(15).fontColor('#7B8794')
           Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 12 }).onClick(() => this.load())
@@ -147,9 +154,10 @@ struct NodeTopics {
           List({ space: 1 }) {
             ForEach(this.topics, (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`)
             ListItem() {
-              Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
+              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
             }.width('100%').padding(18).align(Alignment.Center)
-          }.layoutWeight(1).width('100%')
+          }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMore())
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {
           if (state === RefreshStatus.Refresh) this.load();
         })

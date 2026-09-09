@@ -237,9 +237,12 @@ struct Index {
             }
           }.onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
             .hitTestBehavior(HitTestMode.Block)
-          Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6').margin({ left: 8 })
-            .onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
-            .hitTestBehavior(HitTestMode.Block)
+          Column() {
+            Text(topic.member?.username ?? '匿名').fontSize(12).fontColor('#8A97A6')
+              .onClick(() => { if (topic.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: topic.member.username } }); })
+              .hitTestBehavior(HitTestMode.Block)
+            Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(11).fontColor('#8A97A6').margin({ top: 3 })
+          }.alignItems(HorizontalAlign.Start).margin({ left: 8 })
           Blank()
           Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
         }.width('100%').margin({ bottom: 8 })
@@ -247,7 +250,6 @@ struct Index {
           Text(topic.title).fontSize(16).fontColor(this.primaryText()).fontWeight(FontWeight.Medium)
             .maxLines(2).textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
         }.width('100%').alignItems(VerticalAlign.Top)
-        Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(12).fontColor('#8A97A6').margin({ top: 6 })
       }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16, right: 16, top: 12, bottom: 12 }).backgroundColor(this.surface())
     }.onClick(() => {
       if (topic.url && !/\/t\/\d+/i.test(topic.url)) {

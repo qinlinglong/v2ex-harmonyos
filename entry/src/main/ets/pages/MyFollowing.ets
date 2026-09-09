@@ -13,6 +13,8 @@ struct MyFollowing {
   @State status: string = '';
   @State members: string[] = [];
   @State selectedMember: string = '';
+  @State noMore: boolean = false;
+  @State loadMoreStatus: string = '';
 
   aboutToAppear(): void {
     this.restoreCache();
@@ -36,6 +38,8 @@ struct MyFollowing {
     this.status = '';
     this.page = 1;
     this.selectedMember = '';
+    this.noMore = false;
+    this.loadMoreStatus = '';
     try {
       const fresh: V2exTopic[] = await V2exService.followingTopics(1);
       this.topics = fresh;
@@ -60,6 +64,11 @@ struct MyFollowing {
   private async selectMember(username: string): Promise<void> {
     if (this.selectedMember === username) return;
     this.selectedMember = username;
+    if (username.length === 0) {
+      this.page = 1;
+      this.noMore = false;
+      this.loadMoreStatus = '';
+    }
     this.loading = true;
     this.status = '';
     try {
@@ -82,17 +91,19 @@ struct MyFollowing {
   }
 
   private async loadMore(): Promise<void> {
-    if (this.loadingMore) return;
+    if (this.loadingMore || this.noMore || this.selectedMember.length > 0) return;
     this.loadingMore = true;
     try {
       const next: V2exTopic[] = await V2exService.followingTopics(this.page + 1);
-      if (next.length === 0) this.status = '没有更多动态';
+      const unique: V2exTopic[] = next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0);
+      if (unique.length === 0) { this.noMore = true; this.loadMoreStatus = '没有更多动态'; }
       else {
-        this.topics = this.topics.concat(next.filter((topic: V2exTopic) => this.topics.findIndex((item: V2exTopic) => item.id === topic.id) < 0));
+        this.topics = this.topics.concat(unique);
         this.cacheJson = JSON.stringify(this.topics);
         this.page += 1;
+        this.loadMoreStatus = '';
       }
-    } catch (_) { this.status = '加载更多失败'; }
+    } catch (_) { this.loadMoreStatus = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }
 
@@ -139,14 +150,17 @@ struct MyFollowing {
       }.width('100%').height(50).scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16 })
         .backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
-      else if (this.status.length > 0) Column() { Text(this.status).fontSize(15).fontColor('#7B8794'); Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' })) }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
+      else if (this.status.length > 0 && this.topics.length === 0) Column() { Text(this.status).fontSize(15).fontColor('#7B8794'); Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' })) }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else Refresh({ refreshing: this.loading }) {
         List({ space: 1 }) {
           ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
           if (this.selectedMember.length === 0) {
-            ListItem() { Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore()) }
+            ListItem() {
+              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
+            }
           }
-        }.layoutWeight(1).width('100%')
+        }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMore())
       }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.reloadCurrent(); })
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor('#F5F7FA')
   }

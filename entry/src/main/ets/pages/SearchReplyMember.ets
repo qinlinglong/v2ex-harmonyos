@@ -32,6 +32,12 @@ struct SearchReplyMember {
     return this.replies.filter((reply: V2exReply) => `${reply.member?.username ?? ''} ${reply.content}`.toLowerCase().includes(query));
   }
 
+  private replyFloor(reply: V2exReply): number {
+    if (reply.no !== undefined && reply.no > 0) return reply.no;
+    const sourceIndex: number = this.replies.findIndex((item: V2exReply) => item.id === reply.id);
+    return sourceIndex >= 0 ? sourceIndex + 1 : 0;
+  }
+
   private confirm(): void {
     const names: string[] = this.replies.filter((reply: V2exReply) => this.selected.indexOf(reply.id) >= 0)
       .map((reply: V2exReply) => `@${reply.member?.username ?? ''}`).filter((name: string) => name.length > 1);
@@ -55,7 +61,7 @@ struct SearchReplyMember {
           Row() {
             Text(this.selected.indexOf(reply.id) >= 0 ? '✓' : '○').fontSize(24).fontColor(this.themeColor).width(36)
             Column() {
-              Text(`${reply.member?.username ?? '匿名'}  #${reply.id}`).fontSize(14).fontColor(this.themeColor)
+              Text(`${reply.member?.username ?? '匿名'}  #${this.replyFloor(reply)}`).fontSize(14).fontColor(this.themeColor)
               Text(reply.content).fontSize(14).fontColor('#30343B').maxLines(3).margin({ top: 5 })
             }.layoutWeight(1).alignItems(HorizontalAlign.Start)
           }.width('100%').padding(16).backgroundColor(Color.White)

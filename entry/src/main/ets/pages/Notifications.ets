@@ -12,6 +12,8 @@ struct Notifications {
   @State deletingId: number = 0;
   @State loadingMore: boolean = false;
   @State page: number = 1;
+  @State noMore: boolean = false;
+  @State loadMoreStatus: string = '';
 
   aboutToAppear(): void {
     this.restoreCache();
@@ -33,6 +35,8 @@ struct Notifications {
     this.loading = !hasCached;
     this.status = '';
     this.page = 1;
+    this.noMore = false;
+    this.loadMoreStatus = '';
     try {
       const fresh: V2exNotification[] = await V2exService.notifications(1);
       this.items = fresh;
@@ -45,17 +49,19 @@ struct Notifications {
   }
 
   private async loadMore(): Promise<void> {
-    if (this.loadingMore) return;
+    if (this.loadingMore || this.noMore) return;
     this.loadingMore = true;
     try {
       const next: V2exNotification[] = await V2exService.notifications(this.page + 1);
-      if (next.length === 0) this.status = '没有更多通知';
+      const unique: V2exNotification[] = next.filter((item: V2exNotification) => this.items.findIndex((old: V2exNotification) => old.id === item.id) < 0);
+      if (unique.length === 0) { this.noMore = true; this.loadMoreStatus = '没有更多通知'; }
       else {
-        this.items = this.items.concat(next.filter((item: V2exNotification) => this.items.findIndex((old: V2exNotification) => old.id === item.id) < 0));
+        this.items = this.items.concat(unique);
         this.cacheJson = JSON.stringify(this.items);
         this.page += 1;
+        this.loadMoreStatus = '';
       }
-    } catch (_) { this.status = '加载更多失败'; }
+    } catch (_) { this.loadMoreStatus = '加载更多失败'; }
     finally { this.loadingMore = false; }
   }
 
@@ -100,7 +106,7 @@ struct Notifications {
         Blank()
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(Color.White)
       if (this.loading) LoadingProgress().width(30).height(30).color('#4F7CAC').margin({ top: 40 })
-      else if (this.status.length > 0) Column() {
+      else if (this.status.length > 0 && this.items.length === 0) Column() {
         Text(this.status).fontSize(15).fontColor('#7B8794')
         Button('打开登录').margin({ top: 16 }).onClick(() => router.pushUrl({ url: 'pages/Login' }))
       }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
@@ -108,8 +114,11 @@ struct Notifications {
         Refresh({ refreshing: this.loading }) {
           List({ space: 1 }) {
             ForEach(this.items, (item: V2exNotification) => this.row(item), (item: V2exNotification) => `${item.id}`)
-            ListItem() { Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore()) }
-          }
+            ListItem() {
+              if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor('#8A97A6')
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).onClick(() => this.loadMore())
+            }
+          }.onReachEnd(() => this.loadMore())
             .layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => { if (state === RefreshStatus.Refresh) this.load(); })
       }
