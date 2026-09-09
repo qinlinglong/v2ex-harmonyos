@@ -1,5 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
+import { V2exService } from '../service/V2exService';
 import { themeMutedText } from '../common/Theme';
 
 @Entry
@@ -30,6 +31,7 @@ struct Settings {
   @StorageLink('v2exNodeTopicsCache') nodeTopicsCacheJson: string = '{}';
   @State customColor: string = '#4F7CAC';
   @State status: string = '';
+  @State signingOut: boolean = false;
   private readonly colors: string[] = ['#4F7CAC', '#5B8C5A', '#C05A73', '#8B6FB0', '#D07A3A'];
   aboutToAppear(): void { this.customColor = this.themeColor; }
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
@@ -55,6 +57,19 @@ struct Settings {
     this.nodesCacheJson = '[]';
     this.nodeTopicsCacheJson = '{}';
     this.status = '缓存已清除';
+  }
+  private async signout(): Promise<void> {
+    if (this.signingOut) return;
+    this.signingOut = true;
+    this.status = '退出中…';
+    try { await V2exService.signout(); } catch (_) { /* local cleanup below is still required */ }
+    try {
+      webview.WebCookieManager.clearAllCookiesSync();
+      this.nativeCookie = '';
+      this.cachedMemberJson = '';
+      this.status = '已退出登录';
+    } catch (_) { this.status = '退出失败'; }
+    finally { this.signingOut = false; }
   }
   build() {
     Column() {
@@ -133,17 +148,8 @@ struct Settings {
         Row() { Text('当前版本').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('1.0.0').fontSize(14).fontColor(themeMutedText(this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
-          Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button('退出').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => {
-            try {
-              webview.WebCookieManager.clearAllCookiesSync();
-              // Native sign-in stores the session separately from ArkWeb.
-              // Clear both stores so later permission checks cannot reuse a
-              // stale authenticated session after the user logs out.
-              this.nativeCookie = '';
-              this.cachedMemberJson = '';
-              this.status = '已退出登录';
-            } catch (_) { this.status = '退出失败'; }
-          }) }
+          Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.signingOut ? '退出中…' : '退出').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White)
+            .enabled(!this.signingOut).onClick(() => this.signout()) }
             .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
         } else {
           Button('登录 V2EX').width('100%').backgroundColor(this.themeColor).fontColor(Color.White).margin({ top: 16 })

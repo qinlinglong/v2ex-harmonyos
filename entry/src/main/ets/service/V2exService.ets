@@ -1134,6 +1134,24 @@ export class V2exService {
     return match?.[1] ?? '';
   }
 
+  /** Invalidate the server session before local cookies are removed. */
+  static async signout(): Promise<boolean> {
+    let once: string = '';
+    try { once = await V2exService.settingsOnce(); } catch (_) { return false; }
+    if (once.length === 0) return false;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/signout?once=${V2exService.formValue(once)}`, {
+        method: http.RequestMethod.GET,
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/settings` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      return response.responseCode >= 200 && response.responseCode < 400;
+    } finally { request.destroy(); }
+  }
+
   static async resetBlocked(): Promise<boolean> {
     const once: string = await V2exService.settingsOnce();
     if (once.length === 0) return false;
