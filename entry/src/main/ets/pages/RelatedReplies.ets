@@ -42,6 +42,7 @@ struct RelatedReplies {
   @State replies: V2exReply[] = [];
   @State loading: boolean = true;
   @State relatedOnly: boolean = true;
+  @State selectedReference: string = '';
   private topicId: number = 0;
   private anchorReplyId: number = 0;
 
@@ -63,32 +64,56 @@ struct RelatedReplies {
     return sourceIndex >= 0 ? sourceIndex + 1 : renderedIndex + 1;
   }
 
+  private anchorReply(): V2exReply | undefined {
+    return this.replies.find((item: V2exReply) => item.id === this.anchorReplyId) ?? this.replies[0];
+  }
+
+  private referenceNames(): string[] {
+    const anchor: V2exReply | undefined = this.anchorReply();
+    if (anchor === undefined) return [];
+    const names: string[] = [];
+    const seen: Set<string> = new Set<string>();
+    replyReferences(anchor.content).forEach((item: ReplyReference) => {
+      const key: string = item.username.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      names.push(item.username);
+    });
+    return names;
+  }
+
+  private relatedByReference(content: string, replyUserName: string, replyAtName: string, byNo: Map<number, V2exReply>): boolean {
+    const references: ReplyReference[] = replyReferences(content);
+    const explicit: ReplyReference[] = references.filter((item: ReplyReference) => item.replyNo !== undefined);
+    const exact: ReplyReference[] = explicit.filter((item: ReplyReference) => {
+      const target: V2exReply | undefined = byNo.get(item.replyNo as number);
+      return target?.member?.username?.toLowerCase() === item.username.toLowerCase();
+    });
+    if (exact.length > 0) {
+      return exact.some((item: ReplyReference) => {
+        const target: V2exReply | undefined = byNo.get(item.replyNo as number);
+        const targetName: string = target?.member?.username?.toLowerCase() ?? '';
+        return targetName === replyUserName.toLowerCase() || targetName === replyAtName.toLowerCase();
+      });
+    }
+    const names: Set<string> = new Set<string>(references.map((item: ReplyReference) => item.username.toLowerCase()));
+    return names.size === 0 || names.has(replyUserName.toLowerCase()) || names.has(replyAtName.toLowerCase());
+  }
+
   private visibleReplies(): V2exReply[] {
     if (!this.relatedOnly) return this.replies;
     if (this.replies.length === 0) return [];
-    const anchor: V2exReply = this.replies.find((item: V2exReply) => item.id === this.anchorReplyId) ?? this.replies[0];
-    const references: ReplyReference[] = replyReferences(anchor.content);
+    const anchor: V2exReply = this.anchorReply() as V2exReply;
     const anchorName: string = anchor.member?.username?.toLowerCase() ?? '';
-    const names: Set<string> = new Set<string>(references.map((item: ReplyReference) => item.username.toLowerCase()));
-    if (anchorName.length === 0 || names.size === 0) return [anchor];
-    const participants: Set<string> = new Set<string>([anchorName]);
-    names.forEach((name: string) => participants.add(name));
+    const names: string[] = this.referenceNames();
+    const atName: string = (this.selectedReference.length > 0 ? this.selectedReference : names[0] ?? '').toLowerCase();
+    if (anchorName.length === 0 || atName.length === 0) return [anchor];
     const byNo: Map<number, V2exReply> = new Map<number, V2exReply>();
     this.replies.forEach((item: V2exReply, index: number) => byNo.set(item.no ?? index + 1, item));
     return this.replies.filter((reply: V2exReply) => {
       const author: string = reply.member?.username?.toLowerCase() ?? '';
-      if (reply.id === anchor.id || !participants.has(author)) return reply.id === anchor.id;
-      const replyRefs: ReplyReference[] = replyReferences(reply.content);
-      const explicit: ReplyReference[] = replyRefs.filter((item: ReplyReference) => item.replyNo !== undefined);
-      if (explicit.length > 0) {
-        const exact: ReplyReference[] = explicit.filter((item: ReplyReference) => {
-          const target: V2exReply | undefined = byNo.get(item.replyNo as number);
-          return target?.member?.username?.toLowerCase() === item.username.toLowerCase();
-        });
-        if (exact.length > 0) return exact.some((item: ReplyReference) => participants.has(byNo.get(item.replyNo as number)?.member?.username?.toLowerCase() ?? ''));
-      }
-      const mentioned: Set<string> = new Set<string>(replyRefs.map((item: ReplyReference) => item.username.toLowerCase()));
-      return mentioned.size === 0 || mentioned.has(anchorName) || mentioned.has(author);
+      if (author !== anchorName && author !== atName) return false;
+      return reply.id === anchor.id || this.relatedByReference(reply.content, anchorName, atName, byNo);
     });
   }
 
@@ -108,9 +133,19 @@ struct RelatedReplies {
         Blank()
       }.height(60).width('100%').backgroundColor(Color.White)
       Row() {
-        Text(this.relatedOnly ? '仅显示当前回复关联的评论' : '显示全部回复').fontSize(14).fontColor('#7B8794').layoutWeight(1)
-        Button(this.relatedOnly ? '查看全部' : '仅看相关').fontSize(13).onClick(() => this.relatedOnly = !this.relatedOnly)
+        Text(this.relatedOnly ? '智能模式' : '显示全部回复').fontSize(14).fontColor('#7B8794').layoutWeight(1)
+        Button(this.relatedOnly ? '查看全部' : '智能模式').fontSize(13).onClick(() => this.relatedOnly = !this.relatedOnly)
       }.width('100%').padding(16).backgroundColor(Color.White).margin({ top: 1 })
+      if (this.referenceNames().length > 1) {
+        Scroll() {
+          Row({ space: 18 }) {
+            ForEach(this.referenceNames(), (name: string) => {
+              Text(`@${name}`).fontSize(14).fontColor(this.selectedReference.toLowerCase() === name.toLowerCase() || (this.selectedReference.length === 0 && name === this.referenceNames()[0]) ? this.themeColor : '#7B8794')
+                .onClick(() => this.selectedReference = name)
+            }, (name: string) => `reference-${name}`)
+          }.padding({ left: 16, right: 16, top: 10, bottom: 10 })
+        }.scrollable(ScrollDirection.Horizontal).width('100%').backgroundColor(Color.White)
+      }
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
       else if (this.visibleReplies().length === 0) Text('没有检测到关联回复').fontSize(15).fontColor('#7B8794').margin({ top: 48 })
       else List({ space: 1 }) {
