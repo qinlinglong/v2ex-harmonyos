@@ -203,6 +203,22 @@ struct TopicDetail {
     return reply.editable === true && this.isSelf(reply.member?.username);
   }
 
+  private decodeBase64Selection(value: string): string {
+    let normalized: string = value.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(normalized)) {
+      const candidates: string[] = value.match(/[A-Za-z0-9+/_-]{4,}={0,2}/g) ?? [];
+      if (candidates.length === 0) throw new Error('invalid base64');
+      normalized = candidates.sort((a: string, b: string) => b.length - a.length)[0]
+        .replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+    }
+    const remainder: number = normalized.length % 4;
+    if (remainder > 0) normalized += '='.repeat(4 - remainder);
+    const bytes: Uint8Array = new util.Base64Helper().decodeSync(normalized, util.Type.BASIC);
+    const decoded: string = util.TextDecoder.create('utf-8').decodeToString(bytes);
+    if (decoded.length === 0) throw new Error('empty result');
+    return decoded;
+  }
+
   private selectionMenu(source: string): EditMenuOptions {
     return {
       onCreateMenu: (items: Array<TextMenuItem>): Array<TextMenuItem> => {
@@ -219,13 +235,7 @@ struct TopicDetail {
           return true;
         }
         try {
-          const normalized: string = selected.replace(/\s+/g, '');
-          if (!/^[A-Za-z0-9+/=_-]+$/.test(normalized)) throw new Error('invalid base64');
-          const decodeType: util.Type = /[-_]/.test(normalized) ? util.Type.BASIC_URL_SAFE : util.Type.BASIC;
-          const bytes: Uint8Array = new util.Base64Helper().decodeSync(normalized, decodeType);
-          const decoded: string = util.TextDecoder.create('utf-8').decodeToString(bytes);
-          if (decoded.length === 0) throw new Error('empty result');
-          this.base64Result = decoded;
+          this.base64Result = this.decodeBase64Selection(selected);
           this.actionStatus = 'Base64 解码完成';
         } catch (_) {
           this.base64Result = '';
