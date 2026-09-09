@@ -6,12 +6,14 @@ export function applyThemeSystemBars(darkMode: boolean): void {
   try {
     const context = getContext() as common.UIAbilityContext;
     context.windowStage.getMainWindow().then((mainWindow: window.Window) => {
-      // Match the page canvas so the safe-area region has no visible strip.
-      const surface: string = darkMode ? '#0F141A' : '#F5F7FA';
+      // The status area belongs to the top app bar; keep it the same color as
+      // every page header so there is no seam below the system clock.
+      const surface: string = darkMode ? '#18202A' : '#FFFFFF';
+      const canvas: string = darkMode ? '#0F141A' : '#F5F7FA';
       const content: string = darkMode ? '#F2F5F8' : '#202124';
       mainWindow.setWindowSystemBarProperties({
         statusBarColor: surface,
-        navigationBarColor: surface,
+        navigationBarColor: canvas,
         statusBarContentColor: content,
         navigationBarContentColor: content,
         isStatusBarLightIcon: !darkMode,
