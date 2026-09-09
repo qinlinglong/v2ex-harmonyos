@@ -277,6 +277,15 @@ struct TopicDetail {
     }
   }
 
+  private async copyBase64Result(): Promise<void> {
+    if (this.base64Result.length === 0) return;
+    try {
+      const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.base64Result);
+      await pasteboard.getSystemPasteboard().setData(data);
+      this.actionStatus = '解码结果已复制';
+    } catch (_) { this.actionStatus = '复制失败'; }
+  }
+
   private async toggleIgnoredFromMenu(): Promise<void> {
     const nextIgnored: boolean = !this.ignored;
     try {
@@ -688,16 +697,6 @@ struct TopicDetail {
                 }.width('100%').margin({ top: 8 })
               }
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8 })
-              if (this.base64Result.length > 0) {
-                Column() {
-                  Text('Base64 解码结果').fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ bottom: 4 })
-                  Text(this.base64Result).fontSize(15).fontColor(this.bodyText()).lineHeight(24)
-                    .width('100%').copyOption(CopyOptions.LocalDevice)
-                    .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
-                    .editMenuOptions(this.selectionMenu(this.base64Result))
-                }.width('100%').padding(10).backgroundColor(this.darkMode ? '#202A35' : '#F3F6FA')
-                  .borderRadius(8).margin({ top: 10 })
-              }
               ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
                 if (part.kind === 'code') {
                   Text(part.value).fontSize(14).fontColor(this.bodyText()).lineHeight(22).fontFamily('monospace')
@@ -741,6 +740,18 @@ struct TopicDetail {
                     .editMenuOptions(this.selectionMenu(plainMarkdown(part.value)))
                 }
               }, (part: DetailPart, index: number) => `${part.kind}-${index}-${part.value.substring(0, 12)}`)
+              if (this.base64Result.length > 0) {
+                Column() {
+                  Text('Base64 解码结果').fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ bottom: 4 })
+                  Text(this.base64Result).fontSize(15).fontColor(this.bodyText()).lineHeight(24)
+                    .width('100%').copyOption(CopyOptions.LocalDevice)
+                    .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                    .editMenuOptions(this.selectionMenu(this.base64Result))
+                  Button('复制解码结果').fontSize(13).fontColor(themeOnColor(this.themeColor)).backgroundColor(this.themeColor)
+                    .margin({ top: 8 }).onClick(() => this.copyBase64Result())
+                }.width('100%').padding(10).backgroundColor(this.darkMode ? '#202A35' : '#F3F6FA')
+                  .borderRadius(8).margin({ top: 12, bottom: 4 })
+              }
               Row({ space: 8 }) {
                 Row() {
                   Text(this.favorited ? '★' : '☆').fontSize(18).fontColor(this.favorited ? '#D69E00' : themeAccentText(this.themeColor, this.darkMode))
