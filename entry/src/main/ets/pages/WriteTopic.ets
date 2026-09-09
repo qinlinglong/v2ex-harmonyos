@@ -47,6 +47,7 @@ struct WriteTopic {
   @State editAllowed: boolean = false;
   @State editPermissionChecked: boolean = false;
   @StorageLink('v2exImgurClientId') imgurClientId: string = '';
+  @StorageLink('v2exImageBed') imageBed: string = 'imgur';
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   private topicId: number = 0;
 
@@ -109,15 +110,18 @@ struct WriteTopic {
   }
 
   private async insertImage(): Promise<void> {
-    if (this.imgurClientId.trim().length === 0) { this.status = '请先在设置中配置 Imgur Client ID'; return; }
+    if (this.imageBed === 'imgur' && this.imgurClientId.trim().length === 0) { this.status = '请先在设置中配置 Imgur Client ID'; return; }
+    if (this.imageBed === 'bilibili' && !V2exService.biliLoggedIn()) { this.status = '请先在设置中登录 Bilibili 图床'; return; }
     try {
       const result = await new picker.PhotoViewPicker().select({ maxSelectNumber: 1 });
       if (!result.photoUris || result.photoUris.length === 0) return;
       this.status = '正在上传图片…';
-      const link: string = await V2exService.uploadImage(result.photoUris[0], this.imgurClientId);
+      const link: string = this.imageBed === 'bilibili'
+        ? await V2exService.uploadBilibiliImage(result.photoUris[0])
+        : await V2exService.uploadImage(result.photoUris[0], this.imgurClientId);
       this.content = `${this.content}${this.content.length > 0 && !this.content.endsWith('\n') ? '\n' : ''}![图片](${link})\n`;
       this.status = '图片已插入';
-    } catch (_) { this.status = '图片上传失败，请检查配置和网络'; }
+    } catch (_) { this.status = this.imageBed === 'bilibili' ? 'Bilibili 图片上传失败，请检查登录状态' : '图片上传失败，请检查配置和网络'; }
   }
 
   private contentUrl(url: string): string {

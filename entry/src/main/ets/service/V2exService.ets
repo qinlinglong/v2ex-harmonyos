@@ -320,6 +320,52 @@ export class V2exService {
     } finally { fileIo.closeSync(file.fd); }
   }
 
+  static biliCookie(): string {
+    try { return webview.WebCookieManager.fetchCookieSync('https://www.bilibili.com') || ''; } catch (_) { return ''; }
+  }
+
+  static biliCsrf(): string {
+    const item: string | undefined = V2exService.biliCookie().split(';').find((part: string) => part.trim().startsWith('bili_jct='));
+    return item ? item.trim().substring('bili_jct='.length) : '';
+  }
+
+  static biliLoggedIn(): boolean {
+    const cookie: string = V2exService.biliCookie();
+    return cookie.includes('SESSDATA=') && V2exService.biliCsrf().length > 0;
+  }
+
+  static async uploadBilibiliImage(uri: string): Promise<string> {
+    const csrf: string = V2exService.biliCsrf();
+    if (uri.trim().length === 0 || csrf.length === 0) throw new Error('请先登录 Bilibili');
+    const file = fileIo.openSync(uri, fileIo.OpenMode.READ_ONLY);
+    try {
+      const size: number = fileIo.statSync(file.fd).size;
+      if (size <= 0 || size > 15 * 1024 * 1024) throw new Error('图片大小需在 15MB 以内');
+      const buffer: ArrayBuffer = new ArrayBuffer(size);
+      fileIo.readSync(file.fd, buffer);
+      const encoded: string = `data:image/jpeg;base64,${new util.Base64Helper().encodeToStringSync(new Uint8Array(buffer))}`;
+      const request: http.HttpRequest = http.createHttp();
+      try {
+        const response: http.HttpResponse = await request.request('https://api.bilibili.com/x/article/creative/article/upcover', {
+          method: http.RequestMethod.POST,
+          header: {
+            'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36',
+            'Referer': 'https://www.bilibili.com/', 'Origin': 'https://www.bilibili.com',
+            'Cookie': V2exService.biliCookie(), 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 'Accept': 'application/json'
+          },
+          extraData: `csrf=${encodeURIComponent(csrf)}&cover=${encodeURIComponent(encoded)}`,
+          connectTimeout: 12000, readTimeout: 120000, expectDataType: http.HttpDataType.STRING
+        });
+        const text: string = response.result as string;
+        const payload: Record<string, Object> = JSON.parse(text) as Record<string, Object>;
+        const data: Record<string, Object> = (payload['data'] as Record<string, Object>) ?? {};
+        const link: string = String(data['url'] ?? '');
+        if (Number(payload['code'] ?? -1) !== 0 || link.length === 0) throw new Error('Bilibili 图床上传失败');
+        return link.replace(/\\\//g, '/');
+      } finally { request.destroy(); }
+    } finally { fileIo.closeSync(file.fd); }
+  }
+
   static async nodes(): Promise<V2exNode[]> {
     const now: number = Date.now();
     if (V2exService.nodesMemory.length > 0 && now - V2exService.nodesLoadedAt < 15 * 60 * 1000) {

@@ -39,7 +39,8 @@ struct CustomizeTheme {
           }.width('100%')
           Row() {
             Text('深色模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
-            Button(this.darkMode ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
+            Button() { Text(this.darkMode ? '☀' : '☾').fontSize(22).fontColor(themeOnColor(this.themeColor)) }
+              .width(48).height(38).backgroundColor(this.themeColor)
               .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
           }.width('100%').padding({ top: 18, bottom: 18 }).margin({ top: 12 })
           Text('主题设置会保存到本机，并应用到首页、详情、节点、个人中心和设置页面。')
