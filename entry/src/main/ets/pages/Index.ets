@@ -133,7 +133,7 @@ struct Index {
     this.noMoreTopics = false;
     try { this.topics = await V2exService.topics(kind, 1); }
     catch (_) { this.errorText = '暂时无法连接 V2EX，请稍后重试'; }
-    finally { this.loading = false; }
+    finally { this.loading = false; this.prefetchHomeTopics(); }
   }
 
   private selectTab(index: number): void {
@@ -170,13 +170,18 @@ struct Index {
     this.errorText = '';
     try { this.topics = await V2exService.topicsForTab(name, page); this.topicPage = page; }
     catch (_) { this.errorText = '板块内容加载失败，请稍后重试'; }
-    finally { this.loading = false; }
+    finally { this.loading = false; this.prefetchHomeTopics(); }
   }
 
   private async loadMoreHomeTopics(): Promise<void> {
+    await this.prefetchHomeTopics();
+  }
+
+  private async prefetchHomeTopics(): Promise<void> {
     if (this.loading || this.loadingMoreTopics || this.noMoreTopics || !this.isTopicTab()) return;
     const tab: HomeTabItem = this.activeTab();
     if (tab.type === 'nodes' || tab.type === 'xna') return;
+    const tabKey: string = tab.key;
     this.loadingMoreTopics = true;
     try {
       // Prefetch two pages while the user is still near the bottom. This
@@ -184,6 +189,7 @@ struct Index {
       let appended = false;
       let requestedPage: number = this.topicPage + 1;
       for (let offset: number = 1; offset <= 2; offset++) {
+        if (this.activeTab().key !== tabKey) return;
         const nextPage: number = requestedPage;
         requestedPage += 1;
         let next: V2exTopic[] = [];
