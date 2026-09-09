@@ -61,12 +61,23 @@ struct Login {
       if (!source) throw new Error('验证码图片解码失败');
       // V2EX serves a compact 320×80 bitmap; upscale it before OCR so thin glyphs
       // remain legible on devices whose OCR model has a larger minimum text size.
-      pixelMap = await source.createPixelMap({ desiredSize: { width: 1280, height: 320 } });
+      pixelMap = await source.createPixelMap({
+        desiredSize: { width: 1280, height: 320 },
+        desiredPixelFormat: image.PixelMapFormat.RGBA_8888
+      });
       const ready: boolean = await textRecognition.init();
       if (!ready) throw new Error('此设备未提供 OCR 模型');
-      const result: textRecognition.TextRecognitionResult = await textRecognition.recognizeText({ pixelMap }, {
-        isDirectionDetectionSupported: false
-      });
+      let result: textRecognition.TextRecognitionResult | undefined;
+      let lastError: Error | undefined;
+      for (let attempt: number = 0; attempt < 2 && result === undefined; attempt += 1) {
+        try {
+          result = await textRecognition.recognizeText({ pixelMap }, { isDirectionDetectionSupported: false });
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          if (attempt === 0) await new Promise<void>((resolve: () => void) => setTimeout(resolve, 350));
+        }
+      }
+      if (result === undefined) throw lastError ?? new Error('验证码识别失败');
       const code: string = result.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
       if (!/^[A-Z0-9]{4}$/.test(code)) throw new Error('未识别到 4 位验证码，请点击图片刷新后重试');
       const filled: string = await this.controller.runJavaScript(`(() => {
