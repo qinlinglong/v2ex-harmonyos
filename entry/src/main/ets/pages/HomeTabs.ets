@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeMutedText, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 interface HomeTabOption {
   title: string;
@@ -98,12 +98,12 @@ struct HomeTabs {
             Row() {
               Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? themePrimaryText(this.darkMode) : themeMutedText(this.darkMode)).layoutWeight(1)
               if (this.editing && this.contains(item.key)) {
-                Button('↑').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(Color.White).margin({ right: 6 })
+                Button('↑').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).margin({ right: 6 })
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), -1))
-                Button('↓').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(Color.White).margin({ right: 6 })
+                Button('↓').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).margin({ right: 6 })
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), 1))
               }
-              Button(this.contains(item.key) ? (this.editing ? '移除' : '已添加') : '添加').fontSize(12).backgroundColor(this.themeColor).fontColor(Color.White).enabled(this.editing)
+              Button(this.contains(item.key) ? (this.editing ? '移除' : '已添加') : '添加').fontSize(12).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).enabled(this.editing)
                 .onClick(() => this.toggle(item))
             }.width('100%').padding({ left: 16, right: 16, top: 14, bottom: 14 })
               .backgroundColor(themeSurface(this.darkMode)).margin({ bottom: 1 })

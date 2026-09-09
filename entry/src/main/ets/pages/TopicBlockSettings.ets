@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -43,7 +43,7 @@ struct TopicBlockSettings {
           Row() {
           TextInput({ placeholder: '输入关键词', text: this.keyword }).layoutWeight(1).height(46).fontSize(15).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
               .onChange((value: string) => this.keyword = value).onSubmit(() => this.add())
-            Button('添加').fontSize(14).margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.add())
+            Button('添加').fontSize(14).margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.add())
           }.width('100%')
           if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })
           ForEach(this.keywords, (value: string) => Row() {

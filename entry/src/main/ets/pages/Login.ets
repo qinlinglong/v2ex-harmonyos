@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { V2exService, V2exSigninInfo } from '../service/V2exService';
-import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 import { V2exMember } from '../model/V2exModels';
 
 @Entry
@@ -102,7 +102,7 @@ struct Login {
           Column() {
             Text('你的 V2EX 账号已开启两步验证，请输入验证码继续。').fontSize(16).fontColor(themePrimaryText(this.darkMode)).width('100%').lineHeight(24)
             TextInput({ placeholder: '请输入两步验证码', text: this.twoFactorCode }).width('100%').height(52).margin({ top: 20 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.twoFactorCode = value)
-            Button(this.submitting ? '验证中…' : '继续登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitTwoFactor())
+            Button(this.submitting ? '验证中…' : '继续登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.submitTwoFactor())
             Text('出于安全考虑，开启两步验证后需要定期输入验证码续期。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').lineHeight(22).margin({ top: 18 })
           }.width('82%').padding({ top: 28, bottom: 28 })
         }.layoutWeight(1).width('100%')
@@ -112,7 +112,7 @@ struct Login {
             if (this.limited) {
               Text('登录受限').fontSize(28).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
               Text('由于当前 IP 在短时间内的登录尝试次数太多，暂时不能继续尝试。').fontSize(15).fontColor(themeBodyText(this.darkMode)).width('100%').lineHeight(24).margin({ top: 10 })
-              Button(this.loading ? '重试中…' : '重试').width('100%').height(48).margin({ top: 24 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadSigninInfo())
+              Button(this.loading ? '重试中…' : '重试').width('100%').height(48).margin({ top: 24 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.loadSigninInfo())
             } else {
               Text('登录 V2EX').fontSize(26).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
               Text('使用用户名或电子邮件地址登录。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 6, bottom: 22 })
@@ -128,7 +128,7 @@ struct Login {
               }
               TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.code = value)
               if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).width('100%').lineHeight(20).margin({ top: 12 })
-              Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White)
+              Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
                 .enabled(!this.loading && !this.submitting && this.signinInfo !== undefined && !this.limited)
                 .onClick(() => this.submitSignin())
               Row() {

@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -24,7 +24,7 @@ struct NotFound {
       Blank().layoutWeight(1)
       Text('404').fontSize(56).fontWeight(FontWeight.Bold).fontColor(this.themeColor)
       Text(this.message).fontSize(16).fontColor(themePrimaryText(this.darkMode)).margin({ top: 12 })
-      Button('返回首页').fontSize(15).backgroundColor(this.themeColor).fontColor(Color.White)
+      Button('返回首页').fontSize(15).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
         .margin({ top: 24 }).onClick(() => router.replaceUrl({ url: 'pages/Index' }))
       Blank().layoutWeight(1)
     }.width('100%').height('100%')

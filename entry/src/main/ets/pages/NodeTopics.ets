@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeMutedText, themeSecondaryText } from '../common/Theme';
+import { themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
 
 function age(unix: number): string {
   if (!unix) return '';
@@ -158,7 +158,7 @@ struct NodeTopics {
             ForEach(this.topics, (topic: V2exTopic) => this.topicRow(topic), (topic: V2exTopic) => `${topic.id}`)
             ListItem() {
               if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor(themeMutedText(this.darkMode))
-              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadMore())
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.loadMore())
             }.width('100%').padding(18).align(Alignment.Center)
           }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMore())
         }.layoutWeight(1).width('100%').onStateChange((state: RefreshStatus) => {

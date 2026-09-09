@@ -4,7 +4,7 @@ import { pasteboard } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
-import { themeMutedText, themeSecondaryText } from '../common/Theme';
+import { themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
 
 interface MarkdownTable { headers: string[]; rows: string[][]; }
 interface DetailPart { kind: string; value: string; label?: string; table?: MarkdownTable; }
@@ -655,7 +655,7 @@ struct TopicDetail {
                 Row() {
                   if (this.appendStatus.length > 0) Text(this.appendStatus).fontSize(12).fontColor(this.themeColor)
                   Blank()
-                  Button('保存追加').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitAppend())
+                  Button('保存追加').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.submitAppend())
                 }.width('100%').margin({ top: 8 })
               }
               if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
@@ -788,7 +788,7 @@ struct TopicDetail {
                     if (this.editingReplyStatus.length > 0) Text(this.editingReplyStatus).fontSize(12).fontColor(this.themeColor)
                     Blank()
                     Text('取消').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ right: 16 }).onClick(() => this.editingReplyId = 0)
-                    Button('保存').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.saveReplyEdit())
+                    Button('保存').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.saveReplyEdit())
                   }.width('100%').margin({ top: 8 })
                 } else {
                   ForEach(detailParts(reply.content), (part: DetailPart) => {
@@ -872,7 +872,7 @@ struct TopicDetail {
             if (this.replies.length > 0) {
               Row() {
                 if (this.replyMoreStatus.length > 0) Text(this.replyMoreStatus).fontSize(13).fontColor(themeMutedText(this.darkMode))
-                if (!this.noMoreReplies) Button(this.loadingMoreReplies ? '加载中…' : '加载更多回复').fontSize(13).backgroundColor(this.themeColor).fontColor(Color.White)
+                if (!this.noMoreReplies) Button(this.loadingMoreReplies ? '加载中…' : '加载更多回复').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
                   .onClick(() => this.loadMoreReplies())
               }.width('100%').padding(18).justifyContent(FlexAlign.Center)
             }
@@ -892,7 +892,7 @@ struct TopicDetail {
                   .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
                 Text('取消').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ right: 14 })
                   .onClick(() => { if (!this.replying) this.replyComposerOpen = false; })
-                Button(this.replying ? '发送中' : '发送').height(36).backgroundColor(this.themeColor).fontColor(Color.White)
+                Button(this.replying ? '发送中' : '发送').height(36).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
                   .fontSize(13).onClick(() => this.submitReply())
               }.width('100%').height(40).margin({ top: 4 })
             }.width('100%').padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(this.surface())

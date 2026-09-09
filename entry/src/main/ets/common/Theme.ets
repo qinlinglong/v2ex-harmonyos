@@ -29,3 +29,14 @@ export function themeMutedText(darkMode: boolean): string {
 export function themeAvatarBackground(darkMode: boolean): string {
   return darkMode ? '#435466' : '#B7C4D2';
 }
+
+/** Pick readable foreground text for a user-selected accent color. */
+export function themeOnColor(color: string): string {
+  const value: string = color.trim().replace(/^#/, '');
+  if (!/^[0-9A-Fa-f]{6}$/.test(value)) return '#FFFFFF';
+  const red: number = Number.parseInt(value.substring(0, 2), 16);
+  const green: number = Number.parseInt(value.substring(2, 4), 16);
+  const blue: number = Number.parseInt(value.substring(4, 6), 16);
+  const brightness: number = (red * 299 + green * 587 + blue * 114) / 1000;
+  return brightness >= 165 ? '#202124' : '#FFFFFF';
+}

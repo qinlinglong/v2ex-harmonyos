@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -29,7 +29,7 @@ struct ConfigureDomain {
         Text('默认使用 https://www.v2ex.com。自建镜像或代理可在这里配置。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).lineHeight(22).width('100%')
         TextInput({ placeholder: 'https://www.v2ex.com', text: this.input }).width('100%').height(50).fontSize(15).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).margin({ top: 18 })
           .onChange((value: string) => this.input = value)
-        Button('保存').width('100%').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.save())
+        Button('保存').width('100%').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.save())
         if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 14 })
       }.width('100%').padding(20).backgroundColor(themeSurface(this.darkMode)).margin({ top: 12 })
       Blank()

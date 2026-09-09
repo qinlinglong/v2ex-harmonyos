@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
+import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -139,12 +139,12 @@ struct MyFollowing {
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
       Scroll() {
         Row({ space: 8 }) {
-          Text('全部').fontSize(14).fontColor(this.selectedMember.length === 0 ? '#FFFFFF' : this.themeColor)
+          Text('全部').fontSize(14).fontColor(this.selectedMember.length === 0 ? themeOnColor(this.themeColor) : this.themeColor)
             .padding({ left: 12, right: 12, top: 5, bottom: 5 })
             .backgroundColor(this.selectedMember.length === 0 ? this.themeColor : (this.darkMode ? '#26313D' : '#EAF1F8')).borderRadius(14)
             .onClick(() => this.selectMember(''))
           ForEach(this.members, (username: string) => {
-            Text(username).fontSize(14).fontColor(this.selectedMember === username ? '#FFFFFF' : this.themeColor)
+            Text(username).fontSize(14).fontColor(this.selectedMember === username ? themeOnColor(this.themeColor) : this.themeColor)
               .padding({ left: 12, right: 12, top: 5, bottom: 5 })
               .backgroundColor(this.selectedMember === username ? this.themeColor : (this.darkMode ? '#26313D' : '#EAF1F8')).borderRadius(14)
               .onClick(() => this.selectMember(username))
@@ -153,14 +153,14 @@ struct MyFollowing {
       }.width('100%').height(50).scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16 })
         .backgroundColor(themeSurface(this.darkMode))
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
-      else if (this.status.length > 0 && this.topics.length === 0) Column() { Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)); Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => router.pushUrl({ url: 'pages/Login' })) }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
+      else if (this.status.length > 0 && this.topics.length === 0) Column() { Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)); Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => router.pushUrl({ url: 'pages/Login' })) }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else Refresh({ refreshing: this.loading }) {
         List({ space: 1 }) {
           ForEach(this.topics, (topic: V2exTopic) => this.row(topic), (topic: V2exTopic) => `${topic.id}`)
           if (this.selectedMember.length === 0) {
             ListItem() {
               if (this.loadMoreStatus.length > 0) Text(this.loadMoreStatus).fontSize(13).fontColor(themeMutedText(this.darkMode))
-              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadMore())
+              if (!this.noMore) Button(this.loadingMore ? '加载中…' : '加载更多').fontSize(14).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.loadMore())
             }
           }
         }.layoutWeight(1).width('100%').onReachEnd(() => this.loadMore())
