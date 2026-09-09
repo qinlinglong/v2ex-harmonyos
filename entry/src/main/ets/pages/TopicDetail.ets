@@ -584,6 +584,14 @@ struct TopicDetail {
             { value: '复制主题链接', action: () => this.copyTopicLink() },
             { value: '在浏览器打开', action: () => this.openLink(this.topicShareUrl()) },
             { value: this.favorited ? '取消收藏主题' : '收藏主题', action: () => this.action('favorite') },
+            { value: '编辑主题', enabled: this.topic?.editable === true && this.isSelf(this.topic?.member?.username), action: () => {
+              if (this.topic?.editable === true && this.isSelf(this.topic.member?.username)) {
+                router.pushUrl({ url: 'pages/WriteTopic', params: { topicId: this.topicId } });
+              }
+            } },
+            { value: '追加内容', enabled: this.topic?.appendable === true && this.isSelf(this.topic?.member?.username), action: () => {
+              if (this.topic?.appendable === true && this.isSelf(this.topic.member?.username)) this.appendOpen = true;
+            } },
             { value: '感谢作者', enabled: !this.isSelf(this.topic?.member?.username), action: () => this.action('thank') },
             { value: this.ignored ? '取消忽略主题' : '忽略主题', enabled: !this.isSelf(this.topic?.member?.username), action: () => this.toggleIgnoredFromMenu() },
             { value: '举报主题', enabled: !this.isSelf(this.topic?.member?.username), action: () => this.action('report') }
