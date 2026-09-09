@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
-import { themeAccentText, themeMutedText, themeOnColor, themeSecondaryText } from '../common/Theme';
+import { applyThemeSystemBars, themeAccentText, themeMutedText, themeOnColor, themeSecondaryText } from '../common/Theme';
 
 function relativeTime(unix: number): string {
   if (!unix) return '';
@@ -79,6 +79,7 @@ struct Index {
   @State noMoreTopics: boolean = false;
 
   aboutToAppear(): void {
+    applyThemeSystemBars(this.darkMode);
     this.readHomeTabs();
     try {
       if (this.cachedMemberJson.trim().length > 0) this.currentMember = JSON.parse(this.cachedMemberJson) as V2exMember;
@@ -87,6 +88,7 @@ struct Index {
   }
 
   onPageShow(): void {
+    applyThemeSystemBars(this.darkMode);
     // A page opened from the drawer can be popped without recreating Index.
     // Always restore the home screen with the drawer closed.
     this.drawerOpen = false;
@@ -474,7 +476,7 @@ struct Index {
               Row() {
                 Text('夜间模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
                 Button(this.darkMode ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor)
-                  .fontColor(themeOnColor(this.themeColor)).onClick(() => this.darkMode = !this.darkMode)
+                  .fontColor(themeOnColor(this.themeColor)).onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
               }.width('100%').padding({ left: 20, right: 20, top: 12, bottom: 12 }).backgroundColor(this.surface()).margin({ top: 1 })
               this.drawerItem('更多选项', 'Settings')
             }.width('100%')

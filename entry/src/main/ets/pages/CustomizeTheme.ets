@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeAccentText, themeMutedText, themeOnColor } from '../common/Theme';
+import { applyThemeSystemBars, themeAccentText, themeMutedText, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -9,7 +9,7 @@ struct CustomizeTheme {
   @State customColor: string = '#4F7CAC';
   private readonly colors: string[] = ['#4F7CAC', '#FB7299', '#00AEEC', '#51A775', '#8B6FB0', '#D07A3A'];
 
-  aboutToAppear(): void { this.customColor = this.themeColor; }
+  aboutToAppear(): void { this.customColor = this.themeColor; applyThemeSystemBars(this.darkMode); }
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
   private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
@@ -40,7 +40,7 @@ struct CustomizeTheme {
           Row() {
             Text('深色模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
             Button(this.darkMode ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
-              .onClick(() => this.darkMode = !this.darkMode)
+              .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
           }.width('100%').padding({ top: 18, bottom: 18 }).margin({ top: 12 })
           Text('主题设置会保存到本机，并应用到首页、详情、节点、个人中心和设置页面。')
             .fontSize(13).fontColor(themeMutedText(this.darkMode)).lineHeight(21).width('100%').margin({ top: 18 })

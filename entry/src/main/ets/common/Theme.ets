@@ -1,3 +1,25 @@
+import { common } from '@kit.AbilityKit';
+import { window } from '@kit.ArkUI';
+
+/** Keep system bars continuous with every native page and the current theme. */
+export function applyThemeSystemBars(darkMode: boolean): void {
+  try {
+    const context = getContext() as common.UIAbilityContext;
+    context.windowStage.getMainWindow().then((mainWindow: window.Window) => {
+      const surface: string = darkMode ? '#0F141A' : '#FFFFFF';
+      const content: string = darkMode ? '#F2F5F8' : '#202124';
+      mainWindow.setWindowSystemBarProperties({
+        statusBarColor: surface,
+        navigationBarColor: surface,
+        statusBarContentColor: content,
+        navigationBarContentColor: content,
+        isStatusBarLightIcon: !darkMode,
+        isNavigationBarLightIcon: !darkMode
+      });
+    });
+  } catch (_) { /* system bars are best effort on older devices */ }
+}
+
 export function themeSurface(darkMode: boolean): string {
   return darkMode ? '#18202A' : '#FFFFFF';
 }
