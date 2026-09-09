@@ -40,8 +40,7 @@ struct CustomizeTheme {
           Row() {
             Text('深色模式').fontSize(16).fontColor(this.primaryText()).layoutWeight(1)
             Button() {
-              if (this.darkMode) Image($r('app.media.ic_sun')).width(18).height(18).objectFit(ImageFit.Contain)
-              else Image($r('app.media.ic_moon')).width(18).height(18).objectFit(ImageFit.Contain)
+              Text(this.darkMode ? '☀︎' : '☾').fontSize(21).fontColor(themeOnColor(this.themeColor)).textAlign(TextAlign.Center)
             }
               .width(56).height(32).borderRadius(16).backgroundColor(this.themeColor)
               .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
