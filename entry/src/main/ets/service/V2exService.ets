@@ -606,7 +606,8 @@ export class V2exService {
       const topicMatch: RegExpMatchArray | null = block.match(/<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
       if (avatarMatch && topicMatch) {
         const deleteMatch: RegExpMatchArray | null = block.match(/href=["']\/delete\/notification\/\d+\?once=([^"']+)["']/i)
-          ?? block.match(/href=["'][^"']*\/delete\/notification\/\d+\?once=([^"']+)["']/i);
+          ?? block.match(/href=["'][^"']*\/delete\/notification\/\d+\?once=([^"']+)["']/i)
+          ?? block.match(/onclick=["'][^"']*,\s*([\w-]+)\s*\)["']/i);
         const createdMatch: RegExpMatchArray | null = block.match(/class=["'][^"']*\b(?:snow|fade)\b[^"']*["'][^>]*>([\s\S]*?)<\//i);
         result.push({
           id: Number(match[1]), once: deleteMatch?.[1], avatar: V2exService.assetUrl(avatarMatch[1]), username: avatarMatch[2],
