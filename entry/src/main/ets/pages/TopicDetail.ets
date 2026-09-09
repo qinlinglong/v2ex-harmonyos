@@ -253,11 +253,13 @@ struct TopicDetail {
 
   private async toggleIgnoredFromMenu(): Promise<void> {
     const nextIgnored: boolean = !this.ignored;
-    const ok: boolean = await this.action(nextIgnored ? 'ignore' : 'unignore');
-    if (ok) {
-      this.ignored = nextIgnored;
-      this.setIgnoredTopic(nextIgnored);
-    }
+    try {
+      const ok: boolean = await this.action(nextIgnored ? 'ignore' : 'unignore');
+      if (ok) {
+        this.ignored = nextIgnored;
+        this.setIgnoredTopic(nextIgnored);
+      }
+    } catch (_) { this.actionStatus = '操作失败，请稍后重试'; }
   }
 
   aboutToAppear(): void {

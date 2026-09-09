@@ -101,9 +101,11 @@ struct NodeTopics {
   }
 
   private async toggleFavorite(): Promise<void> {
-    const ok: boolean = await V2exService.nodeAction(this.name, this.nodeFavorited ? 'unfavorite' : 'favorite');
-    this.actionStatus = ok ? (this.nodeFavorited ? '已取消收藏' : '已收藏') : '请先登录';
-    if (ok) this.nodeFavorited = !this.nodeFavorited;
+    try {
+      const ok: boolean = await V2exService.nodeAction(this.name, this.nodeFavorited ? 'unfavorite' : 'favorite');
+      this.actionStatus = ok ? (this.nodeFavorited ? '已取消收藏' : '已收藏') : '请先登录';
+      if (ok) this.nodeFavorited = !this.nodeFavorited;
+    } catch (_) { this.actionStatus = '操作失败，请稍后重试'; }
   }
 
   @Builder

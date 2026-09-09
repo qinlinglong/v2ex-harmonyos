@@ -70,13 +70,14 @@ struct Notifications {
 
   private async remove(item: V2exNotification): Promise<void> {
     this.deletingId = item.id;
-    const ok: boolean = await V2exService.notificationAction(item.id, 'delete');
-    if (ok) {
-      this.items = this.items.filter((value: V2exNotification) => value.id !== item.id);
-      this.cacheJson = JSON.stringify(this.items);
-    }
-    else this.status = '删除失败，请先登录';
-    this.deletingId = 0;
+    try {
+      const ok: boolean = await V2exService.notificationAction(item.id, 'delete');
+      if (ok) {
+        this.items = this.items.filter((value: V2exNotification) => value.id !== item.id);
+        this.cacheJson = JSON.stringify(this.items);
+      } else this.status = '删除失败，请先登录';
+    } catch (_) { this.status = '删除失败，请稍后重试'; }
+    finally { this.deletingId = 0; }
   }
 
   @Builder
