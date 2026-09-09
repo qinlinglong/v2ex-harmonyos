@@ -95,14 +95,15 @@ export class V2exService {
     } catch (_) { /* cookie headers are optional on some API levels */ }
     if (raw.trim().length === 0) return;
     const cookies: string[] = raw.split(/,(?=[^;,\s]+=)/g).map((item: string) => item.trim()).filter((item: string) => item.indexOf('=') > 0);
+    const cookiePairs: string = cookies.map((item: string) => item.split(';')[0].trim()).filter((item: string) => item.indexOf('=') > 0).join('; ');
     let current: string = '';
     try { current = AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { current = ''; }
-    const cookieHeader: string = V2exService.mergeCookieHeaders(current, cookies.map((item: string) => item.split(';')[0]).join('; '));
+    const cookieHeader: string = V2exService.mergeCookieHeaders(current, cookiePairs);
     try { AppStorage.setOrCreate('v2exNativeCookie', cookieHeader); } catch (_) { /* storage may be unavailable during startup */ }
     // Keep the Web component session in sync for links opened after a native login.
-    cookies.forEach((item: string) => {
-      try { webview.WebCookieManager.configCookieSync(V2exService.base(), item); } catch (_) { /* native HTTP remains the source of truth */ }
-    });
+    if (cookiePairs.length > 0) {
+      try { webview.WebCookieManager.configCookieSync(V2exService.base(), cookiePairs); } catch (_) { /* native HTTP remains the source of truth */ }
+    }
     try { webview.WebCookieManager.saveCookieAsync(); } catch (_) { /* best effort */ }
   }
 
