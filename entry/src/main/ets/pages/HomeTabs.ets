@@ -96,7 +96,7 @@ struct HomeTabs {
             .fontSize(13).fontColor(themeMutedText(this.darkMode)).width('100%').margin({ bottom: 12 })
           ForEach(ALL_HOME_TABS, (item: HomeTabOption) => {
             Row() {
-              Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? themePrimaryText(this.darkMode) : '#9AA3AD').layoutWeight(1)
+              Text(item.title).fontSize(16).fontColor(this.contains(item.key) ? themePrimaryText(this.darkMode) : themeMutedText(this.darkMode)).layoutWeight(1)
               if (this.editing && this.contains(item.key)) {
                 Button('↑').fontSize(12).width(42).height(32).backgroundColor(this.themeColor).fontColor(Color.White).margin({ right: 6 })
                   .onClick(() => this.move(this.selected.findIndex((entry: HomeTabOption) => entry.key === item.key), -1))

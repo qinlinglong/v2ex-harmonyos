@@ -88,10 +88,10 @@ struct HotestTopics {
         Column() {
           Text('历史最热').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-        Text('‹').fontSize(26).fontColor(this.date <= isoDay(-30) ? '#B0B7BF' : this.themeColor).width(44).height(56).textAlign(TextAlign.Center)
+        Text('‹').fontSize(26).fontColor(this.date <= isoDay(-30) ? themeMutedText(this.darkMode) : this.themeColor).width(44).height(56).textAlign(TextAlign.Center)
           .onClick(() => this.shiftDate(-1))
         Text(this.date).fontSize(13).fontColor(this.themeColor).height(56).textAlign(TextAlign.Center)
-        Text('›').fontSize(26).fontColor(this.date >= isoDay(-1) ? '#B0B7BF' : this.themeColor).width(44).height(56).textAlign(TextAlign.Center)
+        Text('›').fontSize(26).fontColor(this.date >= isoDay(-1) ? themeMutedText(this.darkMode) : this.themeColor).width(44).height(56).textAlign(TextAlign.Center)
           .onClick(() => this.shiftDate(1))
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
       if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
