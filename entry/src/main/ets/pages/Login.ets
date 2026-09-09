@@ -21,9 +21,31 @@ struct Login {
   @State limited: boolean = false;
   @State submitting: boolean = false;
   @State captchaImage: string = '';
+  @State h5FallbackOpened: boolean = false;
   private signinInfo: V2exSigninInfo | undefined = undefined;
 
   aboutToAppear(): void { this.loadSigninInfo(); }
+
+  onPageShow(): void {
+    if (!this.h5FallbackOpened) return;
+    this.h5FallbackOpened = false;
+    this.syncH5Member();
+  }
+
+  private async syncH5Member(): Promise<void> {
+    try {
+      const member: V2exMember | undefined = await V2exService.currentMember();
+      if (!member) return;
+      this.cachedMemberJson = JSON.stringify(member);
+      this.status = '登录成功';
+      setTimeout(() => router.back(), 250);
+    } catch (_) { /* remain on the native login page when H5 is not signed in */ }
+  }
+
+  private openH5Signin(): void {
+    this.h5FallbackOpened = true;
+    router.pushUrl({ url: 'pages/WebViewPage', params: { title: '登录 V2EX', url: 'https://www.v2ex.com/signin' } });
+  }
 
   private async loadSigninInfo(): Promise<void> {
     this.loading = true;
@@ -116,7 +138,7 @@ struct Login {
               Button(this.loading ? '重试中…' : '重试').width('100%').height(48).margin({ top: 24 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.loadSigninInfo())
               Text('打开 H5 登录').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
                 .width('100%').textAlign(TextAlign.Center).margin({ top: 18 })
-                .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '登录 V2EX', url: 'https://www.v2ex.com/signin' } }))
+                .onClick(() => this.openH5Signin())
             } else {
               Text('登录 V2EX').fontSize(26).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
               Text('使用用户名或电子邮件地址登录。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 6, bottom: 22 })
@@ -144,7 +166,7 @@ struct Login {
               }.width('100%').margin({ top: 18 }).onClick(() => this.agreementRow())
               Text('无法完成原生登录？打开 H5 登录').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
                 .width('100%').textAlign(TextAlign.Center).margin({ top: 18 })
-                .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '登录 V2EX', url: 'https://www.v2ex.com/signin' } }))
+                .onClick(() => this.openH5Signin())
             }
           }.width('82%').padding({ top: 28, bottom: 32 })
         }.layoutWeight(1).width('100%')
