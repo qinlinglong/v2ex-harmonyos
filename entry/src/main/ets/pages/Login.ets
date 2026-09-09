@@ -139,6 +139,9 @@ struct Login {
                 Text('和').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
                 Text('《隐私政策》').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/privacy-policy_zh.md', title: '隐私政策' } }))
               }.width('100%').margin({ top: 18 }).onClick(() => this.agreementRow())
+              Text('无法完成原生登录？打开 H5 登录').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
+                .width('100%').textAlign(TextAlign.Center).margin({ top: 18 })
+                .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '登录 V2EX', url: 'https://www.v2ex.com/signin' } }))
             }
           }.width('82%').padding({ top: 28, bottom: 32 })
         }.layoutWeight(1).width('100%')
