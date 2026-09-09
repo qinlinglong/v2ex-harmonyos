@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exMember, V2exMemberRelations, V2exReply, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeAccentText, themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeInputBackground, themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
 
 function decodeHtmlEntities(value: string): string {
   return value.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
@@ -167,14 +167,26 @@ struct Profile {
   @Builder
   replyRow(reply: V2exReply) {
     ListItem() {
-      Column() {
-        Text(replyPreview(reply.topic_title ?? '回复')).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-        Text(replyPreview(reply.content)).fontSize(15).fontColor(this.bodyText()).lineHeight(23).maxLines(4)
-          .textOverflow({ overflow: TextOverflow.Ellipsis }).copyOption(CopyOptions.LocalDevice)
-          .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
-        Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 7 })
-      }.width('100%').padding({ left: 18, right: 18, top: 14, bottom: 14 }).backgroundColor(this.surface())
+      Row() {
+        Stack() {
+          Text((reply.member?.username ?? this.username).substring(0, 1).toUpperCase()).fontSize(14).fontColor(Color.White)
+            .width(36).height(36).textAlign(TextAlign.Center).backgroundColor(this.darkMode ? '#435466' : '#B7C4D2').borderRadius(18)
+          if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(36).height(36).borderRadius(18).objectFit(ImageFit.Cover)
+        }.hitTestBehavior(HitTestMode.Block)
+        Column() {
+          Row() {
+            Text(reply.member?.username ?? this.username).fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
+            Blank()
+            Text(reply.createdLabel ?? new Date(reply.created * 1000).toLocaleDateString()).fontSize(11).fontColor(themeMutedText(this.darkMode))
+          }.width('100%')
+          Text(`回复主题：${replyPreview(reply.topic_title ?? '未知主题')}`).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode))
+            .maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis }).margin({ top: 5 })
+          Text(replyPreview(reply.content)).fontSize(15).fontColor(this.bodyText()).lineHeight(23).maxLines(5)
+            .textOverflow({ overflow: TextOverflow.Ellipsis }).copyOption(CopyOptions.LocalDevice)
+            .textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE).width('100%')
+            .padding({ left: 11, right: 11, top: 8, bottom: 8 }).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(7).margin({ top: 7 })
+        }.layoutWeight(1).alignItems(HorizontalAlign.Start).margin({ left: 12 })
+      }.width('100%').padding({ left: 18, right: 18, top: 13, bottom: 13 }).backgroundColor(this.surface())
     }.onClick(() => {
       const topicId: number = this.replyTopicId(reply);
       if (topicId > 0) router.pushUrl({ url: 'pages/TopicDetail', params: { id: topicId } });
