@@ -489,6 +489,9 @@ export class V2exService {
         readTimeout: 12000,
         expectDataType: http.HttpDataType.ARRAY_BUFFER
       });
+      // Some V2EX deployments refresh PB3_SESSION while issuing the image.
+      // Keep that session paired with the challenge used by the subsequent POST.
+      V2exService.rememberResponseCookies(response);
       if (response.responseCode < 200 || response.responseCode >= 400) throw new Error(`验证码请求失败 (${response.responseCode})`);
       const bytes: Uint8Array = new Uint8Array(response.result as ArrayBuffer);
       if (bytes.length === 0) throw new Error('验证码为空');
