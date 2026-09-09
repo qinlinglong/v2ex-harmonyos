@@ -474,6 +474,35 @@ export class V2exService {
     } finally { request.destroy(); }
   }
 
+  /** Download the CAPTCHA with the native session and return an ArkUI image source. */
+  static async signinCaptcha(url: string): Promise<string> {
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(url, {
+        method: http.RequestMethod.GET,
+        header: {
+          'Accept': 'image/png,image/*',
+          'Cookie': V2exService.cookie(),
+          'Referer': `${V2exService.base()}/signin`
+        },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.ARRAY_BUFFER
+      });
+      if (response.responseCode < 200 || response.responseCode >= 400) throw new Error(`验证码请求失败 (${response.responseCode})`);
+      const bytes: Uint8Array = new Uint8Array(response.result as ArrayBuffer);
+      if (bytes.length === 0) throw new Error('验证码为空');
+      let mime: string = 'image/png';
+      try {
+        const headers: Record<string, Object> = response.header as Record<string, Object>;
+        const contentType: string = String(headers['content-type'] ?? headers['Content-Type'] ?? '').split(';')[0].trim();
+        if (contentType.startsWith('image/')) mime = contentType;
+      } catch (_) { /* use the PNG default */ }
+      const encoded: string = new util.Base64Helper().encodeToStringSync(bytes);
+      return `data:${mime};base64,${encoded}`;
+    } finally { request.destroy(); }
+  }
+
   static async signin(info: V2exSigninInfo, username: string, password: string, code: string): Promise<V2exSigninResult> {
     const values: string = `${V2exService.formValue(info.usernameField)}=${V2exService.formValue(username)}&${V2exService.formValue(info.passwordField)}=${V2exService.formValue(password)}&${V2exService.formValue(info.codeField)}=${V2exService.formValue(code)}&once=${V2exService.formValue(info.once)}&username=${V2exService.formValue(username)}`;
     const request: http.HttpRequest = http.createHttp();

@@ -20,6 +20,7 @@ struct Login {
   @State loading: boolean = true;
   @State limited: boolean = false;
   @State submitting: boolean = false;
+  @State captchaImage: string = '';
   private signinInfo: V2exSigninInfo | undefined = undefined;
 
   aboutToAppear(): void { this.loadSigninInfo(); }
@@ -31,11 +32,17 @@ struct Login {
       const info: V2exSigninInfo = await V2exService.signinInfo();
       this.signinInfo = info;
       this.captchaUrl = info.captchaUrl;
+      this.captchaImage = info.captchaUrl;
       this.limited = info.limited;
       this.status = info.limited ? '当前 IP 暂时无法获取验证码，请稍后重试' : '';
+      if (!info.limited && info.captchaUrl.length > 0) {
+        try { this.captchaImage = await V2exService.signinCaptcha(info.captchaUrl); }
+        catch (_) { this.status = '验证码加载失败，请点击验证码区域重试'; }
+      }
     } catch (error) {
       this.signinInfo = undefined;
       this.captchaUrl = '';
+      this.captchaImage = '';
       this.status = error instanceof Error ? error.message : '获取验证码失败，请检查网络';
     } finally { this.loading = false; }
   }
@@ -115,7 +122,7 @@ struct Login {
               TextInput({ placeholder: '请输入密码', text: this.password }).width('100%').height(52).margin({ top: 6 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Password).showPasswordIcon(true).onChange((value: string) => this.password = value)
               Text('你是机器人吗？').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 16 })
               if (this.captchaUrl.length > 0) {
-                Image(this.captchaUrl).width('100%').height(128).margin({ top: 6 }).borderRadius(8).objectFit(ImageFit.Fill).onClick(() => this.loadSigninInfo())
+                Image(this.captchaImage).width('100%').height(128).margin({ top: 6 }).borderRadius(8).objectFit(ImageFit.Fill).onClick(() => this.loadSigninInfo())
               } else {
                 Text('点击刷新验证码').width('100%').height(128).margin({ top: 6 }).textAlign(TextAlign.Center).fontColor(themeSecondaryText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).onClick(() => this.loadSigninInfo())
               }
