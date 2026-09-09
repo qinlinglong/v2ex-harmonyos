@@ -47,7 +47,7 @@ struct WriteTopic {
   @State editAllowed: boolean = false;
   @State editPermissionChecked: boolean = false;
   @StorageLink('v2exImgurClientId') imgurClientId: string = '';
-  @StorageLink('v2exImageBed') imageBed: string = 'imgur';
+  @StorageLink('v2exImageBed') imageBed: string = 'bilibili';
   @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
   private topicId: number = 0;
 

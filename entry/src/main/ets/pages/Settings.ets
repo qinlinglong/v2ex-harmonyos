@@ -29,6 +29,7 @@ struct Settings {
   @StorageLink('v2exHotestTopicsCache') hotestTopicsCacheJson: string = '{}';
   @StorageLink('v2exNodesCache') nodesCacheJson: string = '[]';
   @StorageLink('v2exNodeTopicsCache') nodeTopicsCacheJson: string = '{}';
+  @StorageLink('v2exImageBed') imageBed: string = 'bilibili';
   @State customColor: string = '#4F7CAC';
   @State status: string = '';
   @State signingOut: boolean = false;
@@ -77,16 +78,16 @@ struct Settings {
         .height(60).width('100%').backgroundColor(this.surface())
       Scroll() {
         Column() {
-        Row() { Text('内容解析').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.parseContent ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.parseContent = !this.parseContent) }
+        Row() { Text('内容解析').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button() { if (this.parseContent) { Image($r('app.media.ic_toggle_on')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } else { Image($r('app.media.ic_toggle_off')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } }.width(48).height(36).backgroundColor(this.themeColor).borderRadius(18).onClick(() => this.parseContent = !this.parseContent) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 12 })
-        Row() { Text('内置浏览器').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.builtinBrowser ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
+        Row() { Text('内置浏览器').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button() { if (this.builtinBrowser) { Image($r('app.media.ic_toggle_on')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } else { Image($r('app.media.ic_toggle_off')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } }.width(48).height(36).backgroundColor(this.themeColor).borderRadius(18).onClick(() => this.builtinBrowser = !this.builtinBrowser) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
-          Row() { Text('自动签到').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.autoCheckin ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.autoCheckin = !this.autoCheckin) }
+          Row() { Text('自动签到').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button() { if (this.autoCheckin) { Image($r('app.media.ic_toggle_on')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } else { Image($r('app.media.ic_toggle_off')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } }.width(48).height(36).backgroundColor(this.themeColor).borderRadius(18).onClick(() => this.autoCheckin = !this.autoCheckin) }
             .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         }
         if (this.cachedMemberJson.trim().length > 0) {
-          Row() { Text('消息通知').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.msgPush ? '已开启' : '已关闭').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.msgPush = !this.msgPush) }
+          Row() { Text('消息通知').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button() { if (this.msgPush) { Image($r('app.media.ic_toggle_on')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } else { Image($r('app.media.ic_toggle_off')).width(25).height(25).fillColor(themeOnColor(this.themeColor)) } }.width(48).height(36).backgroundColor(this.themeColor).borderRadius(18).onClick(() => this.msgPush = !this.msgPush) }
             .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         }
         Text('主题颜色').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).width('100%')
@@ -128,7 +129,7 @@ struct Settings {
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         Row() { Text('问题反馈').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('GitHub').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
-          .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '问题反馈', url: 'https://github.com/liaoliao666/v2ex/issues' } }))
+          .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: '问题反馈', url: 'https://github.com/qinlinglong/guozaoke-harmonyos.git' } }))
         Row() { Text('社区排行').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('查看').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/Rank' }))
@@ -140,7 +141,7 @@ struct Settings {
             .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
             .onClick(() => router.pushUrl({ url: 'pages/BlackList' }))
         }
-        Row() { Text('图片上传').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('Imgur').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }
+        Row() { Text('图片上传').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text(this.imageBed === 'bilibili' ? 'Bilibili' : 'Imgur').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ImgurConfig' }))
         Row() { Text('域名配置').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('V2EX').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }

@@ -460,10 +460,12 @@ struct TopicDetail {
 
   private async thankReply(replyId: number): Promise<void> {
     if (this.thankedReplies.indexOf(replyId) >= 0) return;
+    this.replyStatus = '点赞中…';
     try {
       const ok: boolean = await V2exService.replyAction(this.topicId, replyId, 'thank');
       if (ok) {
         this.thankedReplies = this.thankedReplies.concat([replyId]);
+        this.replyStatus = '已点赞';
         this.replies = this.replies.map((item: V2exReply) => {
           if (item.id !== replyId) return item;
           return {
@@ -870,8 +872,11 @@ struct TopicDetail {
                   }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
                   Row() {
                     if (!this.isSelf(reply.member?.username) || (reply.thanks ?? 0) > 0) {
-                      Text(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? `♥ 已感谢 ${reply.thanks ?? 0}` : `♡ 感谢 ${reply.thanks ?? 0}`)
-                        .fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
+                      Row() {
+                        Image($r('app.media.ic_heart')).width(17).height(17)
+                          .fillColor(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? '#D05A73' : themeSecondaryText(this.darkMode))
+                        Text(`${reply.thanks ?? 0}`).fontSize(13).fontColor(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? '#D05A73' : themeSecondaryText(this.darkMode)).margin({ left: 4 })
+                      }.padding({ left: 8, right: 8, top: 5, bottom: 5 })
                         .onClick(() => { if (!this.isSelf(reply.member?.username)) this.thankReply(reply.id); })
                     }
                     Text('回复').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ left: 16 }).onClick(() => {

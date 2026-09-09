@@ -8,7 +8,7 @@ struct ImgurConfig {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exImgurClientId') clientId: string = '';
-  @StorageLink('v2exImageBed') imageBed: string = 'imgur';
+  @StorageLink('v2exImageBed') imageBed: string = 'bilibili';
   @State input: string = '';
   @State status: string = '';
 
@@ -34,7 +34,7 @@ struct ImgurConfig {
             Button('保存 Imgur 配置').width('100%').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => { this.clientId = this.input.trim(); this.status = this.clientId.length > 0 ? 'Imgur 配置已保存' : '请输入 Client ID'; })
           } else {
             Text('Bilibili 图床需要先登录 Bilibili，登录状态通过系统 Cookie 保存。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').lineHeight(22).margin({ top: 18 })
-            Button(V2exService.biliLoggedIn() ? '已登录，重新登录' : '登录 Bilibili 图床').width('100%').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => router.pushUrl({ url: 'pages/BilibiliLogin' }))
+            Button(V2exService.biliLoggedIn() ? '已登录，重新登录' : '登录 Bilibili 图床').width('100%').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => { this.status = '正在打开 Bilibili 登录页'; setTimeout((): void => { router.pushUrl({ url: 'pages/BilibiliLogin' }); }, 80); })
           }
           if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 14 })
           Text('上传图片后会自动插入 Markdown：![图片](图片地址)').fontSize(13).fontColor(themeMutedText(this.darkMode)).width('100%').margin({ top: 28 })

@@ -31,7 +31,7 @@ struct BilibiliLogin {
         Text('Bilibili 图床登录').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).margin({ left: 14 })
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8, bottom: 8 })
-      Web({ src: 'https://passport.bilibili.com/login', controller: this.controller }).javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%').onPageEnd(() => this.checkCookie())
+      Web({ src: 'https://passport.bilibili.com/login', controller: this.controller }).javaScriptAccess(true).domStorageAccess(true).fileAccess(true).databaseAccess(true).layoutWeight(1).width('100%').onPageEnd(() => this.checkCookie())
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(themeBackground(this.darkMode))
   }
 }
