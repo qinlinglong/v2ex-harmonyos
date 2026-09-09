@@ -1,6 +1,6 @@
-# HarmonyV2EX
+# V2ext
 
-HarmonyV2EX 是 V2EX 的 HarmonyOS 原生客户端，使用 ArkTS、ArkUI 和 DevEco CLI 构建。
+V2ext 是 V2EX 的 HarmonyOS 原生客户端，使用 ArkTS、ArkUI 和 DevEco CLI 构建。
 
 ## 当前状态
 
