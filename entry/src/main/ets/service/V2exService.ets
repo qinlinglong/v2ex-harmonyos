@@ -6,6 +6,22 @@ import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply,
 
 const API_BASE: string = 'https://www.v2ex.com';
 
+export interface V2exSigninInfo {
+  captchaUrl: string;
+  once: string;
+  usernameField: string;
+  passwordField: string;
+  codeField: string;
+  limited: boolean;
+}
+
+export interface V2exSigninResult {
+  success: boolean;
+  twoFactor: boolean;
+  once: string;
+  member?: V2exMember;
+}
+
 export class V2exService {
   // Node metadata is shared by the home page, node navigation and hot-topic
   // pages. Keep a short-lived in-memory copy and coalesce concurrent requests
@@ -39,7 +55,81 @@ export class V2exService {
   }
 
   private static cookie(): string {
-    try { return webview.WebCookieManager.fetchCookieSync(V2exService.base()) || ''; } catch (_) { return ''; }
+    let webCookie: string = '';
+    try { webCookie = webview.WebCookieManager.fetchCookieSync(V2exService.base()) || ''; } catch (_) { webCookie = ''; }
+    let nativeCookie: string = '';
+    try { nativeCookie = AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { nativeCookie = ''; }
+    return V2exService.mergeCookieHeaders(webCookie, nativeCookie);
+  }
+
+  /** Return the current session cookie for native image/OCR requests. */
+  static sessionCookie(): string { return V2exService.cookie(); }
+
+  private static mergeCookieHeaders(...headers: string[]): string {
+    const values: string[] = [];
+    const names: string[] = [];
+    headers.forEach((header: string) => {
+      header.split(';').forEach((part: string) => {
+        const value: string = part.trim();
+        const separator: number = value.indexOf('=');
+        if (separator <= 0) return;
+        const name: string = value.substring(0, separator).trim();
+        if (names.indexOf(name) >= 0) {
+          const index: number = names.indexOf(name);
+          values[index] = value;
+        } else {
+          names.push(name);
+          values.push(value);
+        }
+      });
+    });
+    return values.join('; ');
+  }
+
+  private static rememberResponseCookies(response: http.HttpResponse): void {
+    let raw: string = '';
+    try { raw = String(response.cookies ?? ''); } catch (_) { raw = ''; }
+    try {
+      const header: Record<string, Object> = response.header as Record<string, Object>;
+      raw = `${raw};${String(header['set-cookie'] ?? header['Set-Cookie'] ?? '')}`;
+    } catch (_) { /* cookie headers are optional on some API levels */ }
+    if (raw.trim().length === 0) return;
+    const cookies: string[] = raw.split(/,(?=[^;,\s]+=)/g).map((item: string) => item.trim()).filter((item: string) => item.indexOf('=') > 0);
+    let current: string = '';
+    try { current = AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { current = ''; }
+    const cookieHeader: string = V2exService.mergeCookieHeaders(current, cookies.map((item: string) => item.split(';')[0]).join('; '));
+    try { AppStorage.setOrCreate('v2exNativeCookie', cookieHeader); } catch (_) { /* storage may be unavailable during startup */ }
+    // Keep the Web component session in sync for links opened after a native login.
+    cookies.forEach((item: string) => {
+      try { webview.WebCookieManager.configCookieSync(V2exService.base(), item); } catch (_) { /* native HTTP remains the source of truth */ }
+    });
+    try { webview.WebCookieManager.saveCookieAsync(); } catch (_) { /* best effort */ }
+  }
+
+  private static formInputName(html: string, label: string, fallback: string): string {
+    const inputs: RegExpMatchArray | null = html.match(/<input\\b[^>]*>/gi);
+    const hint: RegExp = new RegExp(`(?:${label})`, 'i');
+    if (inputs) {
+      for (const input of inputs) {
+        const name: RegExpMatchArray | null = input.match(/\\bname=["']([^"']+)["']/i);
+        if (name?.[1] && hint.test(input)) return name[1];
+      }
+    }
+    // Some deployments render labels outside the input tag. Keep a row-level
+    // fallback for those pages while still limiting the match to one form row.
+    const row: RegExpMatchArray | null = html.match(new RegExp(`${label}[\\s\\S]{0,900}?<input[^>]+name=["']([^"']+)["']`, 'i'));
+    return row?.[1] ?? fallback;
+  }
+
+  private static formHiddenValue(html: string, name: string): string {
+    const match: RegExpMatchArray | null = html.match(new RegExp(`<input[^>]+name=["']${name}["'][^>]*value=["']([^"']+)["']`, 'i'))
+      ?? html.match(new RegExp(`<input[^>]+value=["']([^"']+)["'][^>]*name=["']${name}["']`, 'i'));
+    return match?.[1] ?? '';
+  }
+
+  private static signinProblem(html: string): string {
+    const match: RegExpMatchArray | null = html.match(/class=["'][^"']*problem[^"']*["'][^>]*>[\s\S]*?<li[^>]*>([\s\S]*?)<\/li>/i);
+    return V2exService.cleanHtml(match?.[1] ?? '');
   }
 
   private static formValue(value: string): string {
@@ -351,6 +441,97 @@ export class V2exService {
     const username: string = decodeURIComponent(match[1]);
     try { return await V2exService.member(username); }
     catch (_) { return { username }; }
+  }
+
+  static async signinInfo(): Promise<V2exSigninInfo> {
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/signin?now=${Date.now()}`, {
+        method: http.RequestMethod.GET,
+        header: {
+          'Accept': 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
+        },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      V2exService.rememberResponseCookies(response);
+      if (response.responseCode < 200 || response.responseCode >= 400) throw new Error(`登录页请求失败 (${response.responseCode})`);
+      const html: string = String(response.result ?? '');
+      const captchaMatch: RegExpMatchArray | null = html.match(/<img[^>]+(?:id|name)=["']captcha-image["'][^>]+src=["']([^"']+)["']/i)
+        ?? html.match(/<img[^>]+src=["']([^"']+)["'][^>]*(?:id|name)=["']captcha-image["']/i);
+      const captchaPath: string = captchaMatch?.[1] ?? '';
+      const captchaUrl: string = captchaPath.length > 0
+        ? (captchaPath.startsWith('http') ? captchaPath : `${V2exService.base()}${captchaPath.startsWith('/') ? captchaPath : `/${captchaPath}`}`) + (captchaPath.indexOf('?') >= 0 ? `&now=${Date.now()}` : `?now=${Date.now()}`)
+        : '';
+      const once: string = V2exService.formHiddenValue(html, 'once');
+      const usernameField: string = V2exService.formInputName(html, '用户名|username|email', 'u');
+      const passwordField: string = V2exService.formInputName(html, '密码|password', 'p');
+      const codeField: string = V2exService.formInputName(html, '验证码|captcha|code|机器', 'code');
+      return { captchaUrl, once, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
+    } finally { request.destroy(); }
+  }
+
+  static async signin(info: V2exSigninInfo, username: string, password: string, code: string): Promise<V2exSigninResult> {
+    const values: string = `${V2exService.formValue(info.usernameField)}=${V2exService.formValue(username)}&${V2exService.formValue(info.passwordField)}=${V2exService.formValue(password)}&${V2exService.formValue(info.codeField)}=${V2exService.formValue(code)}&once=${V2exService.formValue(info.once)}&username=${V2exService.formValue(username)}`;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/signin`, {
+        method: http.RequestMethod.POST,
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Cookie': V2exService.cookie(),
+          'Referer': `${V2exService.base()}/signin`,
+          'Origin': V2exService.base(),
+          'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
+        },
+        extraData: values,
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      V2exService.rememberResponseCookies(response);
+      const html: string = String(response.result ?? '');
+      const otp: RegExpMatchArray | null = html.match(/id=["']otp_code["'][\s\S]*?<input[^>]+name=["']once["'][^>]+value=["']([^"']+)["']/i)
+        ?? html.match(/<input[^>]+name=["']once["'][^>]+value=["']([^"']+)["'][\s\S]*id=["']otp_code["']/i);
+      if (otp) return { success: false, twoFactor: true, once: otp[1] };
+      const problem: string = V2exService.signinProblem(html);
+      if (problem.length > 0) throw new Error(problem);
+      const member: V2exMember | undefined = await V2exService.currentMember();
+      if (member) return { success: true, twoFactor: false, once: '', member };
+      if (response.responseCode >= 200 && response.responseCode < 400 && html.length === 0 && V2exService.cookie().length > 0) {
+        return { success: true, twoFactor: false, once: '' };
+      }
+      throw new Error('登录失败，请检查用户名、密码和验证码');
+    } finally { request.destroy(); }
+  }
+
+  static async signinTwoFactor(once: string, code: string): Promise<V2exMember | undefined> {
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/2fa`, {
+        method: http.RequestMethod.POST,
+        header: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Cookie': V2exService.cookie(),
+          'Referer': `${V2exService.base()}/2fa`,
+          'Origin': V2exService.base(),
+          'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
+        },
+        extraData: `code=${V2exService.formValue(code)}&once=${V2exService.formValue(once)}`,
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      V2exService.rememberResponseCookies(response);
+      const html: string = String(response.result ?? '');
+      const problem: string = V2exService.signinProblem(html);
+      if (problem.length > 0) throw new Error(problem);
+      const member: V2exMember | undefined = await V2exService.currentMember();
+      if (member) return member;
+      throw new Error('两步验证码错误或已过期');
+    } finally { request.destroy(); }
   }
 
   static async checkin(): Promise<boolean> {

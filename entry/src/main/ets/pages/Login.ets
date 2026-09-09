@@ -1,9 +1,10 @@
 import { router } from '@kit.ArkUI';
-import { webview } from '@kit.ArkWeb';
 import { http } from '@kit.NetworkKit';
 import { image } from '@kit.ImageKit';
 import { textRecognition } from '@kit.CoreVisionKit';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { V2exService, V2exSigninInfo } from '../service/V2exService';
+import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
+import { V2exMember } from '../model/V2exModels';
 
 @Entry
 @Component
@@ -11,70 +12,75 @@ struct Login {
   @StorageLink('v2exTheme') themeColor: string = '#4F7CAC';
   @StorageLink('v2exDarkMode') darkMode: boolean = false;
   @StorageLink('v2exDomain') domain: string = 'https://www.v2ex.com';
-  private controller: webview.WebviewController = new webview.WebviewController();
-  @State captchaStatus: string = '';
-  @State recognizingCaptcha: boolean = false;
+  @StorageLink('v2exCachedMember') cachedMemberJson: string = '';
+  @State username: string = '';
+  @State password: string = '';
+  @State code: string = '';
+  @State twoFactorCode: string = '';
+  @State twoFactorOnce: string = '';
+  @State agreed: boolean = false;
+  @State captchaUrl: string = '';
+  @State status: string = '';
+  @State loading: boolean = true;
+  @State limited: boolean = false;
+  @State submitting: boolean = false;
+  @State recognizing: boolean = false;
+  private signinInfo: V2exSigninInfo | undefined = undefined;
 
-  private siteBase(): string {
-    return this.domain.replace(/\/$/, '');
+  aboutToAppear(): void { this.loadSigninInfo(); }
+
+  private siteBase(): string { return this.domain.replace(/\/$/, ''); }
+
+  private async loadSigninInfo(): Promise<void> {
+    this.loading = true;
+    this.status = '正在获取验证码…';
+    try {
+      const info: V2exSigninInfo = await V2exService.signinInfo();
+      this.signinInfo = info;
+      this.captchaUrl = info.captchaUrl;
+      this.limited = info.limited;
+      this.status = info.limited ? '当前 IP 暂时无法获取验证码，请稍后重试' : '';
+    } catch (error) {
+      this.signinInfo = undefined;
+      this.captchaUrl = '';
+      this.status = error instanceof Error ? error.message : '获取验证码失败，请检查网络';
+    } finally { this.loading = false; }
   }
 
   private async captchaBuffer(): Promise<ArrayBuffer> {
-    let sourceResult: string = await this.controller.runJavaScript(`(() => {
-      const image = document.getElementById('captcha-image');
-      return image ? (image.currentSrc || image.src || '') : '';
-    })()`);
-    if ((sourceResult ?? '').trim().length === 0) {
-      await new Promise<void>((resolve: () => void) => setTimeout(resolve, 500));
-      sourceResult = await this.controller.runJavaScript(`(() => {
-        const image = document.getElementById('captcha-image');
-        return image ? (image.currentSrc || image.src || '') : '';
-      })()`);
-    }
-    const source: string = (sourceResult ?? '').replace(/^['"]|['"]$/g, '').trim();
-    if (source.length === 0) throw new Error('验证码图片尚未加载');
-    const url: string = /^https?:\/\//i.test(source) ? source : `${this.siteBase()}${source.startsWith('/') ? source : `/${source}`}`;
+    if (this.captchaUrl.length === 0) throw new Error('验证码图片尚未加载');
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(url, {
+      const response: http.HttpResponse = await request.request(this.captchaUrl, {
         method: http.RequestMethod.GET,
-        header: { Cookie: webview.WebCookieManager.fetchCookieSync(this.siteBase()) || '' },
+        header: { 'Cookie': V2exService.sessionCookie(), 'Referer': `${this.siteBase()}/signin` },
         connectTimeout: 10000,
         readTimeout: 15000,
         expectDataType: http.HttpDataType.ARRAY_BUFFER
       });
-      if (response.responseCode < 200 || response.responseCode >= 300) throw new Error(`验证码请求失败 (${response.responseCode})`);
-      if (!(response.result instanceof ArrayBuffer)) throw new Error('验证码返回格式异常');
+      if (response.responseCode < 200 || response.responseCode >= 300 || !(response.result instanceof ArrayBuffer)) {
+        throw new Error('验证码图片下载失败');
+      }
       return response.result;
-    } finally {
-      request.destroy();
-    }
+    } finally { request.destroy(); }
   }
 
   private async recognizeCaptcha(): Promise<void> {
-    if (this.recognizingCaptcha) return;
-    this.recognizingCaptcha = true;
-    this.captchaStatus = '正在识别验证码…';
+    if (this.recognizing || this.captchaUrl.length === 0) return;
+    this.recognizing = true;
+    this.status = '正在识别验证码…';
     let source: image.ImageSource | undefined;
     let pixelMap: image.PixelMap | undefined;
     try {
-      const buffer: ArrayBuffer = await this.captchaBuffer();
-      source = image.createImageSource(buffer);
+      source = image.createImageSource(await this.captchaBuffer());
       if (!source) throw new Error('验证码图片解码失败');
-      // V2EX serves a compact 320×80 bitmap; upscale it before OCR so thin glyphs
-      // remain legible on devices whose OCR model has a larger minimum text size.
-      pixelMap = await source.createPixelMap({
-        desiredSize: { width: 1280, height: 320 },
-        desiredPixelFormat: image.PixelMapFormat.RGBA_8888
-      });
-      const ready: boolean = await textRecognition.init();
-      if (!ready) throw new Error('此设备未提供 OCR 模型');
+      pixelMap = await source.createPixelMap({ desiredSize: { width: 1280, height: 320 }, desiredPixelFormat: image.PixelMapFormat.RGBA_8888 });
+      if (!await textRecognition.init()) throw new Error('此设备未提供 OCR 模型');
       let result: textRecognition.TextRecognitionResult | undefined;
       let lastError: Error | undefined;
       for (let attempt: number = 0; attempt < 2 && result === undefined; attempt += 1) {
-        try {
-          result = await textRecognition.recognizeText({ pixelMap }, { isDirectionDetectionSupported: false });
-        } catch (error) {
+        try { result = await textRecognition.recognizeText({ pixelMap }, { isDirectionDetectionSupported: false }); }
+        catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
           if (attempt === 0) await new Promise<void>((resolve: () => void) => setTimeout(resolve, 350));
         }
@@ -82,81 +88,115 @@ struct Login {
       if (result === undefined) throw lastError ?? new Error('验证码识别失败');
       const compact: string = result.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
       const candidates: RegExpMatchArray | null = result.value.toUpperCase().match(/[A-Z0-9]{4}/g);
-      const code: string = compact.length === 4 ? compact : (candidates && candidates.length > 0 ? candidates[0] : compact.substring(0, 4));
-      if (!/^[A-Z0-9]{4}$/.test(code)) throw new Error('未识别到 4 位验证码，请点击图片刷新后重试');
-      const filled: string = await this.controller.runJavaScript(`(() => {
-        const inputs = Array.from(document.querySelectorAll('input'));
-        const input = inputs.find((element) => /captcha|once|code|验证码/i.test(
-          [element.id, element.name, element.placeholder].join(' ')))
-          ?? inputs.filter((element) => element.type === 'text').slice(-1)[0];
-        if (!input) return 'false';
-        input.focus();
-        input.value = '${code}';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        return 'true';
-      })()`);
-      if (filled !== 'true') throw new Error('未找到验证码输入框');
-      this.captchaStatus = `已识别：${code}`;
+      const candidate: string = compact.length === 4 ? compact : (candidates?.[0] ?? compact.substring(0, 4));
+      if (!/^[A-Z0-9]{4}$/.test(candidate)) throw new Error('未识别到 4 位验证码，请点击图片刷新后重试');
+      this.code = candidate;
+      this.status = `已识别：${candidate}`;
     } catch (error) {
-      const detail: Record<string, Object> = (error ?? {}) as Record<string, Object>;
-      const code: string = detail['code'] !== undefined ? ` (${String(detail['code'])})` : '';
-      const message: string = detail['message'] !== undefined ? String(detail['message']) : (error instanceof Error ? error.message : '验证码识别失败');
-      this.captchaStatus = `${message}${code}，请手动输入`;
+      this.status = error instanceof Error ? `${error.message}，请手动输入` : '验证码识别失败，请手动输入';
     } finally {
       if (pixelMap) await pixelMap.release();
       if (source) await source.release();
       try { await textRecognition.release(); } catch (_) { /* OCR may be unavailable on this device. */ }
-      this.recognizingCaptcha = false;
+      this.recognizing = false;
     }
   }
 
-  private applyWebTheme(): void {
-    const background: string = this.darkMode ? '#0F141A' : '#FFFFFF';
-    const surface: string = this.darkMode ? '#18202A' : '#FFFFFF';
-    const input: string = this.darkMode ? '#26313D' : '#F1F4F7';
-    const text: string = this.darkMode ? '#F2F5F8' : '#202124';
-    const muted: string = this.darkMode ? '#AAB7C4' : '#7B8794';
-    const css: string = `body { background:${background} !important; color:${text} !important; }
-      body * { color:${text}; }
-      #Top, #Wrapper, #Main, #Header, header, nav { background:${surface} !important; color:${text} !important; }
-      a, .fade, .small, .normal { color:${muted} !important; }
-      input, textarea, select { background:${input} !important; color:${text} !important; border-color:${muted} !important; }
-      button, input[type=submit], .button { background:${this.themeColor} !important; color:#FFFFFF !important; border-color:${this.themeColor} !important; }
-      a.button, a[class*="button"], a[class*="oauth"], a[href*="google"], a[href*="solana"] { background:${surface} !important; color:${text} !important; border-color:${muted} !important; }
-      .box, .cell, .content, .topic_content, table, td, tr, form, fieldset { background:${surface} !important; color:${text} !important; }`;
-    const script: string = `(() => { let style = document.getElementById('v2ex-native-theme'); if (!style) { style = document.createElement('style'); style.id = 'v2ex-native-theme'; document.head.appendChild(style); } style.textContent = ${JSON.stringify(css)}; return 'ok'; })()`;
-    try {
-      this.controller.runJavaScript(script).catch(() => { /* The page may have navigated away. */ });
-    } catch (_) {
-      // The controller can be unavailable during the first lifecycle pass.
+  private async submitSignin(): Promise<void> {
+    if (this.submitting || this.signinInfo === undefined) return;
+    if (!this.agreed) { this.status = '请勾选同意《用户协议》和《隐私政策》后登录'; return; }
+    if (this.username.trim().length === 0 || this.password.length === 0 || this.code.trim().length === 0) {
+      this.status = '请完整填写用户名、密码和验证码';
+      return;
     }
+    this.submitting = true;
+    this.status = '登录中…';
+    try {
+      const result = await V2exService.signin(this.signinInfo, this.username.trim(), this.password, this.code.trim());
+      if (result.twoFactor) {
+        this.twoFactorOnce = result.once;
+        this.status = '请输入两步验证码';
+        return;
+      }
+      if (!result.success) throw new Error('登录失败');
+      if (result.member) this.cachedMemberJson = JSON.stringify(result.member);
+      this.status = '登录成功';
+      setTimeout(() => router.back(), 250);
+    } catch (error) {
+      this.status = error instanceof Error ? error.message : '登录失败，请检查输入';
+      await this.loadSigninInfo();
+    } finally { this.submitting = false; }
   }
+
+  private async submitTwoFactor(): Promise<void> {
+    if (this.submitting || this.twoFactorOnce.length === 0 || this.twoFactorCode.trim().length === 0) return;
+    this.submitting = true;
+    this.status = '验证中…';
+    try {
+      const member: V2exMember | undefined = await V2exService.signinTwoFactor(this.twoFactorOnce, this.twoFactorCode.trim());
+      if (!member) throw new Error('两步验证码错误或已过期');
+      this.cachedMemberJson = JSON.stringify(member);
+      this.status = '登录成功';
+      setTimeout(() => router.back(), 250);
+    } catch (error) {
+      this.status = error instanceof Error ? error.message : '两步验证码错误';
+    } finally { this.submitting = false; }
+  }
+
+  private agreementRow(): void { this.agreed = !this.agreed; }
 
   build() {
     Column() {
       Row() {
         Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
-        Text('登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
+        Text(this.twoFactorOnce.length > 0 ? '两步验证' : '登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-        Text(this.recognizingCaptcha ? '识别中…' : '识别验证码').fontSize(13).fontColor(this.themeColor)
-          .padding({ left: 10, right: 14 }).enabled(!this.recognizingCaptcha)
-          .onClick(() => this.recognizeCaptcha())
+        if (this.twoFactorOnce.length === 0) Text(this.recognizing ? '识别中…' : '识别验证码').fontSize(13).fontColor(this.themeColor)
+          .enabled(!this.recognizing && !this.loading).padding({ left: 10, right: 14 }).onClick(() => this.recognizeCaptcha())
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
-      if (this.captchaStatus.length > 0) {
-        Text(this.captchaStatus).fontSize(12).fontColor(this.themeColor).width('100%')
-          .padding({ left: 16, right: 16, top: 5, bottom: 5 }).backgroundColor(this.darkMode ? '#26313D' : '#EEF4FB')
+      if (this.twoFactorOnce.length > 0) {
+        Scroll() {
+          Column() {
+            Text('你的 V2EX 账号已开启两步验证，请输入验证码继续。').fontSize(16).fontColor(themePrimaryText(this.darkMode)).width('100%').lineHeight(24)
+            TextInput({ placeholder: '请输入两步验证码', text: this.twoFactorCode }).width('100%').height(52).margin({ top: 20 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.twoFactorCode = value)
+            Button(this.submitting ? '验证中…' : '继续登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.submitTwoFactor())
+            Text('出于安全考虑，开启两步验证后需要定期输入验证码续期。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').lineHeight(22).margin({ top: 18 })
+          }.width('82%').padding({ top: 28, bottom: 28 })
+        }.layoutWeight(1).width('100%')
+      } else {
+        Scroll() {
+          Column() {
+            if (this.limited) {
+              Text('登录受限').fontSize(28).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
+              Text('由于当前 IP 在短时间内的登录尝试次数太多，暂时不能继续尝试。').fontSize(15).fontColor(themeBodyText(this.darkMode)).width('100%').lineHeight(24).margin({ top: 10 })
+              Button(this.loading ? '重试中…' : '重试').width('100%').height(48).margin({ top: 24 }).backgroundColor(this.themeColor).fontColor(Color.White).onClick(() => this.loadSigninInfo())
+            } else {
+              Text('登录 V2EX').fontSize(26).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).width('100%')
+              Text('使用用户名或电子邮件地址登录。').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 6, bottom: 22 })
+              Text('用户名').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%')
+              TextInput({ placeholder: '用户名或电子邮件地址', text: this.username }).width('100%').height(52).margin({ top: 6 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.username = value)
+              Text('密码').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 16 })
+              TextInput({ placeholder: '请输入密码', text: this.password }).width('100%').height(52).margin({ top: 6 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Password).showPasswordIcon(true).onChange((value: string) => this.password = value)
+              Text('你是机器人吗？').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 16 })
+              if (this.captchaUrl.length > 0) {
+                Image(this.captchaUrl).width('100%').height(128).margin({ top: 6 }).borderRadius(8).objectFit(ImageFit.Fill).onClick(() => this.loadSigninInfo())
+              } else {
+                Text('点击刷新验证码').width('100%').height(128).margin({ top: 6 }).textAlign(TextAlign.Center).fontColor(themeSecondaryText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).onClick(() => this.loadSigninInfo())
+              }
+              TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.code = value)
+              if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).width('100%').lineHeight(20).margin({ top: 12 })
+              Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(Color.White).enabled(!this.loading && !this.submitting).onClick(() => this.submitSignin())
+              Row() {
+                Text(this.agreed ? '☑' : '□').fontSize(21).fontColor(this.themeColor).margin({ right: 8 })
+                Text('我已阅读并同意').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
+                Text('《用户协议》').fontSize(13).fontColor(this.themeColor).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/terms-and-conditions_zh.md', title: '用户协议' } }))
+                Text('和').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
+                Text('《隐私政策》').fontSize(13).fontColor(this.themeColor).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/privacy-policy_zh.md', title: '隐私政策' } }))
+              }.width('100%').margin({ top: 18 }).onClick(() => this.agreementRow())
+            }
+          }.width('82%').padding({ top: 28, bottom: 32 })
+        }.layoutWeight(1).width('100%')
       }
-      Web({ src: `${this.domain.replace(/\/$/, '')}/signin`, controller: this.controller })
-        .javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%')
-        .onPageEnd((event: OnPageEndEvent) => {
-          this.applyWebTheme();
-          setTimeout(() => this.applyWebTheme(), 800);
-          if (event.url.indexOf(this.domain.replace(/^https?:\/\//, '').replace(/\/$/, '')) >= 0 && event.url.indexOf('/signin') < 0 &&
-            event.url.indexOf('/recover') < 0) {
-            setTimeout(() => router.back(), 300);
-          }
-        })
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))
   }
 }
