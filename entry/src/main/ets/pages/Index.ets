@@ -179,14 +179,28 @@ struct Index {
     if (tab.type === 'nodes' || tab.type === 'xna') return;
     this.loadingMoreTopics = true;
     try {
-      const nextPage: number = this.topicPage + 1;
-      let next: V2exTopic[] = [];
-      if (tab.type === 'hot') next = await V2exService.topics('hot', nextPage);
-      else if (tab.type === 'latest') next = await V2exService.topics('latest', nextPage);
-      else next = await V2exService.topicsForTab(tab.key, nextPage);
-      const unique: V2exTopic[] = next.filter((item: V2exTopic) => this.topics.findIndex((old: V2exTopic) => old.id === item.id) < 0);
-      if (unique.length === 0) this.noMoreTopics = true;
-      else { this.topics = this.topics.concat(unique); this.topicPage = nextPage; }
+      // Prefetch two pages while the user is still near the bottom. This
+      // keeps the next batch ready before the final row reaches the viewport.
+      let appended = false;
+      let requestedPage: number = this.topicPage + 1;
+      for (let offset: number = 1; offset <= 2; offset++) {
+        const nextPage: number = requestedPage;
+        requestedPage += 1;
+        let next: V2exTopic[] = [];
+        if (tab.type === 'hot') next = await V2exService.topics('hot', nextPage);
+        else if (tab.type === 'latest') next = await V2exService.topics('latest', nextPage);
+        else next = await V2exService.topicsForTab(tab.key, nextPage);
+        const unique: V2exTopic[] = next.filter((item: V2exTopic) => this.topics.findIndex((old: V2exTopic) => old.id === item.id) < 0);
+        if (unique.length > 0) {
+          this.topics = this.topics.concat(unique);
+          this.topicPage = nextPage;
+          appended = true;
+        } else {
+          this.noMoreTopics = true;
+          break;
+        }
+      }
+      if (!appended && this.topicPage <= 1) this.noMoreTopics = true;
     } catch (_) { /* retain the current page on transient failures */ }
     finally { this.loadingMoreTopics = false; }
   }
@@ -420,7 +434,7 @@ struct Index {
       } else {
         List({ space: 1 }) { ForEach(this.visibleTopics(), (topic: V2exTopic) => this.topicCard(topic), (topic: V2exTopic) => `${topic.id}`) }
           .onReachEnd(() => this.loadMoreHomeTopics())
-          .onScrollIndex((_start: number, end: number) => { if (end >= this.visibleTopics().length - 2) this.loadMoreHomeTopics(); })
+          .onScrollIndex((_start: number, end: number) => { if (end >= Math.max(0, this.visibleTopics().length - 8)) this.loadMoreHomeTopics(); })
           .layoutWeight(1).width('100%').divider({ strokeWidth: 1, color: this.darkMode ? '#27313B' : '#EEF1F4' })
       }
     }.width('100%').height('100%').padding({ top: this.safeAreaTop, bottom: this.safeAreaBottom }).backgroundColor(this.pageBackground())
