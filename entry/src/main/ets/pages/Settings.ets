@@ -36,7 +36,9 @@ struct Settings {
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
   private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
   private clearCache(): void {
-    this.cachedMemberJson = '';
+    // Authentication is session state, not content cache. Keep the cached
+    // member so clearing feed/profile data does not make the UI appear logged
+    // out while the native session is still valid.
     this.recentJson = '[]';
     this.ignoredTopicsJson = '[]';
     this.ignoredRepliesJson = '[]';
