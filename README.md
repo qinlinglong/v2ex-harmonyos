@@ -15,7 +15,7 @@ V2Halo 是 V2EX 的 HarmonyOS 原生客户端，使用 ArkTS、ArkUI 和 DevEco 
 
 ## 当前状态
 
-当前为原生 ArkUI 客户端，参考 `liaoliao666/v2ex` 的首页、最近、最热、XNA、节点和个人中心信息架构，已接入 V2EX 公开 API 及网页端登录 Cookie。
+当前为原生 ArkUI 客户端，提供首页、最近、最热、XNA、节点和个人中心信息架构，已接入 V2EX 公开 API 及网页端登录 Cookie。
 
 已实现的原生流程包括：
 

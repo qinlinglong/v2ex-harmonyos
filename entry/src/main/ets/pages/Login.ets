@@ -160,9 +160,9 @@ struct Login {
               Row() {
                 Text(this.agreed ? '☑' : '□').fontSize(21).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ right: 8 })
                 Text('我已阅读并同意').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
-                Text('《用户协议》').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/terms-and-conditions_zh.md', title: '用户协议' } }))
+                Text('《用户协议》').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { url: 'https://www.v2ex.com/terms', title: '用户协议' } }))
                 Text('和').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
-                Text('《隐私政策》').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/privacy-policy_zh.md', title: '隐私政策' } }))
+                Text('《隐私政策》').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { url: 'https://www.v2ex.com/about', title: '隐私政策' } }))
               }.width('100%').margin({ top: 18 }).onClick(() => this.agreementRow())
               Text('无法完成原生登录？打开 H5 登录').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
                 .width('100%').textAlign(TextAlign.Center).margin({ top: 18 })

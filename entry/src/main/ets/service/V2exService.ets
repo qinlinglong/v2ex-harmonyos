@@ -230,7 +230,7 @@ export class V2exService {
       return parsed;
     } catch (_) {
       // The public JSON feed can be rate-limited. Keep the home tab useful by
-      // falling back to the same rendered pages used by the reference client.
+      // falling back to the same rendered pages used by the web client.
       const htmlPath: string = kind === 'hot' ? `/?tab=hot${normalizedPage > 1 ? `&p=${normalizedPage}` : ''}` : `/recent${normalizedPage > 1 ? `?p=${normalizedPage}` : ''}`;
       return V2exService.parseRichTopicItems(await V2exService.get(htmlPath));
     }
@@ -239,7 +239,7 @@ export class V2exService {
   /**
    * V2EX home board feeds (`?tab=tech`, `?tab=all`, `/changes`, ...). These
    * are rendered on the site home page rather than exposed through the public
-   * JSON API, so parse the same HTML cells used by the reference client.
+   * JSON API, so parse the same HTML cells used by the web client.
    */
   static async topicsForTab(tab: string, page: number = 1): Promise<V2exTopic[]> {
     const normalizedPage: number = Math.max(1, page);
@@ -559,7 +559,7 @@ export class V2exService {
   }
 
   static async signin(info: V2exSigninInfo, username: string, password: string, code: string): Promise<V2exSigninResult> {
-    // Keep the native POST identical to the reference H5 form. The field
+    // Keep the native POST identical to the web form. The field
     // names are deployment-specific hashes; the H5 client submits only those
     // fields and the hidden nonce (the username is stripped before posting).
     const values: string = `${V2exService.formValue(info.usernameField)}=${V2exService.formValue(username)}&${V2exService.formValue(info.passwordField)}=${V2exService.formValue(password.trim())}&${V2exService.formValue(info.codeField)}=${V2exService.formValue(code.trim())}&once=${V2exService.formValue(info.once)}`;
@@ -915,7 +915,7 @@ export class V2exService {
     } catch (_) { /* fall back to the HTML page */ }
     // The public JSON detail endpoint may return [] when the server applies
     // its anonymous rate limit. Fall back to the same HTML detail page used
-    // by the reference client so a topic never opens as a blank screen.
+    // by the web client so a topic never opens as a blank screen.
     const html: string = await V2exService.get(`/t/${id}`);
     const titleMatch: RegExpMatchArray | null = html.match(/<title>([\s\S]*?)\s+-\s+V2EX<\/title>/i);
     const bodyMatch: RegExpMatchArray | null = html.match(/class=["'][^"']*topic_content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
@@ -1112,7 +1112,7 @@ export class V2exService {
         expectDataType: http.HttpDataType.STRING
       });
       let ok: boolean = V2exService.mutationSucceeded(response);
-      // V2EX keeps node moves as a separate operation. Match the reference
+      // V2EX keeps node moves as a separate operation. Match the web
       // client by submitting it after the title/body update when the editor
       // supplied a different node.
       const nodeValue: string = nodeName.trim();

@@ -98,7 +98,7 @@ export default class EntryAbility extends UIAbility {
           AppStorage.setOrCreate('v2exSafeAreaBottom', uiContext.px2vp(data.area.bottomRect.height));
         }
       });
-      // Keep the native pages visually continuous with the reference client: the
+      // Keep the native pages visually continuous with the web client: the
       // system bars use the same light surface instead of the platform black default.
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
     });
