@@ -122,12 +122,11 @@ struct Login {
       button, input[type=submit], .button { background:${this.themeColor} !important; color:#FFFFFF !important; border-color:${this.themeColor} !important; }
       .box, .cell, .content, .topic_content { background:${surface} !important; color:${text} !important; }`;
     const script: string = `(() => { let style = document.getElementById('v2ex-native-theme'); if (!style) { style = document.createElement('style'); style.id = 'v2ex-native-theme'; document.head.appendChild(style); } style.textContent = ${JSON.stringify(css)}; return 'ok'; })()`;
-    this.controller.runJavaScript(script).catch(() => { /* The page may have navigated away. */ });
-  }
-
-  onPageShow(): void {
-    this.applyWebTheme();
-    setTimeout(() => this.applyWebTheme(), 800);
+    try {
+      this.controller.runJavaScript(script).catch(() => { /* The page may have navigated away. */ });
+    } catch (_) {
+      // The controller can be unavailable during the first lifecycle pass.
+    }
   }
 
   build() {
