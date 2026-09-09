@@ -16,6 +16,10 @@ V2Halo 是 V2EX 的 HarmonyOS 原生客户端，使用 ArkTS、ArkUI 和 DevEco 
 
 ![侧边菜单](docs/screenshots/drawer-final.png)
 
+设置
+
+![设置](docs/screenshots/settings.png)
+
 截图来自 HarmonyOS 真机，图片存放在仓库内，便于直接预览和引用
 
 ## 当前状态

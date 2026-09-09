@@ -26,3 +26,5 @@ https://github.com/qinlinglong/v2ex-harmonyos
 ![主题详情](https://raw.githubusercontent.com/qinlinglong/v2ex-harmonyos/main/docs/screenshots/detail.png)
 
 ![侧边菜单](https://raw.githubusercontent.com/qinlinglong/v2ex-harmonyos/main/docs/screenshots/drawer-final.png)
+
+![设置](https://raw.githubusercontent.com/qinlinglong/v2ex-harmonyos/main/docs/screenshots/settings.png)
