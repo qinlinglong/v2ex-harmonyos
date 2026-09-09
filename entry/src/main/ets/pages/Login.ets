@@ -52,7 +52,9 @@ struct Login {
       const buffer: ArrayBuffer = await this.captchaBuffer();
       source = image.createImageSource(buffer);
       if (!source) throw new Error('验证码图片解码失败');
-      pixelMap = await source.createPixelMap();
+      // V2EX serves a compact 320×80 bitmap; upscale it before OCR so thin glyphs
+      // remain legible on devices whose OCR model has a larger minimum text size.
+      pixelMap = await source.createPixelMap({ desiredSize: { width: 1280, height: 320 } });
       await textRecognition.init();
       const result: textRecognition.TextRecognitionResult = await textRecognition.recognizeText({ pixelMap }, {
         isDirectionDetectionSupported: false
