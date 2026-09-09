@@ -737,7 +737,7 @@ struct TopicDetail {
                       .width(28).height(28).textAlign(TextAlign.Center).backgroundColor('#B7C4D2').borderRadius(14)
                     if (reply.member?.avatar_large) Image(reply.member.avatar_large).width(28).height(28).borderRadius(14).objectFit(ImageFit.Cover)
                   }.onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
-                  Text(`${index + 1}. ${reply.member?.username ?? '匿名'}`).fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
+                  Text(reply.member?.username ?? '匿名').fontSize(14).fontWeight(FontWeight.Medium).fontColor(this.themeColor)
                     .onClick(() => { if (reply.member?.username) router.pushUrl({ url: 'pages/Profile', params: { username: reply.member.username } }); })
                   if (reply.mod === true) {
                     Text('MOD').fontSize(10).fontColor(Color.White).padding({ left: 5, right: 5, top: 1, bottom: 1 })
@@ -748,6 +748,7 @@ struct TopicDetail {
                       .border({ width: 1, color: this.themeColor }).borderRadius(3).margin({ left: 4 })
                   }
                   Blank()
+                  Text(`#${reply.no ?? index + 1}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 10 })
                   Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
                 }
                 if (this.editingReplyId === reply.id) {

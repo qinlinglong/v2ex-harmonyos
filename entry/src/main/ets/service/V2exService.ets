@@ -80,6 +80,12 @@ export class V2exService {
     const block: string = V2exService.replyBlock(html, replyId);
     return block.length > 0 && new RegExp(`/edit/reply/${replyId}(?:[?"'\\s])`, 'i').test(block);
   }
+
+  private static replyNo(block: string): number | undefined {
+    const match: RegExpMatchArray | null = block.match(/class=["'][^"']*\bno\b[^"']*["'][^>]*>\s*#?(\d+)/i);
+    const value: number = Number(match?.[1] ?? 0);
+    return value > 0 ? value : undefined;
+  }
   private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
@@ -613,6 +619,7 @@ export class V2exService {
           V2exService.normalizeMember(reply.member);
           reply.editable = V2exService.replyIsEditable(pageHtml, reply.id);
           const block: string = V2exService.replyBlock(pageHtml, reply.id);
+          reply.no = V2exService.replyNo(block) ?? reply.no;
           reply.thanked = /class=["'][^"']*thanked/i.test(block);
           reply.op = /class=["'][^"']*badge[^"']*op/i.test(block);
           reply.mod = /class=["'][^"']*badge[^"']*mod/i.test(block);
@@ -633,7 +640,7 @@ export class V2exService {
         content: V2exService.cleanHtml(match[4]),
         created: 0,
         member: { username: match[3], avatar_large: V2exService.assetUrl(match[2]) },
-        no: Number((block.match(/class=["'][^"']*no[^"']*["'][^>]*>\s*(\d+)/i)?.[1] ?? '0')) || undefined,
+        no: V2exService.replyNo(block),
         editable: V2exService.replyIsEditable(html, replyId),
         thanked: /class=["'][^"']*thanked/i.test(block),
         op: /class=["'][^"']*badge[^"']*op/i.test(block),
