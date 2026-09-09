@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -62,11 +62,11 @@ struct MyNodes {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('节点收藏').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 40 })
       else if (this.status.length > 0) Column() {
         Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode))
         Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => router.pushUrl({ url: 'pages/Login' }))

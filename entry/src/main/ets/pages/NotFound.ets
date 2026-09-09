@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -17,12 +17,12 @@ struct NotFound {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center)
           .onClick(() => router.back())
         Text('V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Blank().layoutWeight(1)
-      Text('404').fontSize(56).fontWeight(FontWeight.Bold).fontColor(this.themeColor)
+      Text('404').fontSize(56).fontWeight(FontWeight.Bold).fontColor(themeAccentText(this.themeColor, this.darkMode))
       Text(this.message).fontSize(16).fontColor(themePrimaryText(this.darkMode)).margin({ top: 12 })
       Button('返回首页').fontSize(15).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
         .margin({ top: 24 }).onClick(() => router.replaceUrl({ url: 'pages/Index' }))

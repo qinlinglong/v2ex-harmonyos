@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -9,7 +9,7 @@ struct SortTabs {
   @StorageLink('v2exTopicSort') sort: string = 'default';
   build() {
     Column() {
-      Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('回复排序').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)) }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
+      Row() { Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('回复排序').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)) }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Column() {
         Row() { Text('默认排序').fontColor(themePrimaryText(this.darkMode)).layoutWeight(1); Button(this.sort === 'default' ? '已选择' : '选择').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.sort = 'default') }.width('100%').padding(18).backgroundColor(themeSurface(this.darkMode))
         Row() { Text('最新回复在前').fontColor(themePrimaryText(this.darkMode)).layoutWeight(1); Button(this.sort === 'latest' ? '已选择' : '选择').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.sort = 'latest') }.width('100%').padding(18).backgroundColor(themeSurface(this.darkMode)).margin({ top: 1 })

@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeMutedText, themeSecondaryText } from '../common/Theme';
+import { themeAccentText, themeMutedText, themeSecondaryText } from '../common/Theme';
 
 @Entry
 @Component
@@ -135,28 +135,28 @@ struct SearchPage {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('搜索').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
       }.height(60).width('100%').backgroundColor(this.surface())
       Row() {
         TextInput({ placeholder: '搜索主题、正文或用户名', text: this.query }).layoutWeight(1).height(46).fontSize(15).fontColor(this.primaryText()).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7')
           .fontColor(this.bodyText()).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(this.darkMode ? '#26313D' : '#F1F4F7').borderRadius(8)
           .onChange((value: string) => this.query = value).onSubmit(() => this.submit())
-        Image($r('app.media.ic_search')).width(24).height(24).fillColor(this.themeColor).margin({ left: 10 })
+        Image($r('app.media.ic_search')).width(24).height(24).fillColor(themeAccentText(this.themeColor, this.darkMode)).margin({ left: 10 })
           .onClick(() => this.submit())
       }.width('100%').padding(16).backgroundColor(this.surface())
       Row() {
-        Text('主题').fontSize(15).fontColor(this.mode === 0 ? this.themeColor : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 0)
-        Text('用户').fontSize(15).fontColor(this.mode === 1 ? this.themeColor : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 1)
-        Text('节点').fontSize(15).fontColor(this.mode === 2 ? this.themeColor : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 2)
+        Text('主题').fontSize(15).fontColor(this.mode === 0 ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 0)
+        Text('用户').fontSize(15).fontColor(this.mode === 1 ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 1)
+        Text('节点').fontSize(15).fontColor(this.mode === 2 ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode)).layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.mode = 2)
       }.height(48).width('100%').backgroundColor(this.surface())
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 40 })
       else if (this.status.length > 0 && this.query.trim().length > 0) Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 46 })
       else if (this.query.trim().length === 0 && this.history().length > 0) {
         Column() {
           Row() {
             Text('搜索历史').fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText()).layoutWeight(1)
-            Text('清除').fontSize(13).fontColor(this.themeColor).onClick(() => this.historyJson = '[]')
+            Text('清除').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => this.historyJson = '[]')
           }.width('100%').padding({ left: 18, right: 18, top: 18, bottom: 10 })
           List({ space: 1 }) { ForEach(this.history(), (item: string) => this.historyRow(item), (item: string) => item) }.layoutWeight(1).width('100%')
         }.layoutWeight(1).width('100%')

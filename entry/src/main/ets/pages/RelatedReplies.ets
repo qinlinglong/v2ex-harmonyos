@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exReply } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeBodyText, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themeBodyText, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 interface ReplyReference {
   username: string;
@@ -130,7 +130,7 @@ struct RelatedReplies {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('评论回复').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
@@ -148,20 +148,20 @@ struct RelatedReplies {
           }.padding({ left: 16, right: 16, top: 10, bottom: 10 })
         }.scrollable(ScrollDirection.Horizontal).width('100%').backgroundColor(themeSurface(this.darkMode))
       }
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 40 })
       else if (this.visibleReplies().length === 0) Text('没有检测到关联回复').fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 48 })
       else List({ space: 1 }) {
         ForEach(this.visibleReplies(), (reply: V2exReply, index: number) => ListItem() {
           Column() {
             Row() {
-              Text(reply.member?.username ?? '匿名').fontSize(14).fontColor(this.themeColor)
+              Text(reply.member?.username ?? '匿名').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode))
               Blank()
               Text(`#${this.replyFloor(reply, index)}`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ right: 12 })
               if (reply.createdLabel && reply.createdLabel.length > 0) Text(reply.createdLabel).fontSize(12).fontColor(themeMutedText(this.darkMode))
               if ((reply.thanks ?? 0) > 0) Text(`${reply.thanks} 感谢`).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ left: 8 })
             }.width('100%')
             Text(reply.content).fontSize(15).fontColor(themeBodyText(this.darkMode)).lineHeight(23).margin({ top: 8 })
-            Text('回复').fontSize(13).fontColor(this.themeColor).margin({ top: 10 }).onClick(() => this.replyTo(reply))
+            Text('回复').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 10 }).onClick(() => this.replyTo(reply))
           }.width('100%').padding(16).backgroundColor(themeSurface(this.darkMode))
         }, (reply: V2exReply) => `${reply.id}`)
       }.layoutWeight(1).width('100%')

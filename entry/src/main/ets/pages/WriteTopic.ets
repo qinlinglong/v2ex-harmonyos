@@ -2,7 +2,7 @@ import { router } from '@kit.ArkUI';
 import { picker } from '@kit.CoreFileKit';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeAccentText, themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
 
 interface PreviewPart { kind: string; value: string; label?: string; }
 
@@ -146,15 +146,15 @@ struct WriteTopic {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.editing ? '编辑主题' : '发布主题').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-        Image($r('app.media.ic_preview')).width(22).height(22).fillColor(this.themeColor).margin({ right: 16 })
+        Image($r('app.media.ic_preview')).width(22).height(22).fillColor(themeAccentText(this.themeColor, this.darkMode)).margin({ right: 16 })
           .onClick(() => this.preview = !this.preview)
-        Image($r('app.media.ic_image')).width(22).height(22).fillColor(this.themeColor).margin({ right: 16 })
+        Image($r('app.media.ic_image')).width(22).height(22).fillColor(themeAccentText(this.themeColor, this.darkMode)).margin({ right: 16 })
           .onClick(() => this.insertImage())
         Image($r('app.media.ic_send')).width(22).height(22)
-          .fillColor(this.submitting || (this.editing && !this.editAllowed) ? themeMutedText(this.darkMode) : this.themeColor)
+          .fillColor(this.submitting || (this.editing && !this.editAllowed) ? themeMutedText(this.darkMode) : themeAccentText(this.themeColor, this.darkMode))
           .opacity(this.submitting || (this.editing && !this.editAllowed) ? 0.5 : 1)
           .onClick(() => { if (!this.submitting) this.submit(); })
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(themeSurface(this.darkMode))
@@ -170,7 +170,7 @@ struct WriteTopic {
                 Text('节点建议').fontSize(13).fontColor(themeMutedText(this.darkMode)).width('100%')
                 Scroll() {
                   Row() {
-                    ForEach(this.nodeSuggestions(), (item: V2exNode) => Text(`${item.title}  ${item.name}`).fontSize(13).fontColor(this.themeColor)
+                    ForEach(this.nodeSuggestions(), (item: V2exNode) => Text(`${item.title}  ${item.name}`).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode))
                       .padding({ left: 12, right: 12, top: 8, bottom: 8 }).backgroundColor(themeSurface(this.darkMode)).borderRadius(16).margin({ right: 8 })
                       .onClick(() => this.node = item.name), (item: V2exNode) => item.name)
                   }
@@ -186,8 +186,8 @@ struct WriteTopic {
                   Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 })
                     .objectFit(ImageFit.Contain).margin({ top: 14, bottom: 4 })
                 } else if (part.kind === 'link') {
-                  Text(part.label ?? part.value).fontSize(16).fontColor(this.themeColor).lineHeight(26)
-                    .decoration({ type: TextDecorationType.Underline, color: this.themeColor }).margin({ top: 20 })
+                  Text(part.label ?? part.value).fontSize(16).fontColor(themeAccentText(this.themeColor, this.darkMode)).lineHeight(26)
+                    .decoration({ type: TextDecorationType.Underline, color: themeAccentText(this.themeColor, this.darkMode) }).margin({ top: 20 })
                     .onClick(() => this.openPreviewLink(part.value))
                 } else {
                   Text(previewText(part.value)).fontSize(16).fontColor(themeBodyText(this.darkMode)).lineHeight(26)
@@ -199,7 +199,7 @@ struct WriteTopic {
             TextArea({ placeholder: '支持 Markdown 的主题正文', text: this.content }).width('100%').height(360).fontSize(16).fontColor(themePrimaryText(this.darkMode))
               .onChange((value: string) => this.content = value)
           }
-          if (this.status.length > 0) Text(this.status).fontSize(14).fontColor(this.themeColor)
+          if (this.status.length > 0) Text(this.status).fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode))
         }.width('100%').padding(18)
       }.layoutWeight(1).width('100%')
     }.width('100%').height('100%').padding({ top: AppStorage.get<number>('v2exSafeAreaTop') ?? 0, bottom: AppStorage.get<number>('v2exSafeAreaBottom') ?? 0 }).backgroundColor(themeBackground(this.darkMode))

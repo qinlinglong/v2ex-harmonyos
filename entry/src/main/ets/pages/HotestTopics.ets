@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
+import { themeAccentText, themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 function isoDay(offset: number): string {
   const value: Date = new Date(Date.now() + offset * 86400000);
@@ -84,17 +84,17 @@ struct HotestTopics {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Column() {
           Text('历史最热').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         }.alignItems(HorizontalAlign.Start).layoutWeight(1)
-        Text('‹').fontSize(26).fontColor(this.date <= isoDay(-30) ? themeMutedText(this.darkMode) : this.themeColor).width(44).height(56).textAlign(TextAlign.Center)
+        Text('‹').fontSize(26).fontColor(this.date <= isoDay(-30) ? themeMutedText(this.darkMode) : themeAccentText(this.themeColor, this.darkMode)).width(44).height(56).textAlign(TextAlign.Center)
           .onClick(() => this.shiftDate(-1))
-        Text(this.date).fontSize(13).fontColor(this.themeColor).height(56).textAlign(TextAlign.Center)
-        Text('›').fontSize(26).fontColor(this.date >= isoDay(-1) ? themeMutedText(this.darkMode) : this.themeColor).width(44).height(56).textAlign(TextAlign.Center)
+        Text(this.date).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).height(56).textAlign(TextAlign.Center)
+        Text('›').fontSize(26).fontColor(this.date >= isoDay(-1) ? themeMutedText(this.darkMode) : themeAccentText(this.themeColor, this.darkMode)).width(44).height(56).textAlign(TextAlign.Center)
           .onClick(() => this.shiftDate(1))
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 40 })
       else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 42 })
       else Refresh({ refreshing: this.loading }) {
         List({ space: 1 }) { ForEach(this.topics, (topic: V2exTopic, index: number) => this.row(topic, index), (topic: V2exTopic) => `${topic.id}`) }.layoutWeight(1).width('100%')

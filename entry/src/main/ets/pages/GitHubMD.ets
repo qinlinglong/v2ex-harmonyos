@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { http } from '@kit.NetworkKit';
-import { themeBackground, themeBodyText, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeAccentText, themeBackground, themeBodyText, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -47,13 +47,13 @@ struct GitHubMD {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.title).fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Scroll() {
         Column() {
           if (this.loading) Text(this.status).fontSize(14).fontColor(themeMutedText(this.darkMode)).width('100%')
-          if (this.status.length > 0 && !this.loading) Text(this.status).fontSize(14).fontColor(this.themeColor).width('100%').lineHeight(22)
+          if (this.status.length > 0 && !this.loading) Text(this.status).fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)).width('100%').lineHeight(22)
           Text(this.content).fontSize(16).fontColor(themeBodyText(this.darkMode)).lineHeight(29).width('100%').padding(16).backgroundColor(themeSurface(this.darkMode)).margin({ top: 12 })
         }.width('100%').padding(20)
       }.layoutWeight(1).width('100%')

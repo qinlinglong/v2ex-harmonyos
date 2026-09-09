@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exNotification } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -90,7 +90,7 @@ struct Notifications {
           if (item.avatar) Image(item.avatar).width(40).height(40).borderRadius(20).objectFit(ImageFit.Cover)
         }
         Column() {
-            Text(item.username).fontSize(14).fontColor(this.themeColor)
+            Text(item.username).fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode))
           Row() {
             Text(item.topicTitle).fontSize(15).fontColor(themePrimaryText(this.darkMode)).maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
@@ -105,11 +105,11 @@ struct Notifications {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('未读提醒').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 40 })
       else if (this.status.length > 0 && this.items.length === 0) Column() {
         Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode))
         Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => router.pushUrl({ url: 'pages/Login' }))

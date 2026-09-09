@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -133,18 +133,18 @@ struct MyFollowing {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('特别关注').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(themeSurface(this.darkMode))
       Scroll() {
         Row({ space: 8 }) {
-          Text('全部').fontSize(14).fontColor(this.selectedMember.length === 0 ? themeOnColor(this.themeColor) : this.themeColor)
+          Text('全部').fontSize(14).fontColor(this.selectedMember.length === 0 ? themeOnColor(this.themeColor) : themeAccentText(this.themeColor, this.darkMode))
             .padding({ left: 12, right: 12, top: 5, bottom: 5 })
             .backgroundColor(this.selectedMember.length === 0 ? this.themeColor : (this.darkMode ? '#26313D' : '#EAF1F8')).borderRadius(14)
             .onClick(() => this.selectMember(''))
           ForEach(this.members, (username: string) => {
-            Text(username).fontSize(14).fontColor(this.selectedMember === username ? themeOnColor(this.themeColor) : this.themeColor)
+            Text(username).fontSize(14).fontColor(this.selectedMember === username ? themeOnColor(this.themeColor) : themeAccentText(this.themeColor, this.darkMode))
               .padding({ left: 12, right: 12, top: 5, bottom: 5 })
               .backgroundColor(this.selectedMember === username ? this.themeColor : (this.darkMode ? '#26313D' : '#EAF1F8')).borderRadius(14)
               .onClick(() => this.selectMember(username))
@@ -152,7 +152,7 @@ struct MyFollowing {
         }.height(42).alignItems(VerticalAlign.Center)
       }.width('100%').height(50).scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).padding({ left: 16 })
         .backgroundColor(themeSurface(this.darkMode))
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 40 })
       else if (this.status.length > 0 && this.topics.length === 0) Column() { Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)); Button('打开登录').margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => router.pushUrl({ url: 'pages/Login' })) }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       else Refresh({ refreshing: this.loading }) {
         List({ space: 1 }) {

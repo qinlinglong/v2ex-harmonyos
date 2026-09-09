@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -14,7 +14,7 @@ struct SearchOptions {
   @StorageLink('v2exSearchSource') source: string = 'sov2ex';
   build() {
     Column() {
-      Row() { Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('搜索选项').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)) }
+      Row() { Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back()); Text('搜索选项').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)) }
         .height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Scroll() {
         Column() {

@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeMutedText, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeMutedText, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -17,7 +17,7 @@ struct CustomizeTheme {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('主题设置').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
       }.height(60).width('100%').backgroundColor(this.surface())
       Scroll() {

@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themeMutedText, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themeMutedText, themePrimaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 interface HomeTabOption {
   title: string;
@@ -83,11 +83,11 @@ struct HomeTabs {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center)
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center)
           .onClick(() => router.back())
         Text('首页板块').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
-        Text(this.editing ? '完成' : '编辑').fontSize(15).fontColor(this.themeColor)
+        Text(this.editing ? '完成' : '编辑').fontSize(15).fontColor(themeAccentText(this.themeColor, this.darkMode))
           .onClick(() => this.editing = !this.editing)
       }.height(60).width('100%').padding({ left: 8, right: 16 }).backgroundColor(themeSurface(this.darkMode))
       Scroll() {

@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { webview } from '@kit.ArkWeb';
-import { themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeAccentText, themeBackground, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -21,7 +21,7 @@ struct WebViewPage {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.title).fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).maxLines(1).textOverflow({ overflow: TextOverflow.Ellipsis })
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Web({ src: this.url, controller: this.controller }).javaScriptAccess(true).domStorageAccess(true).layoutWeight(1).width('100%')

@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
-import { themeMutedText, themeSecondaryText } from '../common/Theme';
+import { themeAccentText, themeMutedText, themeSecondaryText } from '../common/Theme';
 
 function relativeTime(unix: number): string {
   if (!unix) return '';
@@ -245,7 +245,7 @@ struct Index {
             Text(`${relativeTime(topic.last_touched)} · ${topic.replies} 回复`).fontSize(11).fontColor(themeMutedText(this.darkMode)).margin({ top: 3 })
           }.alignItems(HorizontalAlign.Start).margin({ left: 8 })
           Blank()
-          Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(this.themeColor)
+          Text(topic.node?.title ?? topic.node?.name ?? 'V2EX').fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode))
         }.width('100%').margin({ bottom: 8 })
         Row() {
           Text(topic.title).fontSize(16).fontColor(this.primaryText()).fontWeight(FontWeight.Medium)
@@ -286,7 +286,7 @@ struct Index {
           Row() {
             Text(topic.member?.username ?? '匿名').fontSize(13).fontColor(this.visitedXna().indexOf(topic.url ?? '') >= 0 ? themeSecondaryText(this.darkMode) : this.primaryText())
             if (topic.node?.title) {
-              Text(topic.node.title).fontSize(11).fontColor(this.themeColor)
+              Text(topic.node.title).fontSize(11).fontColor(themeAccentText(this.themeColor, this.darkMode))
                 .padding({ left: 8, right: 8, top: 2, bottom: 2 })
                 .backgroundColor(this.darkMode ? '#26313D' : '#EEF3F8').borderRadius(8).margin({ left: 8 })
             }
@@ -303,15 +303,15 @@ struct Index {
       Column() {
       Row() {
         Button() {
-          Image($r('app.media.ic_menu')).width(24).height(24).fillColor(this.themeColor)
+          Image($r('app.media.ic_menu')).width(24).height(24).fillColor(themeAccentText(this.themeColor, this.darkMode))
         }.width(56).height(64).backgroundColor(Color.Transparent).onClick(() => this.drawerOpen = true)
         Text('V2EX').fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
         Stack() {
-          Image($r('app.media.ic_mail')).width(24).height(24).fillColor(this.themeColor)
+          Image($r('app.media.ic_mail')).width(24).height(24).fillColor(themeAccentText(this.themeColor, this.darkMode))
         }.width(56).height(64).onClick(() => router.pushUrl({ url: 'pages/Notifications' }))
         Stack() {
-          Image($r('app.media.ic_edit')).width(24).height(24).fillColor(this.themeColor)
+          Image($r('app.media.ic_edit')).width(24).height(24).fillColor(themeAccentText(this.themeColor, this.darkMode))
         }.width(56).height(64).onClick(() => router.pushUrl({ url: 'pages/WriteTopic' }))
       }.width('100%').height(64).padding({ left: 20, right: 20 }).backgroundColor(this.surface())
       Row() {
@@ -320,7 +320,7 @@ struct Index {
           .onChange((value: string) => this.searchText = value)
           .onSubmit(() => this.searchRemote())
         Stack() {
-          Image($r('app.media.ic_search')).width(24).height(24).fillColor(this.themeColor)
+          Image($r('app.media.ic_search')).width(24).height(24).fillColor(themeAccentText(this.themeColor, this.darkMode))
         }.width(48).height(42).onClick(() => router.pushUrl({ url: 'pages/Search', params: { query: this.searchText } }))
       }.width('100%').padding({ left: 16, right: 16, top: 8, bottom: 8 }).backgroundColor(this.surface())
       Row() {
@@ -328,7 +328,7 @@ struct Index {
           Row() {
             ForEach(this.tabs, (tab: HomeTabItem, index: number) => {
               Column() {
-                Text(tab.title).fontSize(15).fontColor(this.selectedTab === index ? this.themeColor : themeSecondaryText(this.darkMode))
+                Text(tab.title).fontSize(15).fontColor(this.selectedTab === index ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode))
                   .maxLines(1)
                 Row().height(3).width(28).backgroundColor(this.selectedTab === index ? this.themeColor : Color.Transparent)
                   .borderRadius(2).margin({ top: 7 })
@@ -339,13 +339,13 @@ struct Index {
         }.scrollable(ScrollDirection.Horizontal).scrollBar(BarState.Off).layoutWeight(1).height('100%')
           .align(Alignment.Start)
         Stack() {
-          Image($r('app.media.ic_menu')).width(18).height(18).fillColor(this.themeColor)
+          Image($r('app.media.ic_menu')).width(18).height(18).fillColor(themeAccentText(this.themeColor, this.darkMode))
         }.width(48).height('100%').backgroundColor(this.surface()).onClick(() => router.pushUrl({ url: 'pages/HomeTabs' }))
       }.width('100%').height(52).backgroundColor(this.surface())
       if (this.isTopicTab() && this.loading && this.topics.length === 0) {
-        LoadingProgress().width(28).height(28).color(this.themeColor).margin({ top: 36 })
+        LoadingProgress().width(28).height(28).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 36 })
       } else if (this.isTopicTab() && this.errorText.length > 0 && this.topics.length === 0) {
-        Column() { Text(this.errorText).fontSize(15).fontColor(themeSecondaryText(this.darkMode)); Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 14 }).onClick(() => {
+        Column() { Text(this.errorText).fontSize(15).fontColor(themeSecondaryText(this.darkMode)); Text('点击重试').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 14 }).onClick(() => {
           const tab: HomeTabItem = this.activeTab();
           if (tab.type === 'hot') this.loadTopics('hot');
           else if (tab.type === 'tab') this.loadTopicsForTab(tab.key);
@@ -416,7 +416,7 @@ struct Index {
                   .margin({ top: 8 }).width('100%')
               }.width('100%').padding({ left: 20, right: 20, top: 32, bottom: 20 }).backgroundColor(this.surface())
             } else {
-              Text('点我登录 ›').fontSize(20).fontWeight(FontWeight.Medium).fontColor(this.themeColor).width('100%')
+              Text('点我登录 ›').fontSize(20).fontWeight(FontWeight.Medium).fontColor(themeAccentText(this.themeColor, this.darkMode)).width('100%')
                 .padding({ left: 20, right: 20, top: 24, bottom: 18 }).backgroundColor(this.surface())
                 .onClick(() => { this.drawerOpen = false; router.pushUrl({ url: 'pages/Login' }); })
             }

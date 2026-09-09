@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exNode } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
+import { themeAccentText, themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -76,7 +76,7 @@ struct NavNodes {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('节点导航').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
       }.height(60).width('100%').padding({ right: 10 }).backgroundColor(themeSurface(this.darkMode))
@@ -85,13 +85,13 @@ struct NavNodes {
       Scroll() {
         Row() {
           ForEach(this.groups, (item: string, index: number) => Text(item).fontSize(14)
-            .fontColor(this.group === index ? this.themeColor : themeSecondaryText(this.darkMode))
+            .fontColor(this.group === index ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode))
             .padding({ left: 14, right: 14, top: 8, bottom: 8 })
             .backgroundColor(this.group === index ? (this.darkMode ? '#26313D' : '#EAF1F8') : Color.Transparent)
             .borderRadius(16).margin({ right: 8 }).onClick(() => this.group = index), (item: string) => item)
         }.padding({ left: 18, right: 18 })
       }.scrollable(ScrollDirection.Horizontal).width('100%').height(42)
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 30 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 30 })
       else if (this.status.length > 0) Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 36 })
       else Grid() {
         ForEach(this.visibleNodes(), (node: V2exNode) => this.nodeCard(node), (node: V2exNode) => node.name)

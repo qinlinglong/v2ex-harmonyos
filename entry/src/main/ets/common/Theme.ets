@@ -40,3 +40,16 @@ export function themeOnColor(color: string): string {
   const brightness: number = (red * 299 + green * 587 + blue * 114) / 1000;
   return brightness >= 165 ? '#202124' : '#FFFFFF';
 }
+
+/** Keep accent labels and icons readable against the current page surface. */
+export function themeAccentText(color: string, darkMode: boolean): string {
+  const value: string = color.trim().replace(/^#/, '');
+  if (!/^[0-9A-Fa-f]{6}$/.test(value)) return darkMode ? '#F2F5F8' : '#202124';
+  const red: number = Number.parseInt(value.substring(0, 2), 16);
+  const green: number = Number.parseInt(value.substring(2, 4), 16);
+  const blue: number = Number.parseInt(value.substring(4, 6), 16);
+  const brightness: number = (red * 299 + green * 587 + blue * 114) / 1000;
+  if (!darkMode && brightness >= 165) return '#202124';
+  if (darkMode && brightness < 80) return '#F2F5F8';
+  return color;
+}

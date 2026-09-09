@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exReply } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
+import { themeAccentText, themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSurface } from '../common/Theme';
 
 @Entry
 @Component
@@ -50,20 +50,20 @@ struct SearchReplyMember {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('选择回复对象').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode)).layoutWeight(1)
-        Text('确定').fontSize(15).fontColor(this.themeColor).onClick(() => this.confirm())
+        Text('确定').fontSize(15).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => this.confirm())
       }.height(60).width('100%').padding({ right: 18 }).backgroundColor(themeSurface(this.darkMode))
       TextInput({ placeholder: '搜索用户名或回复内容', text: this.query }).width('100%').height(48).margin({ top: 1 }).padding(14).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode))
         .onChange((value: string) => this.query = value).backgroundColor(themeSurface(this.darkMode))
-      if (this.loading) LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 40 })
+      if (this.loading) LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 40 })
       else if (this.status.length > 0 || this.visibleReplies().length === 0) Text(this.status || '暂无搜索结果').fontSize(15).fontColor(themeMutedText(this.darkMode)).margin({ top: 42 })
       else List({ space: 1 }) {
         ForEach(this.visibleReplies(), (reply: V2exReply) => ListItem() {
           Row() {
-            Text(this.selected.indexOf(reply.id) >= 0 ? '✓' : '○').fontSize(24).fontColor(this.themeColor).width(36)
+            Text(this.selected.indexOf(reply.id) >= 0 ? '✓' : '○').fontSize(24).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(36)
             Column() {
-              Text(`${reply.member?.username ?? '匿名'}  #${this.replyFloor(reply)}`).fontSize(14).fontColor(this.themeColor)
+              Text(`${reply.member?.username ?? '匿名'}  #${this.replyFloor(reply)}`).fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode))
               Text(reply.content).fontSize(14).fontColor(themeBodyText(this.darkMode)).maxLines(3).margin({ top: 5 })
             }.layoutWeight(1).alignItems(HorizontalAlign.Start)
           }.width('100%').padding(16).backgroundColor(themeSurface(this.darkMode))

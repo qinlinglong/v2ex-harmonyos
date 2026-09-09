@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exMember, V2exMemberRelations, V2exReply, V2exTopic } from '../model/V2exModels';
 import { V2exService } from '../service/V2exService';
-import { themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
 
 function decodeHtmlEntities(value: string): string {
   return value.replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<')
@@ -168,7 +168,7 @@ struct Profile {
   replyRow(reply: V2exReply) {
     ListItem() {
       Column() {
-        Text(replyPreview(reply.topic_title ?? '回复')).fontSize(13).fontColor(this.themeColor).maxLines(1)
+        Text(replyPreview(reply.topic_title ?? '回复')).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).maxLines(1)
           .textOverflow({ overflow: TextOverflow.Ellipsis })
         Text(replyPreview(reply.content)).fontSize(15).fontColor(this.bodyText()).lineHeight(23).maxLines(4)
           .textOverflow({ overflow: TextOverflow.Ellipsis }).copyOption(CopyOptions.LocalDevice)
@@ -184,7 +184,7 @@ struct Profile {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.username || '个人资料').fontSize(20).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
         Blank()
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
@@ -199,7 +199,7 @@ struct Profile {
               }
               Text(this.member.username).fontSize(24).fontWeight(FontWeight.Bold).fontColor(this.primaryText()).margin({ top: 12 })
               Text(this.member.tagline || 'V2EX 用户').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).margin({ top: 6 })
-              if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor(this.themeColor).margin({ top: 6 })
+              if (this.member.website && this.member.website.length > 0) Text(this.member.website).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 6 })
                 .onClick(() => router.pushUrl({ url: 'pages/WebViewPage', params: { title: this.member?.username ?? '网站', url: this.member?.website ?? '' } }))
               if (!this.isSelf()) {
                 Row() {
@@ -207,12 +207,12 @@ struct Profile {
                   Button(this.blocked ? '已屏蔽' : '屏蔽').layoutWeight(1).margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.toggleMemberAction(this.blocked ? 'unblock' : 'block'))
                 }.width('80%').margin({ top: 16 })
               }
-              if (this.status.length > 0 && this.status !== '加载中…') Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })
+              if (this.status.length > 0 && this.status !== '加载中…') Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 12 })
             }.width('100%').padding({ top: 28, bottom: 24 }).backgroundColor(this.surface())
             Row() {
-              Text('主题').fontColor(this.tab === 0 ? this.themeColor : themeSecondaryText(this.darkMode)).fontSize(15)
+              Text('主题').fontColor(this.tab === 0 ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode)).fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 0)
-              Text('回复').fontColor(this.tab === 1 ? this.themeColor : themeSecondaryText(this.darkMode)).fontSize(15)
+              Text('回复').fontColor(this.tab === 1 ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode)).fontSize(15)
                 .layoutWeight(1).textAlign(TextAlign.Center).onClick(() => this.tab = 1)
             }.width('100%').height(52).backgroundColor(this.surface())
             if (this.tab === 0) {

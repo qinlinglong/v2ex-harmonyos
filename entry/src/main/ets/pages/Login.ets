@@ -1,6 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { V2exService, V2exSigninInfo } from '../service/V2exService';
-import { themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themeBodyText, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 import { V2exMember } from '../model/V2exModels';
 
 @Entry
@@ -94,7 +94,7 @@ struct Login {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text(this.twoFactorOnce.length > 0 ? '两步验证' : '登录 V2EX').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
         Blank()
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
@@ -128,16 +128,16 @@ struct Login {
                 Text('点击刷新验证码').width('100%').height(128).margin({ top: 6 }).textAlign(TextAlign.Center).fontColor(themeSecondaryText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).onClick(() => this.loadSigninInfo())
               }
               TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).onChange((value: string) => this.code = value)
-              if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).width('100%').lineHeight(20).margin({ top: 12 })
+              if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).width('100%').lineHeight(20).margin({ top: 12 })
               Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
                 .enabled(!this.loading && !this.submitting && this.signinInfo !== undefined && !this.limited)
                 .onClick(() => this.submitSignin())
               Row() {
-                Text(this.agreed ? '☑' : '□').fontSize(21).fontColor(this.themeColor).margin({ right: 8 })
+                Text(this.agreed ? '☑' : '□').fontSize(21).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ right: 8 })
                 Text('我已阅读并同意').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
-                Text('《用户协议》').fontSize(13).fontColor(this.themeColor).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/terms-and-conditions_zh.md', title: '用户协议' } }))
+                Text('《用户协议》').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/terms-and-conditions_zh.md', title: '用户协议' } }))
                 Text('和').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
-                Text('《隐私政策》').fontSize(13).fontColor(this.themeColor).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/privacy-policy_zh.md', title: '隐私政策' } }))
+                Text('《隐私政策》').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).onClick(() => router.pushUrl({ url: 'pages/GitHubMD', params: { url: 'https://raw.githubusercontent.com/liaoliao666/v2ex/main/privacy-policy_zh.md', title: '隐私政策' } }))
               }.width('100%').margin({ top: 18 }).onClick(() => this.agreementRow())
             }
           }.width('82%').padding({ top: 28, bottom: 32 })

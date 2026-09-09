@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exTopic } from '../model/V2exModels';
-import { themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
 
 function age(unix: number): string {
   if (!unix) return '';
@@ -135,22 +135,22 @@ struct NodeTopics {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center)
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center)
           .onClick(() => router.back())
         Column() {
           Text(titleOrName(this.title, this.name)).fontSize(19).fontWeight(FontWeight.Bold).fontColor(this.primaryText())
           Text(this.name).fontSize(12).fontColor(themeMutedText(this.darkMode)).margin({ top: 2 })
         }.alignItems(HorizontalAlign.Start)
         Blank()
-        Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor(this.themeColor).width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
+        Text(this.nodeFavorited ? '★' : '☆').fontSize(24).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(46).textAlign(TextAlign.Center).onClick(() => this.toggleFavorite())
       }.height(64).width('100%').padding({ right: 8 }).backgroundColor(this.surface())
-      if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(this.themeColor).margin({ top: 8 })
+      if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8 })
       if (this.loading) {
-        LoadingProgress().width(30).height(30).color(this.themeColor).margin({ top: 36 })
+        LoadingProgress().width(30).height(30).color(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 36 })
       } else if (this.status.length > 0 && this.topics.length === 0) {
         Column() {
           Text(this.status).fontSize(15).fontColor(themeSecondaryText(this.darkMode))
-          Text('点击重试').fontSize(14).fontColor(this.themeColor).margin({ top: 12 }).onClick(() => this.load())
+          Text('点击重试').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 12 }).onClick(() => this.load())
         }.margin({ top: 42 }).alignItems(HorizontalAlign.Center)
       } else {
         Refresh({ refreshing: this.loading }) {

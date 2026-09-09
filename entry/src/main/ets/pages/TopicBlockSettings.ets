@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
+import { themeAccentText, themeBackground, themeInputBackground, themeMutedText, themePrimaryText, themeSecondaryText, themeSurface, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -34,7 +34,7 @@ struct TopicBlockSettings {
   build() {
     Column() {
       Row() {
-        Text('‹').fontSize(34).fontColor(this.themeColor).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
+        Text('‹').fontSize(34).fontColor(themeAccentText(this.themeColor, this.darkMode)).width(42).textAlign(TextAlign.Center).onClick(() => router.back())
         Text('主题屏蔽').fontSize(20).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
       }.height(60).width('100%').backgroundColor(themeSurface(this.darkMode))
       Scroll() {
@@ -45,7 +45,7 @@ struct TopicBlockSettings {
               .onChange((value: string) => this.keyword = value).onSubmit(() => this.add())
             Button('添加').fontSize(14).margin({ left: 10 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.add())
           }.width('100%')
-          if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(this.themeColor).margin({ top: 12 })
+          if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 12 })
           ForEach(this.keywords, (value: string) => Row() {
             Text(value).fontSize(15).fontColor(themePrimaryText(this.darkMode)).layoutWeight(1)
             Text('删除').fontSize(13).fontColor('#C05A73').onClick(() => this.remove(value))
