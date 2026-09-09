@@ -507,7 +507,10 @@ export class V2exService {
   }
 
   static async signin(info: V2exSigninInfo, username: string, password: string, code: string): Promise<V2exSigninResult> {
-    const values: string = `${V2exService.formValue(info.usernameField)}=${V2exService.formValue(username)}&${V2exService.formValue(info.passwordField)}=${V2exService.formValue(password)}&${V2exService.formValue(info.codeField)}=${V2exService.formValue(code)}&once=${V2exService.formValue(info.once)}&username=${V2exService.formValue(username)}`;
+    // Keep the native POST identical to the rendered H5 form. The field names
+    // are deployment-specific hashes, so only submit those fields plus the
+    // hidden nonce and redirect target that the form actually contains.
+    const values: string = `${V2exService.formValue(info.usernameField)}=${V2exService.formValue(username)}&${V2exService.formValue(info.passwordField)}=${V2exService.formValue(password)}&${V2exService.formValue(info.codeField)}=${V2exService.formValue(code)}&once=${V2exService.formValue(info.once)}&next=%2F`;
     const request: http.HttpRequest = http.createHttp();
     try {
       const response: http.HttpResponse = await request.request(`${V2exService.base()}/signin`, {
