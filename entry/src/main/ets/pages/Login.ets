@@ -80,7 +80,9 @@ struct Login {
         }
       }
       if (result === undefined) throw lastError ?? new Error('验证码识别失败');
-      const code: string = result.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const compact: string = result.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const candidates: RegExpMatchArray | null = result.value.toUpperCase().match(/[A-Z0-9]{4}/g);
+      const code: string = compact.length === 4 ? compact : (candidates && candidates.length > 0 ? candidates[0] : compact.substring(0, 4));
       if (!/^[A-Z0-9]{4}$/.test(code)) throw new Error('未识别到 4 位验证码，请点击图片刷新后重试');
       const filled: string = await this.controller.runJavaScript(`(() => {
         const inputs = Array.from(document.querySelectorAll('input')) as HTMLInputElement[];
