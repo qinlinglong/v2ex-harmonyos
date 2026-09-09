@@ -49,6 +49,8 @@ export interface V2exReply {
   id: number;
   /** 1-based floor number from the rendered H5 page, when available. */
   no?: number;
+  /** Human-readable timestamp from the rendered H5 reply block. */
+  createdLabel?: string;
   content: string;
   created: number;
   member?: V2exMember;

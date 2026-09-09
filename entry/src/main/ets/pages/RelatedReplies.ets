@@ -59,7 +59,7 @@ struct RelatedReplies {
       else List({ space: 1 }) {
         ForEach(this.visibleReplies(), (reply: V2exReply, index: number) => ListItem() {
           Column() {
-            Row() { Text(reply.member?.username ?? '匿名').fontSize(14).fontColor(this.themeColor); Blank(); Text(`#${reply.no ?? index + 1}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 12 }); Text(`${reply.thanks ?? 0} 感谢`).fontSize(12).fontColor('#9AA0A6') }
+            Row() { Text(reply.member?.username ?? '匿名').fontSize(14).fontColor(this.themeColor); Blank(); Text(`#${reply.no ?? index + 1}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 12 }); Text(`${reply.thanks ?? 0} 感谢`).fontSize(12).fontColor('#9AA0A6') }.width('100%')
             Text(reply.content).fontSize(15).fontColor('#30343B').lineHeight(23).margin({ top: 8 })
           }.width('100%').padding(16).backgroundColor(Color.White)
         }, (reply: V2exReply) => `${reply.id}`)

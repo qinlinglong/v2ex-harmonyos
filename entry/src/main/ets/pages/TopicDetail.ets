@@ -405,7 +405,7 @@ struct TopicDetail {
         this.replies = this.replies.map((item: V2exReply) => {
           if (item.id !== replyId) return item;
           return {
-            id: item.id, content: item.content, created: item.created, member: item.member,
+            id: item.id, no: item.no, createdLabel: item.createdLabel, content: item.content, created: item.created, member: item.member,
             thanks: (item.thanks ?? 0) + 1, thanked: true, editable: item.editable,
             op: item.op, mod: item.mod
           } as V2exReply;
@@ -490,7 +490,7 @@ struct TopicDetail {
       this.replies = this.replies.map((item: V2exReply) => {
         if (item.id !== id) return item;
         return {
-          id: item.id, content, created: item.created, member: item.member,
+          id: item.id, no: item.no, createdLabel: item.createdLabel, content, created: item.created, member: item.member,
           thanks: item.thanks, thanked: item.thanked, editable: item.editable,
           op: item.op, mod: item.mod
         } as V2exReply;
@@ -761,8 +761,12 @@ struct TopicDetail {
                   }
                   Blank()
                   Text(`#${reply.no ?? index + 1}`).fontSize(12).fontColor('#9AA0A6').margin({ right: 10 })
-                  Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
-                }
+                  if (reply.createdLabel && reply.createdLabel.length > 0) {
+                    Text(reply.createdLabel).fontSize(12).fontColor('#9AA0A6')
+                  } else if (reply.created > 0) {
+                    Text(new Date(reply.created * 1000).toLocaleDateString()).fontSize(12).fontColor('#9AA0A6')
+                  }
+                }.width('100%')
                 if (this.editingReplyId === reply.id) {
                   TextArea({ placeholder: '编辑回复', text: this.editingReplyText }).width('100%').height(130).fontSize(15).fontColor(this.primaryText())
                     .onChange((value: string) => this.editingReplyText = value)
