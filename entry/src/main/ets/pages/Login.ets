@@ -119,10 +119,12 @@ struct Login {
     const muted: string = this.darkMode ? '#AAB7C4' : '#7B8794';
     const css: string = `body { background:${background} !important; color:${text} !important; }
       body * { color:${text}; }
+      #Top, #Wrapper, #Main, #Header, header, nav { background:${surface} !important; color:${text} !important; }
       a, .fade, .small, .normal { color:${muted} !important; }
       input, textarea, select { background:${input} !important; color:${text} !important; border-color:${muted} !important; }
       button, input[type=submit], .button { background:${this.themeColor} !important; color:#FFFFFF !important; border-color:${this.themeColor} !important; }
-      .box, .cell, .content, .topic_content { background:${surface} !important; color:${text} !important; }`;
+      a.button, a[class*="button"], a[class*="oauth"], a[href*="google"], a[href*="solana"] { background:${surface} !important; color:${text} !important; border-color:${muted} !important; }
+      .box, .cell, .content, .topic_content, table, td, tr, form, fieldset { background:${surface} !important; color:${text} !important; }`;
     const script: string = `(() => { let style = document.getElementById('v2ex-native-theme'); if (!style) { style = document.createElement('style'); style.id = 'v2ex-native-theme'; document.head.appendChild(style); } style.textContent = ${JSON.stringify(css)}; return 'ok'; })()`;
     try {
       this.controller.runJavaScript(script).catch(() => { /* The page may have navigated away. */ });
