@@ -6,16 +6,19 @@ import { themeAccentText, themeBackground, themeBodyText, themeInputBackground, 
 
 interface PreviewPart { kind: string; value: string; label?: string; }
 
-function previewParts(markdown: string): PreviewPart[] {
+function previewParts(markdown: string, syntax: string = 'markdown'): PreviewPart[] {
   const parts: PreviewPart[] = [];
-  const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
+  const pattern: RegExp = syntax === 'default'
+    ? /((?:https?:\/\/|\/)[^\s<>()]+\.(?:png|jpe?g|gif|webp)(?:\?[^\s<>()]*)?)|!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi
+    : /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
     const before: string = markdown.substring(cursor, match.index).trim();
     if (before.length > 0) parts.push({ kind: 'text', value: before });
-    if (match[1]) parts.push({ kind: 'image', value: match[1] });
-    else parts.push({ kind: 'link', value: match[3], label: match[2] });
+    if (syntax === 'default' && (match[1] || match[2])) parts.push({ kind: 'image', value: match[1] ?? match[2] });
+    else if (syntax === 'markdown' && match[1]) parts.push({ kind: 'image', value: match[1] });
+    else parts.push({ kind: 'link', value: syntax === 'default' ? match[1] ?? match[4] : match[3], label: syntax === 'default' ? match[1] ?? match[3] : match[2] });
     cursor = match.index + match[0].length;
     match = pattern.exec(markdown);
   }
@@ -191,7 +194,7 @@ struct WriteTopic {
           if (this.preview) {
             Column() {
               Text(this.title || '（无标题）').fontSize(22).fontWeight(FontWeight.Bold).fontColor(themePrimaryText(this.darkMode))
-              ForEach(previewParts(this.content || '（无正文）'), (part: PreviewPart) => {
+              ForEach(previewParts(this.content || '（无正文）', this.syntax), (part: PreviewPart) => {
                 if (part.kind === 'image') {
                   Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 })
                     .objectFit(ImageFit.Contain).margin({ top: 14, bottom: 4 })
@@ -200,7 +203,7 @@ struct WriteTopic {
                     .decoration({ type: TextDecorationType.Underline, color: themeAccentText(this.themeColor, this.darkMode) }).margin({ top: 20 })
                     .onClick(() => this.openPreviewLink(part.value))
                 } else {
-                  Text(previewText(part.value)).fontSize(16).fontColor(themeBodyText(this.darkMode)).lineHeight(26)
+                  Text(this.syntax === 'markdown' ? previewText(part.value) : part.value).fontSize(16).fontColor(themeBodyText(this.darkMode)).lineHeight(26)
                     .margin({ top: 20 }).textAlign(TextAlign.Start)
                 }
               }, (part: PreviewPart, index: number) => `preview-${part.kind}-${index}-${part.value.substring(0, 12)}`)
