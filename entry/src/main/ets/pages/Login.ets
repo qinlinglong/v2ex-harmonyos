@@ -18,10 +18,17 @@ struct Login {
   }
 
   private async captchaBuffer(): Promise<ArrayBuffer> {
-    const sourceResult: string = await this.controller.runJavaScript(`(() => {
+    let sourceResult: string = await this.controller.runJavaScript(`(() => {
       const image = document.getElementById('captcha-image');
       return image ? (image.currentSrc || image.src || '') : '';
     })()`);
+    if ((sourceResult ?? '').trim().length === 0) {
+      await new Promise<void>((resolve: () => void) => setTimeout(resolve, 500));
+      sourceResult = await this.controller.runJavaScript(`(() => {
+        const image = document.getElementById('captcha-image');
+        return image ? (image.currentSrc || image.src || '') : '';
+      })()`);
+    }
     const source: string = (sourceResult ?? '').replace(/^['"]|['"]$/g, '').trim();
     if (source.length === 0) throw new Error('验证码图片尚未加载');
     const url: string = /^https?:\/\//i.test(source) ? source : `${this.siteBase()}${source.startsWith('/') ? source : `/${source}`}`;
@@ -55,7 +62,8 @@ struct Login {
       // V2EX serves a compact 320×80 bitmap; upscale it before OCR so thin glyphs
       // remain legible on devices whose OCR model has a larger minimum text size.
       pixelMap = await source.createPixelMap({ desiredSize: { width: 1280, height: 320 } });
-      await textRecognition.init();
+      const ready: boolean = await textRecognition.init();
+      if (!ready) throw new Error('此设备未提供 OCR 模型');
       const result: textRecognition.TextRecognitionResult = await textRecognition.recognizeText({ pixelMap }, {
         isDirectionDetectionSupported: false
       });
