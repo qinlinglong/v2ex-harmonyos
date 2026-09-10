@@ -86,6 +86,9 @@ struct Index {
       if (this.cachedMemberJson.trim().length > 0) this.currentMember = JSON.parse(this.cachedMemberJson) as V2exMember;
     } catch (_) { this.currentMember = undefined; }
     this.selectTab(0);
+    // Fetch node metadata while the first topic page is loading. Node
+    // navigation can then render from memory immediately on first open.
+    V2exService.warmNodes();
   }
 
   onPageShow(): void {

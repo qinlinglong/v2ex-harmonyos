@@ -36,7 +36,9 @@ struct NavNodes {
     this.loading = !hasCached;
     this.status = '';
     try {
-      const fresh: V2exNode[] = await V2exService.nodes();
+      // Keep the cached grid visible while forcing a background refresh. The
+      // shared service coalesces this with the home-page prefetch request.
+      const fresh: V2exNode[] = await V2exService.refreshNodes();
       this.nodes = fresh;
       this.cacheJson = JSON.stringify(fresh);
       if (this.nodes.length === 0) this.status = '暂无节点';

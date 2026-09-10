@@ -399,6 +399,11 @@ export class V2exService {
     if (V2exService.nodesMemory.length > 0 && now - V2exService.nodesLoadedAt < 15 * 60 * 1000) {
       return V2exService.nodesMemory;
     }
+    return V2exService.refreshNodes();
+  }
+
+  /** Force a fresh node list while coalescing all callers into one request. */
+  static async refreshNodes(): Promise<V2exNode[]> {
     if (V2exService.nodesRequest) return V2exService.nodesRequest;
     V2exService.nodesRequest = (async (): Promise<V2exNode[]> => {
       const data: V2exNode[] = JSON.parse(await V2exService.get('/api/nodes/all.json')) as V2exNode[];
@@ -415,6 +420,16 @@ export class V2exService {
     } finally {
       V2exService.nodesRequest = undefined;
     }
+  }
+
+  /** Warm the shared node cache in the background without delaying the home page. */
+  static async warmNodes(): Promise<void> {
+    const now: number = Date.now();
+    if (V2exService.nodesMemory.length > 0 && now - V2exService.nodesLoadedAt < 15 * 60 * 1000) return;
+    try {
+      const fresh: V2exNode[] = await V2exService.refreshNodes();
+      if (fresh.length > 0) AppStorage.setOrCreate('v2exNodesCache', JSON.stringify(fresh));
+    } catch (_) { /* navigation can use the previous persistent cache */ }
   }
 
   static async topicsForNode(name: string): Promise<V2exTopic[]> {
