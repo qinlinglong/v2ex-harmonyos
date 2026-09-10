@@ -133,6 +133,14 @@ export class V2exService {
     // Group them before appending the row matcher; otherwise RegExp's `|`
     // precedence lets the first Chinese alternative match by itself and the
     // parser silently falls back to the wrong static field name.
+    const rows: RegExpMatchArray | null = html.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi);
+    if (rows) {
+      for (const currentRow of rows) {
+        if (!new RegExp(`(?:${label})`, 'i').test(currentRow)) continue;
+        const rowInput: RegExpMatchArray | null = currentRow.match(/<input\b[^>]*\bname=["']([^"']+)["'][^>]*>/i);
+        if (rowInput?.[1]) return rowInput[1];
+      }
+    }
     const row: RegExpMatchArray | null = html.match(new RegExp(`(?:${label})[\\s\\S]{0,900}?<input[^>]+name=["']([^"']+)["']`, 'i'));
     return row?.[1] ?? fallback;
   }
