@@ -175,9 +175,9 @@ export class V2exService {
   }
   private static signedInHtml(html: string): boolean {
     // Current V2EX uses /signout?once=... while older pages used /logout.
-    // The reference client treats the signout action as the authoritative
-    // logged-in marker instead of relying on a member link being present.
-    return /\/(?:signout|logout)\b/i.test(html) || html.indexOf('/member/') >= 0;
+    // Match the reference client: a member link alone is not evidence of an
+    // authenticated session because failed pages can contain member links too.
+    return /\/(?:signout|logout)\b/i.test(html);
   }
   private static mutationSucceeded(response: http.HttpResponse): boolean {
     if (response.responseCode < 200 || response.responseCode >= 400) return false;
@@ -633,9 +633,10 @@ export class V2exService {
       });
       V2exService.rememberResponseCookies(response);
       const html: string = String(response.result ?? '');
-      const otp: RegExpMatchArray | null = html.match(/id=["']otp_code["'][\s\S]*?<input[^>]+name=["']once["'][^>]+value=["']([^"']+)["']/i)
-        ?? html.match(/<input[^>]+name=["']once["'][^>]+value=["']([^"']+)["'][\s\S]*id=["']otp_code["']/i);
-      if (otp) return { success: false, twoFactor: true, once: otp[1] };
+      if (/id=["']otp_code["']/i.test(html)) {
+        const otpOnce: string = V2exService.formHiddenValue(html, 'once');
+        return { success: false, twoFactor: true, once: otpOnce };
+      }
       const problem: string = V2exService.signinProblem(html);
       if (problem.length > 0) throw new Error(problem);
       // Match the reference client: the POST response itself is authoritative
