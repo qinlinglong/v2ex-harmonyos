@@ -2,6 +2,7 @@ import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
 import { fileIo } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply, V2exTopic, V2exTopicStats } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
@@ -23,6 +24,7 @@ export interface V2exSigninResult {
 }
 
 export class V2exService {
+  private static readonly LOG_DOMAIN: number = 0x4F32;
   // Node metadata is shared by the home page, node navigation and hot-topic
   // pages. Keep a short-lived in-memory copy and coalesce concurrent requests
   // so opening several menu entries does not trigger duplicate full downloads.
@@ -545,7 +547,13 @@ export class V2exService {
       // Keep that session paired with the challenge used by the subsequent POST.
       V2exService.rememberResponseCookies(response);
       if (response.responseCode < 200 || response.responseCode >= 400) throw new Error(`验证码请求失败 (${response.responseCode})`);
-      const bytes: Uint8Array = new Uint8Array(response.result as ArrayBuffer);
+      // ARRAY_BUFFER is returned as ArrayBuffer on most API levels, while a
+      // few device builds expose a Uint8Array view. Normalize both forms
+      // before encoding so the image is never rejected on type conversion.
+      const raw: Object = response.result as Object;
+      const bytes: Uint8Array = raw instanceof Uint8Array
+        ? raw
+        : new Uint8Array(raw as ArrayBuffer);
       if (bytes.length === 0) throw new Error('验证码为空');
       let mime: string = 'image/png';
       try {
@@ -555,6 +563,10 @@ export class V2exService {
       } catch (_) { /* use the PNG default */ }
       const encoded: string = new util.Base64Helper().encodeToStringSync(bytes);
       return `data:${mime};base64,${encoded}`;
+    } catch (error) {
+      const detail: string = error instanceof Error ? error.message : JSON.stringify(error);
+      hilog.warn(V2exService.LOG_DOMAIN, 'signin', 'Captcha request failed: %{public}s', detail);
+      throw new Error(detail);
     } finally { request.destroy(); }
   }
 

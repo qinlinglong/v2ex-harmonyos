@@ -59,7 +59,13 @@ struct Login {
       this.status = info.limited ? '当前 IP 登录尝试次数过多，可能需要等待最多 1 天后重试' : '';
       if (!info.limited && info.captchaUrl.length > 0) {
         try { this.captchaImage = await V2exService.signinCaptcha(info.captchaUrl); }
-        catch (_) { this.status = '验证码加载失败，请点击验证码区域重试'; }
+        catch (_) {
+          // ArkUI can load the challenge URL directly even on devices where
+          // NetworkKit rejects the binary response. Keep the URL as a
+          // session-paired fallback so native sign-in remains usable.
+          this.captchaImage = info.captchaUrl;
+          this.status = '验证码已就绪，请输入图片中的字符';
+        }
       }
     } catch (error) {
       this.signinInfo = undefined;
