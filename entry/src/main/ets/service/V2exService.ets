@@ -76,12 +76,21 @@ export class V2exService {
         const separator: number = value.indexOf('=');
         if (separator <= 0) return;
         const name: string = value.substring(0, separator).trim();
+        // V2EX returns PB3_SESSION in a quoted Set-Cookie value. The quotes
+        // are valid in a browser cookie jar, but HarmonyOS NetworkKit and
+        // WebCookieManager reject them as disallowed characters. Keep the
+        // token value while emitting a valid Cookie request header.
+        const rawValue: string = value.substring(separator + 1).trim();
+        const cleanValue: string = rawValue.length >= 2 && rawValue.startsWith('"') && rawValue.endsWith('"')
+          ? rawValue.substring(1, rawValue.length - 1)
+          : rawValue;
+        const normalized: string = `${name}=${cleanValue.replace(/["\r\n]/g, '')}`;
         if (names.indexOf(name) >= 0) {
           const index: number = names.indexOf(name);
-          values[index] = value;
+          values[index] = normalized;
         } else {
           names.push(name);
-          values.push(value);
+          values.push(normalized);
         }
       });
     });
@@ -102,10 +111,10 @@ export class V2exService {
     try { current = AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { current = ''; }
     const cookieHeader: string = V2exService.mergeCookieHeaders(current, cookiePairs);
     try { AppStorage.setOrCreate('v2exNativeCookie', cookieHeader); } catch (_) { /* storage may be unavailable during startup */ }
-    // Keep the Web component session in sync for links opened after a native login.
-    if (cookiePairs.length > 0) {
-      try { webview.WebCookieManager.configCookieSync(V2exService.base(), cookiePairs); } catch (_) { /* native HTTP remains the source of truth */ }
-    }
+    // Do not write the native Set-Cookie value into WebCookieManager here.
+    // HarmonyOS rejects V2EX's quoted PB3_SESSION while parsing Web cookies;
+    // native requests use the normalized AppStorage value above. H5 login
+    // maintains its own WebView cookie jar.
     try { webview.WebCookieManager.saveCookieAsync(); } catch (_) { /* best effort */ }
   }
 
@@ -540,8 +549,7 @@ export class V2exService {
           'Referer': `${V2exService.base()}/signin`
         },
         connectTimeout: 8000,
-        readTimeout: 12000,
-        expectDataType: http.HttpDataType.ARRAY_BUFFER
+        readTimeout: 12000
       });
       // Some V2EX deployments refresh PB3_SESSION while issuing the image.
       // Keep that session paired with the challenge used by the subsequent POST.
