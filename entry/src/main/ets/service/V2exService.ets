@@ -609,6 +609,14 @@ export class V2exService {
       if (otp) return { success: false, twoFactor: true, once: otp[1] };
       const problem: string = V2exService.signinProblem(html);
       if (problem.length > 0) throw new Error(problem);
+      // Match the reference client: the POST response itself is authoritative
+      // when it contains the current V2EX signout action. Fetching /settings
+      // is only a best-effort way to populate the cached member afterwards.
+      if (V2exService.signedInHtml(html)) {
+        let member: V2exMember | undefined = undefined;
+        try { member = await V2exService.currentMember(); } catch (_) { member = undefined; }
+        return { success: true, twoFactor: false, once: '', member };
+      }
       const member: V2exMember | undefined = await V2exService.currentMember();
       if (member) return { success: true, twoFactor: false, once: '', member };
       if (response.responseCode >= 200 && response.responseCode < 400 && html.length === 0 && V2exService.cookie().length > 0) {
