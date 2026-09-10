@@ -824,7 +824,8 @@ export class V2exService {
         const nodeMatch: RegExpMatchArray | null = context.match(/class=["'][^"']*\bnode\b[^"']*["'][^>]*href=["']\/go\/([^"']+)["'][^>]*>([\s\S]*?)<\/a>/i)
           ?? context.match(/href=["']\/go\/([^"']+)["'][^>]*class=["'][^"']*\bnode\b[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
         const countMatch: RegExpMatchArray | null = context.match(/class=["'][^"']*\bcount_(?:livid|orange)\b[^"']*["'][^>]*>([\d,]+)<\/a>/i);
-        const timeMatch: RegExpMatchArray | null = context.match(/<span[^>]+title=["']([^"']+)["'][^>]*>([^<]*(?:ago|前)[^<]*)<\/span>/i);
+        const timeMatch: RegExpMatchArray | null = context.match(/<span[^>]+title=["']([^"']+)["'][^>]*>([^<]*(?:ago|前|just\s+now)[^<]*)<\/span>/i)
+          ?? context.match(/<span[^>]*class=["'][^"']*topic_info[^"']*["'][\s\S]*?<span[^>]*>([^<]*(?:ago|前|just\s+now)[^<]*)<\/span>/i);
         const parsedTouched: number = timeMatch ? Math.floor(Date.parse(timeMatch[1]) / 1000) : 0;
         const topic: V2exTopic = {
           id,
@@ -833,7 +834,7 @@ export class V2exService {
           replies: countMatch ? Number(countMatch[1].replace(/,/g, '')) : 0,
           last_modified: 0,
           last_touched: parsedTouched > 0 ? parsedTouched : 0,
-          lastTouchedLabel: timeMatch ? V2exService.cleanHtml(timeMatch[2]) : undefined,
+          lastTouchedLabel: timeMatch ? V2exService.cleanHtml(timeMatch[timeMatch.length > 2 ? 2 : 1]) : undefined,
           member: memberMatch ? { username: V2exService.cleanHtml(memberMatch[2]), avatar_large: V2exService.assetUrl(avatarMatch?.[1] ?? '') } : undefined,
           node: nodeMatch ? { name: V2exService.cleanHtml(nodeMatch[1]), title: V2exService.cleanHtml(nodeMatch[2]) } : undefined
         } as V2exTopic;
