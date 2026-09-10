@@ -36,7 +36,7 @@ struct Login {
     // V2EX's hidden once token is short-lived. Refresh the form when the
     // native page is shown again after being left open, matching the
     // reference client's staleTime: 0 sign-in query behavior.
-    if (this.signinInfo !== undefined && this.signinInfoLoadedAt > 0 && Date.now() - this.signinInfoLoadedAt > 60_000) {
+    if (this.signinInfo !== undefined && (this.signinInfoLoadedAt === 0 || Date.now() - this.signinInfoLoadedAt > 60_000)) {
       this.loadSigninInfo();
     }
   }
