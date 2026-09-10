@@ -24,6 +24,7 @@ struct Login {
   @State h5FallbackOpened: boolean = false;
   private signinInfo: V2exSigninInfo | undefined = undefined;
   private signinInfoLoadedAt: number = 0;
+  private signinLoadSequence: number = 0;
 
   aboutToAppear(): void { this.loadSigninInfo(); }
 
@@ -36,7 +37,7 @@ struct Login {
     // V2EX's hidden once token is short-lived. Refresh the form when the
     // native page is shown again after being left open, matching the
     // reference client's staleTime: 0 sign-in query behavior.
-    if (this.signinInfo !== undefined && (this.signinInfoLoadedAt === 0 || Date.now() - this.signinInfoLoadedAt > 60_000)) {
+    if (!this.loading && this.signinInfo !== undefined && (this.signinInfoLoadedAt === 0 || Date.now() - this.signinInfoLoadedAt > 60_000)) {
       this.loadSigninInfo();
     }
   }
@@ -57,6 +58,7 @@ struct Login {
   }
 
   private async loadSigninInfo(): Promise<void> {
+    const sequence: number = ++this.signinLoadSequence;
     this.loading = true;
     // A challenge is single-use. Clear the previous answer whenever the
     // image is refreshed, including after a rejected submission, so a new
@@ -65,6 +67,7 @@ struct Login {
     this.status = '正在获取验证码…';
     try {
       const info: V2exSigninInfo = await V2exService.signinInfo();
+      if (sequence !== this.signinLoadSequence) return;
       this.signinInfo = info;
       this.signinInfoLoadedAt = Date.now();
       this.captchaUrl = info.captchaUrl;
@@ -76,8 +79,13 @@ struct Login {
       this.limited = info.limited;
       this.status = info.limited ? '当前 IP 登录尝试次数过多，可能需要等待最多 1 天后重试' : '';
       if (!info.limited && info.captchaUrl.length > 0) {
-        try { this.captchaImage = await V2exService.signinCaptcha(info.captchaUrl); }
+        try {
+          const image: string = await V2exService.signinCaptcha(info.captchaUrl);
+          if (sequence !== this.signinLoadSequence) return;
+          this.captchaImage = image;
+        }
         catch (_) {
+          if (sequence !== this.signinLoadSequence) return;
           // ArkUI can load the challenge URL directly even on devices where
           // NetworkKit rejects the binary response. Keep the URL as a
           // session-paired fallback so native sign-in remains usable.
@@ -86,11 +94,14 @@ struct Login {
         }
       }
     } catch (error) {
+      if (sequence !== this.signinLoadSequence) return;
       this.signinInfo = undefined;
       this.captchaUrl = '';
       this.captchaImage = '';
       this.status = error instanceof Error ? error.message : '获取验证码失败，请检查网络';
-    } finally { this.loading = false; }
+    } finally {
+      if (sequence === this.signinLoadSequence) this.loading = false;
+    }
   }
 
   private async submitSignin(): Promise<void> {
@@ -172,9 +183,9 @@ struct Login {
               TextInput({ placeholder: '请输入密码', text: this.password }).width('100%').height(52).margin({ top: 6 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Password).showPasswordIcon(true).onChange((value: string) => this.password = value)
               Text('你是机器人吗？').fontSize(14).fontColor(themeSecondaryText(this.darkMode)).width('100%').margin({ top: 16 })
               if (this.captchaUrl.length > 0) {
-                Image(this.captchaImage).width('100%').aspectRatio(4).margin({ top: 6 }).borderRadius(8).objectFit(ImageFit.Fill).onClick(() => this.loadSigninInfo())
+                Image(this.captchaImage).width('100%').aspectRatio(4).margin({ top: 6 }).borderRadius(8).objectFit(ImageFit.Fill).onClick(() => { if (!this.loading) this.loadSigninInfo(); })
               } else {
-                Text('点击刷新验证码').width('100%').aspectRatio(4).margin({ top: 6 }).textAlign(TextAlign.Center).fontColor(themeSecondaryText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).onClick(() => this.loadSigninInfo())
+                Text('点击刷新验证码').width('100%').aspectRatio(4).margin({ top: 6 }).textAlign(TextAlign.Center).fontColor(themeSecondaryText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).onClick(() => { if (!this.loading) this.loadSigninInfo(); })
               }
               TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Email).onChange((value: string) => this.code = value)
               if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).width('100%').lineHeight(20).margin({ top: 12 })
