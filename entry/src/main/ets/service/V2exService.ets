@@ -129,7 +129,11 @@ export class V2exService {
     }
     // Some deployments render labels outside the input tag. Keep a row-level
     // fallback for those pages while still limiting the match to one form row.
-    const row: RegExpMatchArray | null = html.match(new RegExp(`${label}[\\s\\S]{0,900}?<input[^>]+name=["']([^"']+)["']`, 'i'));
+    // `label` contains alternatives (for example `用户名|username|email`).
+    // Group them before appending the row matcher; otherwise RegExp's `|`
+    // precedence lets the first Chinese alternative match by itself and the
+    // parser silently falls back to the wrong static field name.
+    const row: RegExpMatchArray | null = html.match(new RegExp(`(?:${label})[\\s\\S]{0,900}?<input[^>]+name=["']([^"']+)["']`, 'i'));
     return row?.[1] ?? fallback;
   }
 
