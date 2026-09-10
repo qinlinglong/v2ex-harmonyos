@@ -904,6 +904,8 @@ export class V2exService {
           topic.favorited = html.indexOf('/unfavorite/topic/') >= 0;
           topic.thanked = /topic_thanked/i.test(html);
           topic.ignored = html.indexOf('/unignore/topic/') >= 0;
+          const syntaxMatch: RegExpMatchArray | null = html.match(/name=["']syntax["'][^>]*value=["']([^"']+)["']/i);
+          if (syntaxMatch) topic.syntax = syntaxMatch[1] === 'markdown' ? 'markdown' : 'default';
           const stats = V2exService.parseTopicStats(html);
           if (stats.views !== undefined) topic.views = stats.views;
           if (stats.likes !== undefined) topic.likes = stats.likes;
@@ -929,7 +931,8 @@ export class V2exService {
       appendable: html.indexOf(`/append/topic/${id}`) >= 0,
       favorited: html.indexOf('/unfavorite/topic/') >= 0,
       thanked: /topic_thanked/i.test(html),
-      ignored: html.indexOf('/unignore/topic/') >= 0
+      ignored: html.indexOf('/unignore/topic/') >= 0,
+      syntax: (html.match(/name=["']syntax["'][^>]*value=["']([^"']+)["']/i)?.[1] ?? 'default') === 'markdown' ? 'markdown' : 'default'
     } as V2exTopic;
     V2exService.normalizeTopic(fallbackTopic);
     return fallbackTopic;

@@ -84,6 +84,7 @@ struct WriteTopic {
       this.title = topic.title;
       this.content = topic.content;
       this.node = topic.node?.name ?? this.node;
+      if (topic.syntax === 'markdown' || topic.syntax === 'default') this.syntax = topic.syntax;
     } catch (_) { this.status = '编辑内容加载失败'; }
     finally { this.editPermissionChecked = true; }
   }

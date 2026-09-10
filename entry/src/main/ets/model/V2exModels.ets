@@ -39,6 +39,7 @@ export interface V2exTopic {
   likes?: number;
   thanks?: number;
   last_reply_by?: string;
+  syntax?: string;
 }
 
 export interface V2exTopicStats {
