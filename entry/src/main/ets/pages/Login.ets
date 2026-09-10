@@ -58,7 +58,11 @@ struct Login {
       const info: V2exSigninInfo = await V2exService.signinInfo();
       this.signinInfo = info;
       this.captchaUrl = info.captchaUrl;
-      this.captchaImage = info.captchaUrl;
+      // Do not render the challenge URL before the native download finishes.
+      // Rendering it here would make ArkUI issue a second GET while
+      // signinCaptcha() is fetching the same URL, and some V2EX deployments
+      // generate a new challenge for every request.
+      this.captchaImage = '';
       this.limited = info.limited;
       this.status = info.limited ? '当前 IP 登录尝试次数过多，可能需要等待最多 1 天后重试' : '';
       if (!info.limited && info.captchaUrl.length > 0) {
