@@ -23,13 +23,22 @@ struct Login {
   @State captchaImage: string = '';
   @State h5FallbackOpened: boolean = false;
   private signinInfo: V2exSigninInfo | undefined = undefined;
+  private signinInfoLoadedAt: number = 0;
 
   aboutToAppear(): void { this.loadSigninInfo(); }
 
   onPageShow(): void {
-    if (!this.h5FallbackOpened) return;
-    this.h5FallbackOpened = false;
-    this.syncH5Member();
+    if (this.h5FallbackOpened) {
+      this.h5FallbackOpened = false;
+      this.syncH5Member();
+      return;
+    }
+    // V2EX's hidden once token is short-lived. Refresh the form when the
+    // native page is shown again after being left open, matching the
+    // reference client's staleTime: 0 sign-in query behavior.
+    if (this.signinInfo !== undefined && this.signinInfoLoadedAt > 0 && Date.now() - this.signinInfoLoadedAt > 60_000) {
+      this.loadSigninInfo();
+    }
   }
 
   private async syncH5Member(): Promise<void> {
@@ -57,6 +66,7 @@ struct Login {
     try {
       const info: V2exSigninInfo = await V2exService.signinInfo();
       this.signinInfo = info;
+      this.signinInfoLoadedAt = Date.now();
       this.captchaUrl = info.captchaUrl;
       // Do not render the challenge URL before the native download finishes.
       // Rendering it here would make ArkUI issue a second GET while
