@@ -49,6 +49,10 @@ struct Login {
 
   private async loadSigninInfo(): Promise<void> {
     this.loading = true;
+    // A challenge is single-use. Clear the previous answer whenever the
+    // image is refreshed, including after a rejected submission, so a new
+    // code can never be appended to the expired one.
+    this.code = '';
     this.status = '正在获取验证码…';
     try {
       const info: V2exSigninInfo = await V2exService.signinInfo();
