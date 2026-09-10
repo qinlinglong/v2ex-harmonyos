@@ -581,7 +581,11 @@ export class V2exService {
           'Referer': `${V2exService.base()}/signin`
         },
         connectTimeout: 8000,
-        readTimeout: 12000
+        readTimeout: 12000,
+        // Keep the challenge as binary data. Falling back to a URL can issue
+        // a second request without the native Cookie and display a different
+        // code from the one accepted by the matching POST.
+        expectDataType: http.HttpDataType.ARRAY_BUFFER
       });
       // Some V2EX deployments refresh PB3_SESSION while issuing the image.
       // Keep that session paired with the challenge used by the subsequent POST.
