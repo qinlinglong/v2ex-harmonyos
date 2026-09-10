@@ -144,6 +144,20 @@ export class V2exService {
     return V2exService.cleanHtml(match?.[1] ?? '');
   }
 
+  /** Convert the relative labels used by the rendered H5 list into a stable timestamp. */
+  private static relativeTimeUnix(label: string): number {
+    const value: string = V2exService.cleanHtml(label).trim().toLowerCase();
+    if (value.length === 0 || /just\s+now|刚刚/.test(value)) return Math.floor(Date.now() / 1000);
+    const amount: RegExpMatchArray | null = value.match(/(\d+)\s*(?:min(?:ute)?s?|分钟)/i);
+    if (amount) return Math.floor(Date.now() / 1000) - Number(amount[1]) * 60;
+    const hours: RegExpMatchArray | null = value.match(/(\d+)\s*(?:hours?|小时)/i);
+    if (hours) return Math.floor(Date.now() / 1000) - Number(hours[1]) * 3600;
+    const days: RegExpMatchArray | null = value.match(/(\d+)\s*(?:days?|天)/i);
+    if (days) return Math.floor(Date.now() / 1000) - Number(days[1]) * 86400;
+    const parsed: number = Math.floor(Date.parse(value) / 1000);
+    return parsed > 0 ? parsed : 0;
+  }
+
   private static formValue(value: string): string {
     return encodeURIComponent(value).replace(/%20/g, '+');
   }
@@ -834,7 +848,10 @@ export class V2exService {
         const countMatch: RegExpMatchArray | null = context.match(/class=["'][^"']*\bcount_(?:livid|orange)\b[^"']*["'][^>]*>([\d,]+)<\/a>/i);
         const timeMatch: RegExpMatchArray | null = context.match(/<span[^>]+title=["']([^"']+)["'][^>]*>([^<]*(?:ago|前|just\s+now)[^<]*)<\/span>/i)
           ?? context.match(/<span[^>]*class=["'][^"']*topic_info[^"']*["'][\s\S]*?<span[^>]*>([^<]*(?:ago|前|just\s+now)[^<]*)<\/span>/i);
-        const parsedTouched: number = timeMatch ? Math.floor(Date.parse(timeMatch[1]) / 1000) : 0;
+        const touchedLabel: string | undefined = timeMatch ? V2exService.cleanHtml(timeMatch[timeMatch.length > 2 ? 2 : 1]) : undefined;
+        const parsedTouched: number = timeMatch
+          ? (timeMatch.length > 2 ? Math.floor(Date.parse(timeMatch[1]) / 1000) : V2exService.relativeTimeUnix(touchedLabel ?? ''))
+          : 0;
         const topic: V2exTopic = {
           id,
           title: V2exService.cleanHtml(match[2]),
@@ -842,7 +859,7 @@ export class V2exService {
           replies: countMatch ? Number(countMatch[1].replace(/,/g, '')) : 0,
           last_modified: 0,
           last_touched: parsedTouched > 0 ? parsedTouched : 0,
-          lastTouchedLabel: timeMatch ? V2exService.cleanHtml(timeMatch[timeMatch.length > 2 ? 2 : 1]) : undefined,
+          lastTouchedLabel: touchedLabel,
           member: memberMatch ? { username: V2exService.cleanHtml(memberMatch[2]), avatar_large: V2exService.assetUrl(avatarMatch?.[1] ?? '') } : undefined,
           node: nodeMatch ? { name: V2exService.cleanHtml(nodeMatch[1]), title: V2exService.cleanHtml(nodeMatch[2]) } : undefined
         } as V2exTopic;

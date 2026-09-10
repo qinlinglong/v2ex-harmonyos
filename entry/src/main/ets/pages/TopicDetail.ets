@@ -13,6 +13,24 @@ interface ReplyTextPart { kind: string; value: string; }
 
 const BASE64_MENU_ID: TextMenuItemId = TextMenuItemId.of('v2ex_base64_decode');
 
+/**
+ * Normalize content copied from Markdown editors and forum posts. Some posts
+ * contain escaped HTML (`\\<p>`), numeric spaces (`&#x20;`) or an image URL
+ * wrapped in Markdown inside an HTML img tag. Treat those forms as markup so
+ * the detail view renders the same image and text as the H5 page.
+ */
+function normalizeDetailMarkup(value: string): string {
+  return value
+    .replace(/&#x20;|&#32;/gi, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&quot;/gi, '"').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&amp;/gi, '&')
+    .replace(/\\([\\`*{}\[\]()#+.!_<>-])/g, '$1')
+    .replace(/<p\b[^>]*>/gi, '').replace(/<\/p>/gi, '\n')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<img\b[^>]*src=["']\s*\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)["'][^>]*>/gi, '![$1]($2)')
+    .replace(/<img\b[^>]*src=["']\s*([^"'\s>]+)["'][^>]*>/gi, '![]($1)');
+}
+
 function appendTextWithLinks(parts: DetailPart[], value: string): void {
   const pattern: RegExp = /https?:\/\/[^\s<>()]+/gi;
   let cursor: number = 0;
@@ -74,7 +92,7 @@ function isTableSeparator(line: string): boolean {
 
 function detailParts(markdown: string): DetailPart[] {
   const parts: DetailPart[] = [];
-  const lines: string[] = markdown.replace(/\r/g, '').split('\n');
+  const lines: string[] = normalizeDetailMarkup(markdown).replace(/\r/g, '').split('\n');
   const inlineLines: string[] = [];
   const flushInline = (): void => {
     if (inlineLines.length === 0) return;
@@ -115,7 +133,7 @@ function detailParts(markdown: string): DetailPart[] {
 }
 
 function plainMarkdown(value: string): string {
-  return value.replace(/^#{1,6}\s+/gm, '').replace(/\*\*([^*]+)\*\*/g, '$1')
+  return normalizeDetailMarkup(value).replace(/<[^>]+>/g, '').replace(/^#{1,6}\s+/gm, '').replace(/\*\*([^*]+)\*\*/g, '$1')
     .replace(/__([^_]+)__/g, '$1').replace(/\*([^*]+)\*/g, '$1')
     .replace(/_([^_]+)_/g, '$1').replace(/`([^`]+)`/g, '$1');
 }
