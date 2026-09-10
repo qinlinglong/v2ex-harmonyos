@@ -160,7 +160,10 @@ export class V2exService {
       .replace(/<\/p>|<br\s*\/?>(\r?\n)?/gi, '\n'));
   }
   private static signedInHtml(html: string): boolean {
-    return html.indexOf('/logout') >= 0 || html.indexOf('/member/') >= 0;
+    // Current V2EX uses /signout?once=... while older pages used /logout.
+    // The reference client treats the signout action as the authoritative
+    // logged-in marker instead of relying on a member link being present.
+    return /\/(?:signout|logout)\b/i.test(html) || html.indexOf('/member/') >= 0;
   }
   private static mutationSucceeded(response: http.HttpResponse): boolean {
     if (response.responseCode < 200 || response.responseCode >= 400) return false;
@@ -499,7 +502,7 @@ export class V2exService {
 
   static async currentMember(): Promise<V2exMember | undefined> {
     const html: string = await V2exService.get('/settings', true);
-    if (html.indexOf('/signin') >= 0 && html.indexOf('/logout') < 0) return undefined;
+    if (html.indexOf('/signin') >= 0 && !V2exService.signedInHtml(html)) return undefined;
     const match: RegExpMatchArray | null = html.match(/href=["']\/member\/([^"']+)["']/i);
     if (!match) return undefined;
     const username: string = decodeURIComponent(match[1]);
