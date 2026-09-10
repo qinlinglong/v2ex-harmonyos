@@ -9,6 +9,7 @@ const API_BASE: string = 'https://www.v2ex.com';
 
 export interface V2exSigninInfo {
   captchaUrl: string;
+  cookie: string;
   once: string;
   usernameField: string;
   passwordField: string;
@@ -577,19 +578,22 @@ export class V2exService {
       const usernameField: string = V2exService.formInputName(html, '用户名|username|email', 'u');
       const passwordField: string = V2exService.formInputName(html, '密码|password', 'p');
       const codeField: string = V2exService.formInputName(html, '验证码|captcha|code|机器', 'code');
-      return { captchaUrl, once, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
+      // Keep the cookie snapshot paired with this nonce and captcha. The
+      // reference client passes the same cookie to its image request instead
+      // of reading a possibly changed global jar later.
+      return { captchaUrl, cookie: V2exService.cookie(), once, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
     } finally { request.destroy(); }
   }
 
   /** Download the CAPTCHA with the native session and return an ArkUI image source. */
-  static async signinCaptcha(url: string): Promise<string> {
+  static async signinCaptcha(url: string, cookie: string = ''): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
     try {
       const response: http.HttpResponse = await request.request(url, {
         method: http.RequestMethod.GET,
         header: {
           'Accept': 'image/png,image/*',
-          'Cookie': V2exService.cookie(),
+          'Cookie': cookie.length > 0 ? cookie : V2exService.cookie(),
           'Referer': `${V2exService.base()}/signin`
         },
         connectTimeout: 8000,

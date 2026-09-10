@@ -80,7 +80,7 @@ struct Login {
       this.status = info.limited ? '当前 IP 登录尝试次数过多，可能需要等待最多 1 天后重试' : '';
       if (!info.limited && info.captchaUrl.length > 0) {
         try {
-          const image: string = await V2exService.signinCaptcha(info.captchaUrl);
+          const image: string = await V2exService.signinCaptcha(info.captchaUrl, info.cookie);
           if (sequence !== this.signinLoadSequence) return;
           this.captchaImage = image;
         }
