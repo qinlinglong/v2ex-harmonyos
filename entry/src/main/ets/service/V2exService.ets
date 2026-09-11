@@ -68,6 +68,17 @@ export class V2exService {
   /** Return the current session cookie for native image requests. */
   static sessionCookie(): string { return V2exService.cookie(); }
 
+  /**
+   * Session cookie used by the native sign-in sequence only. It deliberately
+   * excludes the WebView (H5) cookie jar so a previously logged-in H5 session
+   * can never contaminate the challenge: the GET /signin, the captcha image
+   * and the POST /signin must all share the SAME native session, otherwise the
+   * server rejects the POST with a stale-challenge error while H5 keeps working.
+   */
+  private static nativeCookieOnly(): string {
+    try { return AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { return ''; }
+  }
+
   private static mergeCookieHeaders(...headers: string[]): string {
     const values: string[] = [];
     const names: string[] = [];
@@ -98,25 +109,57 @@ export class V2exService {
     return values.join('; ');
   }
 
-  private static rememberResponseCookies(response: http.HttpResponse): void {
-    let raw: string = '';
-    try { raw = String(response.cookies ?? ''); } catch (_) { raw = ''; }
+  /**
+   * Collect every Set-Cookie value issued by the response. NetworkKit exposes
+   * the value in different shapes across API levels: `response.cookies` may be
+   * a string or an array, and `response.header['set-cookie']` may likewise be a
+   * string or an array. Normalize all shapes so a fresh PB3_SESSION is never
+   * silently dropped (a lost session makes every native login fail while H5
+   * keeps working because the WebView keeps its own jar).
+   */
+  private static collectSetCookieParts(response: http.HttpResponse): string[] {
+    const parts: string[] = [];
+    const rawCookies: Object | undefined = response.cookies;
+    if (typeof rawCookies === 'string') {
+      if (rawCookies.length > 0) parts.push(rawCookies);
+    } else if (Array.isArray(rawCookies)) {
+      const list: Object[] = rawCookies as Object[];
+      list.forEach((item: Object): void => {
+        const value: string = String(item ?? '');
+        if (value.length > 0) parts.push(value);
+      });
+    }
     try {
       const header: Record<string, Object> = response.header as Record<string, Object>;
-      raw = `${raw};${String(header['set-cookie'] ?? header['Set-Cookie'] ?? '')}`;
+      const keys: string[] = Object.keys(header);
+      const index: number = keys.findIndex((key: string): boolean => key.toLowerCase() === 'set-cookie');
+      if (index >= 0) {
+        const value: Object = header[keys[index]];
+        if (typeof value === 'string') {
+          if ((value as string).length > 0) parts.push(value as string);
+        } else if (Array.isArray(value)) {
+          const list: Object[] = value as Object[];
+          list.forEach((item: Object): void => {
+            const itemValue: string = String(item ?? '');
+            if (itemValue.length > 0) parts.push(itemValue);
+          });
+        }
+      }
     } catch (_) { /* cookie headers are optional on some API levels */ }
-    if (raw.trim().length === 0) return;
+    return parts;
+  }
+
+  private static rememberResponseCookies(response: http.HttpResponse): void {
+    const parts: string[] = V2exService.collectSetCookieParts(response);
+    if (parts.length === 0) return;
+    const raw: string = parts.join(';');
     const cookies: string[] = raw.split(/,(?=[^;,\s]+=)/g).map((item: string) => item.trim()).filter((item: string) => item.indexOf('=') > 0);
     const cookiePairs: string = cookies.map((item: string) => item.split(';')[0].trim()).filter((item: string) => item.indexOf('=') > 0).join('; ');
+    if (cookiePairs.length === 0) return;
     let current: string = '';
     try { current = AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { current = ''; }
     const cookieHeader: string = V2exService.mergeCookieHeaders(current, cookiePairs);
     try { AppStorage.setOrCreate('v2exNativeCookie', cookieHeader); } catch (_) { /* storage may be unavailable during startup */ }
-    // Do not write the native Set-Cookie value into WebCookieManager here.
-    // HarmonyOS rejects V2EX's quoted PB3_SESSION while parsing Web cookies;
-    // native requests use the normalized AppStorage value above. H5 login
-    // maintains its own WebView cookie jar.
-    try { webview.WebCookieManager.saveCookieAsync(); } catch (_) { /* best effort */ }
   }
 
   private static formInputName(html: string, label: string, fallback: string): string {
@@ -559,6 +602,7 @@ export class V2exService {
         method: http.RequestMethod.GET,
         header: {
           'Accept': 'text/html,application/xhtml+xml',
+          'Cookie': V2exService.nativeCookieOnly(),
           'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
         },
         connectTimeout: 8000,
@@ -581,7 +625,7 @@ export class V2exService {
       // Keep the cookie snapshot paired with this nonce and captcha. The
       // reference client passes the same cookie to its image request instead
       // of reading a possibly changed global jar later.
-      return { captchaUrl, cookie: V2exService.cookie(), once, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
+      return { captchaUrl, cookie: V2exService.nativeCookieOnly(), once, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
     } finally { request.destroy(); }
   }
 
@@ -593,7 +637,7 @@ export class V2exService {
         method: http.RequestMethod.GET,
         header: {
           'Accept': 'image/png,image/*',
-          'Cookie': cookie.length > 0 ? cookie : V2exService.cookie(),
+          'Cookie': cookie.length > 0 ? cookie : V2exService.nativeCookieOnly(),
           'Referer': `${V2exService.base()}/signin`
         },
         connectTimeout: 8000,
@@ -641,7 +685,7 @@ export class V2exService {
         method: http.RequestMethod.POST,
         header: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Cookie': V2exService.cookie(),
+          'Cookie': V2exService.nativeCookieOnly(),
           'Referer': `${V2exService.base()}/signin`,
           'Origin': V2exService.base(),
           'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
@@ -683,7 +727,7 @@ export class V2exService {
         method: http.RequestMethod.POST,
         header: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Cookie': V2exService.cookie(),
+          'Cookie': V2exService.nativeCookieOnly(),
           'Referer': `${V2exService.base()}/2fa`,
           'Origin': V2exService.base(),
           'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
