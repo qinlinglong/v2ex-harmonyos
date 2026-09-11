@@ -4,7 +4,7 @@ import { pasteboard } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 import { systemShare } from '@kit.ShareKit';
 import { V2exService } from '../service/V2exService';
-import { V2exMember, V2exReply, V2exTopic } from '../model/V2exModels';
+import { V2exMember, V2exReply, V2exTopic, V2exVoteResult } from '../model/V2exModels';
 import { themeAccentText, themeMutedText, themeSecondaryText, themeOnColor } from '../common/Theme';
 
 interface MarkdownTable { headers: string[]; rows: string[][]; }
@@ -569,14 +569,61 @@ struct TopicDetail {
   }
 
   private async action(kind: 'favorite' | 'thank' | 'up' | 'down' | 'ignore' | 'unignore' | 'report'): Promise<boolean> {
+    if (kind === 'thank' && this.thanked) {
+      this.actionStatus = '已感谢';
+      return false;
+    }
     this.actionStatus = '处理中…';
+    if (kind === 'up' || kind === 'down') {
+      try {
+        const result: V2exVoteResult = await V2exService.topicVote(this.topicId, kind);
+        if (!result.success) {
+          this.actionStatus = result.message ?? '请先登录';
+          return false;
+        }
+        if (!result.changed) {
+          this.actionStatus = result.message ?? '没有变化';
+          return false;
+        }
+        this.voteState = kind === 'up' ? 1 : -1;
+        if (this.topic && result.votes !== undefined) {
+          this.topic = {
+            id: this.topic.id, title: this.topic.title, content: this.topic.content, replies: this.topic.replies,
+            last_modified: this.topic.last_modified, last_touched: this.topic.last_touched, lastTouchedLabel: this.topic.lastTouchedLabel,
+            node: this.topic.node, member: this.topic.member, editable: this.topic.editable, appendable: this.topic.appendable,
+            favorited: this.topic.favorited, thanked: this.topic.thanked, ignored: this.topic.ignored, vote: this.topic.vote,
+            votes: result.votes, views: this.topic.views, likes: this.topic.likes, thanks: this.topic.thanks,
+            last_reply_by: this.topic.last_reply_by, syntax: this.topic.syntax, url: this.topic.url
+          } as V2exTopic;
+          this.saveTopicCache(this.topic);
+        }
+        this.actionStatus = kind === 'up' ? '已点赞' : '已踩';
+        return true;
+      } catch (_) {
+        this.actionStatus = '操作失败';
+        return false;
+      }
+    }
     const action = kind === 'favorite' ? (this.favorited ? 'unfavorite' : 'favorite') : kind;
     try {
       const ok: boolean = await V2exService.topicAction(this.topicId, action);
       if (ok) {
         if (kind === 'favorite') this.favorited = !this.favorited;
-        if (kind === 'thank') this.thanked = true;
-        this.actionStatus = kind === 'favorite' ? (this.favorited ? '已收藏' : '已取消收藏') : '已完成';
+        if (kind === 'thank') {
+          this.thanked = true;
+          if (this.topic) {
+            this.topic = {
+              id: this.topic.id, title: this.topic.title, content: this.topic.content, replies: this.topic.replies,
+              last_modified: this.topic.last_modified, last_touched: this.topic.last_touched, lastTouchedLabel: this.topic.lastTouchedLabel,
+              node: this.topic.node, member: this.topic.member, editable: this.topic.editable, appendable: this.topic.appendable,
+              favorited: this.topic.favorited, thanked: true, ignored: this.topic.ignored, vote: this.topic.vote, votes: this.topic.votes,
+              views: this.topic.views, likes: this.topic.likes, thanks: (this.topic.thanks ?? 0) + 1,
+              last_reply_by: this.topic.last_reply_by, syntax: this.topic.syntax, url: this.topic.url
+            } as V2exTopic;
+            this.saveTopicCache(this.topic);
+          }
+        }
+        this.actionStatus = kind === 'favorite' ? (this.favorited ? '已收藏' : '已取消收藏') : (kind === 'thank' ? '感谢已发送' : '已完成');
         return true;
       } else this.actionStatus = '请先登录';
     } catch (_) { this.actionStatus = '操作失败'; }
@@ -816,7 +863,6 @@ struct TopicDetail {
                   Button('保存追加').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.submitAppend())
                 }.width('100%').margin({ top: 8 })
               }
-              if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8 })
               ForEach(detailParts(this.parseContent ? (this.topic.content || '（无正文）') : (this.topic.content || '（无正文）').replace(/!\[[^\]]*\]\([^)]*\)/g, '')), (part: DetailPart) => {
                 if (part.kind === 'code') {
                   Column() {
@@ -890,21 +936,23 @@ struct TopicDetail {
                 }
                 Row() {
                   Text('▲').fontSize(15).fontColor(this.voteState === 1 ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode))
+                  if (this.topic.votes !== undefined && this.topic.votes > 0) {
+                    Text(`${this.topic.votes}`).fontSize(13).fontColor(this.voteState === 1 ? themeAccentText(this.themeColor, this.darkMode) : themeSecondaryText(this.darkMode)).margin({ left: 3 })
+                  }
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
                   .backgroundColor(this.darkMode ? (this.voteState === 1 ? '#243C58' : '#26313D') : (this.voteState === 1 ? '#EAF3FF' : '#F3F6FA')).borderRadius(21)
                   .onClick(async () => {
-                    const ok: boolean = await this.action('up');
-                    if (ok) this.voteState = this.voteState === 1 ? 0 : 1;
+                    await this.action('up');
                   })
                 Row() {
                   Text('▼').fontSize(15).fontColor(this.voteState === -1 ? themeSecondaryText(this.darkMode) : themeMutedText(this.darkMode))
                 }.height(42).padding({ left: 16, right: 16 }).justifyContent(FlexAlign.Center)
                   .backgroundColor(this.darkMode ? (this.voteState === -1 ? '#36404B' : '#26313D') : (this.voteState === -1 ? '#E9EDF2' : '#F3F6FA')).borderRadius(21)
                   .onClick(async () => {
-                    const ok: boolean = await this.action('down');
-                    if (ok) this.voteState = this.voteState === -1 ? 0 : -1;
+                    await this.action('down');
                   })
               }.width('100%').margin({ top: 18 })
+              if (this.actionStatus.length > 0) Text(this.actionStatus).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8 })
             }.width('100%').alignItems(HorizontalAlign.Start).padding(20).backgroundColor(this.surface())
             Row() {
               Text(`回复（${Math.max(this.topic.replies, this.replies.length)}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())

@@ -35,6 +35,8 @@ export interface V2exTopic {
   thanked?: boolean;
   ignored?: boolean;
   vote?: number;
+  /** Current topic vote count returned by the H5 vote endpoint. */
+  votes?: number;
   views?: number;
   likes?: number;
   thanks?: number;
@@ -46,6 +48,13 @@ export interface V2exTopicStats {
   views?: number;
   likes?: number;
   thanks?: number;
+}
+
+export interface V2exVoteResult {
+  success: boolean;
+  changed: boolean;
+  votes?: number;
+  message?: string;
 }
 
 export interface V2exReply {

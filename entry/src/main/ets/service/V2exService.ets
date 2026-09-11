@@ -5,7 +5,7 @@ import { util } from '@kit.ArkTS';
 import { preferences } from '@kit.ArkData';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { common } from '@kit.AbilityKit';
-import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply, V2exTopic, V2exTopicStats } from '../model/V2exModels';
+import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply, V2exTopic, V2exTopicStats, V2exVoteResult } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
 
@@ -382,6 +382,10 @@ export class V2exService {
     if (body.length === 0) return true;
     if (/class=["'][^"']*problem|操作失败|请先登录|登录失败|验证码错误/i.test(body)) return false;
     if (body.indexOf('/signin') >= 0 && !V2exService.signedInHtml(body)) return false;
+    try {
+      const data: Record<string, Object> = JSON.parse(body) as Record<string, Object>;
+      if (data.success === false) return false;
+    } catch (_) { /* a successful mutation may return an HTML fragment */ }
     return true;
   }
 
@@ -1485,6 +1489,51 @@ export class V2exService {
         expectDataType: http.HttpDataType.STRING
       });
       return V2exService.mutationSucceeded(response);
+    } finally { request.destroy(); }
+  }
+
+  /**
+   * Submit a topic vote using the same JSON contract as the H5 client.
+   * V2EX returns { changed, html, once }; an HTTP 200 alone is not enough,
+   * because repeated votes are acknowledged with changed=false.
+   */
+  static async topicVote(id: number, action: 'up' | 'down'): Promise<V2exVoteResult> {
+    const html: string = await V2exService.get(`/t/${id}`, true);
+    const once: string = V2exService.pageOnce(html);
+    if (once.length === 0) return { success: false, changed: false } as V2exVoteResult;
+    const request: http.HttpRequest = http.createHttp();
+    try {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/topic/${id}?once=${V2exService.formValue(once)}`, {
+        method: http.RequestMethod.POST,
+        header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${id}` },
+        connectTimeout: 8000,
+        readTimeout: 12000,
+        expectDataType: http.HttpDataType.STRING
+      });
+      const body: string = typeof response.result === 'string' ? response.result : '';
+      let changed: boolean = true;
+      let voteHtml: string = body;
+      let message: string = '';
+      let hasVoteHtml: boolean = body.trim().startsWith('<');
+      try {
+        const data: Record<string, Object> = JSON.parse(body) as Record<string, Object>;
+        if (data.changed !== undefined) changed = data.changed === true;
+        if (typeof data.html === 'string') {
+          voteHtml = data.html as string;
+          hasVoteHtml = true;
+        }
+        if (typeof data.message === 'string') message = data.message as string;
+      } catch (_) { /* older servers may return an HTML fragment directly */ }
+      if (!V2exService.mutationSucceeded(response)) {
+        return message.length > 0 ? { success: false, changed: false, message } as V2exVoteResult : { success: false, changed: false } as V2exVoteResult;
+      }
+      const plain: string = hasVoteHtml ? V2exService.cleanHtml(voteHtml) : '';
+      const countMatch: RegExpMatchArray | null = plain.match(/-?\d+/);
+      const votes: number | undefined = countMatch ? Number(countMatch[0]) : undefined;
+      if (votes === undefined) {
+        return message.length > 0 ? { success: true, changed, message } as V2exVoteResult : { success: true, changed } as V2exVoteResult;
+      }
+      return message.length > 0 ? { success: true, changed, votes, message } as V2exVoteResult : { success: true, changed, votes } as V2exVoteResult;
     } finally { request.destroy(); }
   }
 
