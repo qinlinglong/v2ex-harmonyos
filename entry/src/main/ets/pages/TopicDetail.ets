@@ -176,6 +176,35 @@ function replyTextParts(value: string): ReplyTextPart[] {
   return parts;
 }
 
+/**
+ * V2EX sometimes serializes a mention as two adjacent blocks (`@` followed
+ * by a linked username), with a newline between them. Merge those blocks
+ * before rendering so the mention remains one inline, clickable unit.
+ */
+function replyDetailParts(value: string): DetailPart[] {
+  const source: DetailPart[] = detailParts(value);
+  const result: DetailPart[] = [];
+  for (let index = 0; index < source.length; index += 1) {
+    const current: DetailPart = source[index];
+    const next: DetailPart | undefined = source[index + 1];
+    const currentText: string = current.kind === 'text' ? current.value : '';
+    const atIndex: number = currentText.lastIndexOf('@');
+    if (atIndex >= 0 && next !== undefined && (next.kind === 'link' || next.kind === 'text')) {
+      const prefix: string = currentText.substring(0, atIndex);
+      const mentionName: string = next.kind === 'link' ? (next.label ?? next.value) : next.value;
+      const between: string = currentText.substring(atIndex + 1).replace(/[\s\r\n]+$/g, '');
+      if (between.length === 0 && mentionName.trim().length > 0 && !mentionName.includes('\n')) {
+        if (prefix.length > 0) result.push({ kind: 'text', value: prefix });
+        result.push({ kind: 'mention', value: mentionName.trim(), label: next.kind === 'link' ? next.value : undefined });
+        index += 1;
+        continue;
+      }
+    }
+    result.push(current);
+  }
+  return result;
+}
+
 function hasReplyReferences(value: string): boolean {
   return /@(?:<a\s+href=["']\/member\/[^"']+["'][^>]*>[\s\S]*?<\/a>|[A-Za-z0-9_\-\u4e00-\u9fff]+)/i.test(value);
 }
@@ -904,7 +933,7 @@ struct TopicDetail {
                     Button('保存').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.saveReplyEdit())
                   }.width('100%').margin({ top: 8 })
                 } else {
-                  ForEach(detailParts(reply.content), (part: DetailPart) => {
+                  ForEach(replyDetailParts(reply.content), (part: DetailPart) => {
                     if (part.kind === 'code') {
                       Text(part.value).fontSize(13).fontColor(this.bodyText()).lineHeight(20).fontFamily('monospace')
                         .width('100%').padding(10).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
@@ -934,6 +963,12 @@ struct TopicDetail {
                     } else if (part.kind === 'image') {
                       Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
                         .onClick(() => this.openLink(part.value))
+                    } else if (part.kind === 'mention') {
+                      Text(`@${part.value}`).fontSize(15).fontColor(themeAccentText(this.themeColor, this.darkMode)).lineHeight(23).margin({ top: 8 })
+                        .maxLines(1).wordBreak(WordBreak.BREAK_WORD).flexShrink(0)
+                        .decoration({ type: TextDecorationType.Underline, color: themeAccentText(this.themeColor, this.darkMode) })
+                        .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
+                        .editMenuOptions(this.selectionMenu(`@${part.value}`)).onClick(() => router.pushUrl({ url: 'pages/Profile', params: { username: part.value } }))
                     } else if (part.kind === 'link') {
                       Text(part.label ?? part.value).fontSize(15).fontColor(themeAccentText(this.themeColor, this.darkMode)).lineHeight(23).margin({ top: 8 })
                         .decoration({ type: TextDecorationType.Underline, color: themeAccentText(this.themeColor, this.darkMode) })
