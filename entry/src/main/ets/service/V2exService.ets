@@ -325,8 +325,8 @@ export class V2exService {
   }
   private static signedInHtml(html: string): boolean {
     // Current V2EX uses /signout?once=... while older pages used /logout.
-    // Match the reference client: a member link alone is not evidence of an
-    // authenticated session because failed pages can contain member links too.
+    // A member link alone is not evidence of an authenticated session because
+    // failed pages can contain member links too.
     return /\/(?:signout|logout)\b/i.test(html);
   }
   private static mutationSucceeded(response: http.HttpResponse): boolean {
@@ -722,10 +722,8 @@ export class V2exService {
           if (source?.[1]) { captchaPath = source[1]; break; }
         }
       }
-      // Keep the exact URL from the form. The reference client disables the
-      // HTTP cache for this binary request; adding a cache-busting query here
-      // can make V2EX issue a different challenge for endpoints such as
-      // /_captcha, leaving the displayed image and POST code out of sync.
+      // Keep the exact URL from the form. Disabling the HTTP cache for this
+      // binary request avoids a second challenge being issued by V2EX.
       const captchaUrl: string = captchaPath.length > 0
         ? (captchaPath.startsWith('http') ? captchaPath : `${V2exService.base()}${captchaPath.startsWith('/') ? captchaPath : `/${captchaPath}`}`)
         : '';
@@ -735,9 +733,8 @@ export class V2exService {
       const passwordField: string = signinFields.password;
       const codeField: string = signinFields.code;
       const next: string = V2exService.formHiddenValue(html, 'next');
-      // Keep the cookie snapshot paired with this nonce and captcha. The
-      // reference client passes the same cookie to its image request instead
-      // of reading a possibly changed global jar later.
+      // Keep the cookie snapshot paired with this nonce and captcha and pass
+      // it to the image request instead of reading a changed global jar later.
       const sessionCookie: string = V2exService.nativeCookieOnly();
       return { captchaUrl, cookie: sessionCookie, once, next, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
     } finally { request.destroy(); }
@@ -828,9 +825,9 @@ export class V2exService {
       }
       const problem: string = V2exService.signinProblem(html);
       if (problem.length > 0) throw new Error(problem);
-      // Match the reference client: the POST response itself is authoritative
-      // when it contains the current V2EX signout action. Fetching /settings
-      // is only a best-effort way to populate the cached member afterwards.
+      // The POST response itself is authoritative when it contains the
+      // current V2EX signout action. Fetching /settings is only a best-effort
+      // way to populate the cached member afterwards.
       if (V2exService.signedInHtml(html)) {
         let member: V2exMember | undefined = undefined;
         try { member = await V2exService.currentMember(); } catch (_) { member = undefined; }

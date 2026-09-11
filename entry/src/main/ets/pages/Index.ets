@@ -123,6 +123,13 @@ struct Index {
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
   private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
+  private toggleDarkMode(): void {
+    this.darkMode = !this.darkMode;
+    // Re-registering after the value changes writes the current value to the
+    // persistent store even when the page was created before the binding.
+    PersistentStorage.persistProp('v2exDarkMode', this.darkMode);
+    applyThemeSystemBars(this.darkMode);
+  }
 
   private isTopicTab(): boolean {
     const type: string = this.activeTab().type;
@@ -494,7 +501,7 @@ struct Index {
                   else Image($r('app.media.ic_dark_moon')).width(20).height(20).objectFit(ImageFit.Contain)
                 }
                   .width(56).height(32).borderRadius(16).backgroundColor(this.themeColor)
-                  .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
+                  .onClick(() => this.toggleDarkMode())
               }.width('100%').padding({ left: 20, right: 20, top: 12, bottom: 12 }).backgroundColor(this.surface()).margin({ top: 1 })
               this.drawerItem('更多选项', 'Settings')
             }.width('100%')

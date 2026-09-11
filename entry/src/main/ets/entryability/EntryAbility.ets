@@ -22,10 +22,9 @@ const DOMAIN = 0x0000;
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     try {
-      // Bind the preference before the start window is resolved. Otherwise a
-      // device running in dark system mode can show a dark splash while the
-      // app preference (and the first page) is light.
-      PersistentStorage.persistProp('v2exDarkMode', false);
+      // Bind the preference before the start window is resolved so the splash
+      // and the first page use the saved appearance setting.
+      PersistentStorage.persistProps([{ key: 'v2exDarkMode', defaultValue: false }]);
       const darkMode: boolean = AppStorage.get<boolean>('v2exDarkMode') ?? false;
       this.context.getApplicationContext().setColorMode(
         darkMode ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
