@@ -343,6 +343,27 @@ export class V2exService {
     return true;
   }
 
+  /**
+   * V2EX has used both a hidden input and a page-level `var once = ...` over
+   * time. The current topic page exposes the latter, so accepting only an
+   * input makes native replies fail while the browser can still post them.
+   */
+  private static pageOnce(html: string): string {
+    const hidden: RegExpMatchArray | null = html.match(/<input\b[^>]*\bname\s*=\s*["']once["'][^>]*\bvalue\s*=\s*["']([^"']+)["'][^>]*>/i)
+      ?? html.match(/<input\b[^>]*\bvalue\s*=\s*["']([^"']+)["'][^>]*\bname\s*=\s*["']once["'][^>]*>/i);
+    if (hidden?.[1]) return hidden[1];
+    const script: RegExpMatchArray | null = html.match(/(?:var|let|const)\s+once\s*=\s*["']([^"']+)["']/i);
+    if (script?.[1]) return script[1];
+    const link: RegExpMatchArray | null = html.match(/[?&]once=([^&"'\s>]+)/i);
+    return link?.[1] ?? '';
+  }
+
+  private static mutationError(response: http.HttpResponse): string {
+    const body: string = typeof response.result === 'string' ? response.result : '';
+    const problem: RegExpMatchArray | null = body.match(/class=["'][^"']*problem[^"']*["'][\s\S]*?<li[^>]*>([\s\S]*?)<\/li>/i);
+    return V2exService.cleanHtml(problem?.[1] ?? '');
+  }
+
   /** Return the rendered H5 block for one reply only. */
   private static replyBlock(html: string, replyId: number): string {
     const match: RegExpMatchArray | null = html.match(new RegExp(`id=["']r_${replyId}["'][\\s\\S]*?(?=id=["']r_\\d+["']|$)`, 'i'));
@@ -1269,29 +1290,33 @@ export class V2exService {
 
   static async reply(topicId: number, content: string): Promise<boolean> {
     const html: string = await V2exService.get(`/t/${topicId}`, true);
-    const onceMatch: RegExpMatchArray | null = html.match(/(?:name|value)=["']once["'][^>]*value=["']([^"']+)["']/i) || html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
-    if (!onceMatch) return false;
+    const once: string = V2exService.pageOnce(html);
+    if (once.length === 0) throw new Error(V2exService.signedInHtml(html) ? '回复令牌获取失败，请刷新主题后重试' : '登录状态已失效，请重新登录');
     const request: http.HttpRequest = http.createHttp();
     try {
       const response: http.HttpResponse = await request.request(`${V2exService.base()}/t/${topicId}`, {
         method: http.RequestMethod.POST,
         header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${topicId}` },
-        extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(onceMatch[1])}`,
+        extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(once)}`,
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
       });
-      return V2exService.mutationSucceeded(response);
+      if (!V2exService.mutationSucceeded(response)) {
+        const reason: string = V2exService.mutationError(response);
+        throw new Error(reason.length > 0 ? reason : (V2exService.signedInHtml(String(response.result ?? '')) ? '回复失败，请稍后重试' : '登录状态已失效，请重新登录'));
+      }
+      return true;
     } finally { request.destroy(); }
   }
 
   static async replyAction(topicId: number, replyId: number, action: 'thank' | 'ignore'): Promise<boolean> {
     const html: string = await V2exService.get(`/t/${topicId}`, true);
-    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
-    if (!onceMatch) return false;
+    const once: string = V2exService.pageOnce(html);
+    if (once.length === 0) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
-      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/reply/${replyId}?once=${V2exService.formValue(onceMatch[1])}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/reply/${replyId}?once=${V2exService.formValue(once)}`, {
         method: http.RequestMethod.POST,
         header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${topicId}` },
         connectTimeout: 8000,
@@ -1304,14 +1329,14 @@ export class V2exService {
 
   static async editReply(replyId: number, content: string): Promise<boolean> {
     const html: string = await V2exService.get(`/edit/reply/${replyId}`, true);
-    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
-    if (!onceMatch) return false;
+    const once: string = V2exService.pageOnce(html);
+    if (once.length === 0) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
       const response: http.HttpResponse = await request.request(`${V2exService.base()}/edit/reply/${replyId}`, {
         method: http.RequestMethod.POST,
         header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/edit/reply/${replyId}` },
-        extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(onceMatch[1])}`,
+        extraData: `content=${V2exService.formValue(content)}&once=${V2exService.formValue(once)}`,
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
@@ -1322,14 +1347,14 @@ export class V2exService {
 
   static async appendTopic(topicId: number, content: string): Promise<boolean> {
     const html: string = await V2exService.get(`/t/${topicId}`, true);
-    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
-    if (!onceMatch) return false;
+    const once: string = V2exService.pageOnce(html);
+    if (once.length === 0) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
       const response: http.HttpResponse = await request.request(`${V2exService.base()}/append/topic/${topicId}`, {
         method: http.RequestMethod.POST,
         header: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${topicId}` },
-        extraData: `content=${V2exService.formValue(content)}&syntax=default&once=${V2exService.formValue(onceMatch[1])}`,
+        extraData: `content=${V2exService.formValue(content)}&syntax=default&once=${V2exService.formValue(once)}`,
         connectTimeout: 8000,
         readTimeout: 12000,
         expectDataType: http.HttpDataType.STRING
@@ -1395,12 +1420,12 @@ export class V2exService {
 
   static async topicAction(id: number, action: 'favorite' | 'unfavorite' | 'thank' | 'up' | 'down' | 'ignore' | 'unignore' | 'report'): Promise<boolean> {
     const html: string = await V2exService.get(`/t/${id}`, true);
-    const onceMatch: RegExpMatchArray | null = html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
-    if (!onceMatch) return false;
+    const once: string = V2exService.pageOnce(html);
+    if (once.length === 0) return false;
     const request: http.HttpRequest = http.createHttp();
     try {
       const method: http.RequestMethod = action === 'thank' || action === 'up' || action === 'down' ? http.RequestMethod.POST : http.RequestMethod.GET;
-      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/topic/${id}?once=${V2exService.formValue(onceMatch[1])}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/${action}/topic/${id}?once=${V2exService.formValue(once)}`, {
         method,
         header: { 'Cookie': V2exService.cookie(), 'Referer': `${V2exService.base()}/t/${id}` },
         connectTimeout: 8000,

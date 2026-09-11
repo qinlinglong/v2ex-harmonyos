@@ -158,12 +158,16 @@ function plainMarkdown(value: string): string {
 
 function replyTextParts(value: string): ReplyTextPart[] {
   const parts: ReplyTextPart[] = [];
-  const pattern: RegExp = /@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g;
+  // Keep forum emoji inside the same text flow, but render the glyph a little
+  // smaller because HarmonyOS color emoji metrics are larger than Latin text
+  // at the same font size. Mentions remain separate so they stay clickable.
+  const pattern: RegExp = /@([A-Za-z0-9_\-\u4e00-\u9fff]+)|([\uD83C-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF])/g;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(value);
   while (match !== null) {
     if (match.index > cursor) parts.push({ kind: 'text', value: value.substring(cursor, match.index) });
-    parts.push({ kind: 'mention', value: match[1] });
+    if (match[1]) parts.push({ kind: 'mention', value: match[1] });
+    else if (match[2]) parts.push({ kind: 'emoji', value: match[2] });
     cursor = match.index + match[0].length;
     match = pattern.exec(value);
   }
@@ -503,8 +507,10 @@ struct TopicDetail {
         this.replyComposerOpen = false;
         await this.load();
       }
-      else this.replyStatus = '回复失败，请先登录';
-    } catch (_) { this.replyStatus = '回复失败，请先登录'; }
+      else this.replyStatus = '回复失败，请检查登录状态或稍后重试';
+    } catch (error) {
+      this.replyStatus = error instanceof Error ? error.message : '回复失败，请稍后重试';
+    }
     finally { this.replying = false; }
   }
 
@@ -928,7 +934,7 @@ struct TopicDetail {
                       Flex({ wrap: FlexWrap.Wrap }) {
                         ForEach(replyTextParts(plainMarkdown(part.value)), (fragment: ReplyTextPart) => {
                           Text(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value)
-                            .fontSize(15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(23)
+                            .fontSize(fragment.kind === 'emoji' ? 12 : 15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(23)
                             .decoration({ type: fragment.kind === 'mention' ? TextDecorationType.Underline : TextDecorationType.None, color: themeAccentText(this.themeColor, this.darkMode) })
                             .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
                             .editMenuOptions(this.selectionMenu(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value))
