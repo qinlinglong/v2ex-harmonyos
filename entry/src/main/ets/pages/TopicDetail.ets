@@ -87,7 +87,11 @@ function isImageUrl(value: string): boolean {
 // full-width layout.
 function isInlineEmojiImage(value: string, label: string = ''): boolean {
   return /(?:emoji|emoticon|smiley|smileys|emotion|twemoji|\/face(?:s)?\/)/i.test(`${value} ${label}`)
-    || label.indexOf('表情') >= 0;
+    || label.indexOf('表情') >= 0
+    // V2EX_Polish uses this fixed Imgur resource set for Bilibili
+    // expressions. The rendered HTML does not always retain an emoji class
+    // or alt text, so identify those resources by their stable image ids.
+    || /i\.imgur\.com\/(?:L62ZP7V|3mPhudo|agAJ0Rd|HZL0hOa|n119Wvk|A5WXoZJ|U3hKhrT|3gCygBS|14cwgsI|fLp3t8s|km62MY2|CXXgF4E|TkdeN49|m7IlCrD|MAyk5GN|eRJTCx7|Ug1iMq4|Gy3nwkC|e1q9ScT|wMfcBqD|YGIx7lh|SNHJxtv|5FDsp6L|wnQBodT|pmNOo2w|4GfTlV0|XzEYBoY|84ycU43|2spsghH|oEIJRru|6DMydmQ|PE2dyjY|TYtySHv|0pjsMf0|Ac88cMm|nkoevMu|O6ZZSLk|ggHTLzH|NIvxivj|h8edr5G|rjR4rdr|GMzq0tq|N9E3iZ2|L1N27tb|aptfuiN|cuzxGOI|4aXVwxJ|q663Mor|c1Q76Cd|xMXlmxm|HgxsUD2|0aOdQJd|OZySWIG|ngoi2I6|jrVZoLi|O8alqc1|OVQjxIr|1PeoVR5|Ue1kikn|vOHzwus|aF7QiE5|WneGpK9)\.(?:png|jpe?g|webp)(?:[?#].*)?$/i.test(value);
 }
 
 function splitTableRow(line: string): string[] {
