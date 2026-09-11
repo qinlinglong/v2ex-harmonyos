@@ -52,16 +52,16 @@ function appendInlineParts(parts: DetailPart[], markdown: string): void {
   // V2EX's native format leaves image URLs as plain text (for example
   // https://i.v2ex.co/xxxx.png). Keep Markdown links and native links in the
   // same pass so both formats render identically.
-  const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|((?:https?:\/\/|\/\/)[^\s<>()]+)/gi;
+  const pattern: RegExp = /!\[([^\]]*)\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|((?:https?:\/\/|\/\/)[^\s<>()]+)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
     const before: string = markdown.substring(cursor, match.index);
     if (before.length > 0) appendTextWithLinks(parts, before);
-    if (match[1]) parts.push({ kind: 'image', value: match[1] });
-    else if (match[2]) parts.push({ kind: 'link', value: match[3], label: match[2] });
+    if (match[2]) parts.push({ kind: 'image', value: match[2], label: match[1] });
+    else if (match[3]) parts.push({ kind: 'link', value: match[4], label: match[3] });
     else {
-      const rawUrl: string = match[4];
+      const rawUrl: string = match[5];
       const url: string = rawUrl.replace(/[.,!?;:，。！？；：）)]+$/g, '');
       const punctuation: string = rawUrl.substring(url.length);
       if (isImageUrl(url)) parts.push({ kind: 'image', value: url });
@@ -85,8 +85,9 @@ function isImageUrl(value: string): boolean {
 // The web page renders forum emoticons as small inline images. They arrive here as
 // ordinary image parts, so identify those paths before using the body-image
 // full-width layout.
-function isInlineEmojiImage(value: string): boolean {
-  return /(?:emoji|emoticon|smiley|smileys|emotion|twemoji|\/face(?:s)?\/)/i.test(value);
+function isInlineEmojiImage(value: string, label: string = ''): boolean {
+  return /(?:emoji|emoticon|smiley|smileys|emotion|twemoji|\/face(?:s)?\/)/i.test(`${value} ${label}`)
+    || label.indexOf('表情') >= 0;
 }
 
 function splitTableRow(line: string): string[] {
@@ -900,7 +901,7 @@ struct TopicDetail {
                   }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
                     .margin({ top: 16, bottom: 4 })
                 } else if (part.kind === 'image') {
-                  if (isInlineEmojiImage(part.value)) {
+                  if (isInlineEmojiImage(part.value, part.label)) {
                     Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                       .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                   } else {
@@ -1036,7 +1037,7 @@ struct TopicDetail {
                       }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
                         .margin({ top: 10, bottom: 2 })
                     } else if (part.kind === 'image') {
-                      if (isInlineEmojiImage(part.value)) {
+                      if (isInlineEmojiImage(part.value, part.label)) {
                         Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                           .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                       } else {

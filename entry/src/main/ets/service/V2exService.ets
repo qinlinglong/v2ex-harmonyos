@@ -345,7 +345,13 @@ export class V2exService {
   }
   private static htmlContentToMarkdown(value: string): string {
     const withImages: string = value.replace(/<img\b[^>]*?\bsrc\s*=\s*(?:["']([^"']+)["']|([^\s>]+))[^>]*>/gi,
-      (_full: string, quoted: string, unquoted: string) => `\n![图片](${quoted ?? unquoted})\n`);
+      (full: string, quoted: string, unquoted: string) => {
+        const classMatch: RegExpMatchArray | null = full.match(/\bclass=["']([^"']*)["']/i);
+        const altMatch: RegExpMatchArray | null = full.match(/\balt=["']([^"']*)["']/i);
+        const metadata: string = `${classMatch?.[1] ?? ''} ${altMatch?.[1] ?? ''}`;
+        const label: string = /emoji|emoticon|smiley|smileys|emotion|twemoji|faces?/i.test(metadata) ? '表情' : '图片';
+        return `\n![${label}](${quoted ?? unquoted})\n`;
+      });
     const withLinks: string = withImages
       .replace(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
       .replace(/<\/p>|<br\s*\/?>(\r?\n)?/gi, '\n');
