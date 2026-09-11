@@ -182,7 +182,14 @@ function replyTextParts(value: string): ReplyTextPart[] {
  * before rendering so the mention remains one inline, clickable unit.
  */
 function replyDetailParts(value: string): DetailPart[] {
-  const source: DetailPart[] = detailParts(value);
+  // The rendered H5 markup may put the @ marker and its linked username on
+  // separate lines. Remove that structural newline, and the first newline
+  // after the mention, before parsing. This keeps @username and a short reply
+  // body in the same visual line while leaving unrelated paragraph breaks.
+  const normalized: string = value
+    .replace(/@\s*\r?\n\s*(?=(?:\[[^\]]+\]\(|[A-Za-z0-9_\-\u4e00-\u9fff]))/g, '@')
+    .replace(/(\[[^\]]+\]\((?:https?:\/\/|\/)[^)]+\)|@[A-Za-z0-9_\-\u4e00-\u9fff]+)\s*\r?\n\s*/g, '$1 ');
+  const source: DetailPart[] = detailParts(normalized);
   const result: DetailPart[] = [];
   for (let index = 0; index < source.length; index += 1) {
     const current: DetailPart = source[index];
@@ -195,8 +202,17 @@ function replyDetailParts(value: string): DetailPart[] {
       const between: string = currentText.substring(atIndex + 1).replace(/[\s\r\n]+$/g, '');
       if (between.length === 0 && mentionName.trim().length > 0 && !mentionName.includes('\n')) {
         if (prefix.length > 0) result.push({ kind: 'text', value: prefix });
-        result.push({ kind: 'mention', value: mentionName.trim(), label: next.kind === 'link' ? next.value : undefined });
-        index += 1;
+        const following: DetailPart | undefined = source[index + 2];
+        if (following?.kind === 'text' && following.value.length > 0) {
+          const hadBreak: boolean = /^\s*\r?\n/.test(following.value);
+          let tail: string = hadBreak ? following.value.replace(/^\s*\r?\n\s*/, ' ') : following.value;
+          if (!hadBreak && tail.length > 0 && !/^\s/.test(tail)) tail = ` ${tail}`;
+          result.push({ kind: 'text', value: `@${mentionName.trim()}${tail}` });
+          index += 2;
+        } else {
+          result.push({ kind: 'mention', value: mentionName.trim(), label: next.kind === 'link' ? next.value : undefined });
+          index += 1;
+        }
         continue;
       }
     }
