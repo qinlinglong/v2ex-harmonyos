@@ -497,10 +497,19 @@ struct TopicDetail {
   }
 
   private async submitReply(): Promise<void> {
-    if (this.replyText.trim().length === 0 || this.replying) return;
+    // Take a stable snapshot before starting the request. The IME can emit a
+    // final composition change while the send button is tapped; submitting
+    // the snapshot prevents a visible non-empty editor from becoming an empty
+    // form value, and gives the user feedback when it really is blank.
+    const message: string = this.replyText.replace(/[\u200B\u200C\u200D]/g, '').trim();
+    if (message.length === 0) {
+      this.replyStatus = '回复内容不能为空';
+      return;
+    }
+    if (this.replying) return;
     this.replying = true; this.replyStatus = '发送中…';
     try {
-      const ok: boolean = await V2exService.reply(this.topicId, this.replyText.trim());
+      const ok: boolean = await V2exService.reply(this.topicId, message);
       if (ok) {
         this.replyText = '';
         this.replyStatus = '回复成功';
