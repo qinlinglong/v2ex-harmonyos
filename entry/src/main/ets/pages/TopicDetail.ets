@@ -945,10 +945,11 @@ struct TopicDetail {
                     Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                       .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                   } else {
-                    // The H5 page caps embedded images at 500px. ArkUI can
-                    // otherwise keep the source dimensions when only a
-                    // percentage constraint is supplied.
-                    Image(this.contentUrl(part.value)).width(170).height(170).objectFit(ImageFit.Contain)
+                    // The H5 page allows embedded images up to the content
+                    // column width (about 500 CSS px). Keep a bounded native
+                    // box that maps to that width on the phone while leaving
+                    // a separate 18vp path for inline expressions.
+                    Image(this.contentUrl(part.value)).width(330).height(330).objectFit(ImageFit.Contain)
                       .margin({ top: 14, bottom: 4 })
                       .onClick(() => this.openLink(part.value))
                   }
@@ -1084,12 +1085,9 @@ struct TopicDetail {
                         Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                           .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                       } else {
-                        // ArkUI keeps an image's intrinsic width when only a
-                        // percentage constraint is supplied. A reply image
-                        // could therefore occupy the whole 1120px viewport.
-                        // Match the H5 embedded-image limit with a bounded
-                        // container and preserve the source aspect ratio.
-                        Image(this.contentUrl(part.value)).width(170).height(170).objectFit(ImageFit.Contain).margin({ top: 10 })
+                        // Use the same H5-sized bounded box for reply images;
+                        // inline expressions take the 18vp branch above.
+                        Image(this.contentUrl(part.value)).width(330).height(330).objectFit(ImageFit.Contain).margin({ top: 10 })
                           .onClick(() => this.openLink(part.value))
                       }
                     } else if (part.kind === 'mention') {
