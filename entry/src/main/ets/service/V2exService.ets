@@ -11,6 +11,7 @@ export interface V2exSigninInfo {
   captchaUrl: string;
   cookie: string;
   once: string;
+  next: string;
   usernameField: string;
   passwordField: string;
   codeField: string;
@@ -79,6 +80,16 @@ export class V2exService {
     try { return AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { return ''; }
   }
 
+  /**
+   * Start a fresh native sign-in session. A failed challenge can leave the
+   * server-side PB3 session bound to an already consumed captcha; retaining
+   * that cookie on the next form refresh makes a visually new image fail even
+   * when the entered characters are correct. Keep the H5 cookie jar untouched.
+   */
+  static resetNativeSigninSession(): void {
+    try { AppStorage.setOrCreate('v2exNativeCookie', ''); } catch (_) { /* storage may be unavailable during startup */ }
+  }
+
   private static mergeCookieHeaders(...headers: string[]): string {
     const values: string[] = [];
     const names: string[] = [];
@@ -129,28 +140,33 @@ export class V2exService {
         if (value.length > 0) parts.push(value);
       });
     }
+    parts.push(...V2exService.collectHeaderSetCookieParts(response.header));
+    return parts;
+  }
+
+  private static collectHeaderSetCookieParts(value: Object): string[] {
+    const parts: string[] = [];
     try {
-      const header: Record<string, Object> = response.header as Record<string, Object>;
+      const header: Record<string, Object> = value as Record<string, Object>;
       const keys: string[] = Object.keys(header);
       const index: number = keys.findIndex((key: string): boolean => key.toLowerCase() === 'set-cookie');
-      if (index >= 0) {
-        const value: Object = header[keys[index]];
-        if (typeof value === 'string') {
-          if ((value as string).length > 0) parts.push(value as string);
-        } else if (Array.isArray(value)) {
-          const list: Object[] = value as Object[];
-          list.forEach((item: Object): void => {
-            const itemValue: string = String(item ?? '');
-            if (itemValue.length > 0) parts.push(itemValue);
-          });
-        }
+      if (index < 0) return parts;
+      const cookieValue: Object = header[keys[index]];
+      if (typeof cookieValue === 'string') {
+        if ((cookieValue as string).length > 0) parts.push(cookieValue as string);
+      } else if (Array.isArray(cookieValue)) {
+        const list: Object[] = cookieValue as Object[];
+        list.forEach((item: Object): void => {
+          const itemValue: string = String(item ?? '');
+          if (itemValue.length > 0) parts.push(itemValue);
+        });
       }
     } catch (_) { /* cookie headers are optional on some API levels */ }
     return parts;
   }
 
-  private static rememberResponseCookies(response: http.HttpResponse): void {
-    const parts: string[] = V2exService.collectSetCookieParts(response);
+  private static rememberResponseCookies(response: http.HttpResponse, headerCookies: string[] = []): void {
+    const parts: string[] = V2exService.collectSetCookieParts(response).concat(headerCookies);
     if (parts.length === 0) return;
     const raw: string = parts.join(';');
     const cookies: string[] = raw.split(/,(?=[^;,\s]+=)/g).map((item: string) => item.trim()).filter((item: string) => item.indexOf('=') > 0);
@@ -597,24 +613,37 @@ export class V2exService {
 
   static async signinInfo(): Promise<V2exSigninInfo> {
     const request: http.HttpRequest = http.createHttp();
+    const headerCookies: string[] = [];
+    request.on('headersReceive', (headers: Object): void => {
+      headerCookies.push(...V2exService.collectHeaderSetCookieParts(headers));
+    });
     try {
-      const response: http.HttpResponse = await request.request(`${V2exService.base()}/signin?now=${Date.now()}`, {
+      const response: http.HttpResponse = await request.request(`${V2exService.base()}/signin`, {
         method: http.RequestMethod.GET,
         header: {
-          'Accept': 'text/html,application/xhtml+xml',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip',
           'Cookie': V2exService.nativeCookieOnly(),
           'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
         },
         connectTimeout: 8000,
         readTimeout: 12000,
+        usingCache: false,
         expectDataType: http.HttpDataType.STRING
       });
-      V2exService.rememberResponseCookies(response);
+      V2exService.rememberResponseCookies(response, headerCookies);
       if (response.responseCode < 200 || response.responseCode >= 400) throw new Error(`登录页请求失败 (${response.responseCode})`);
       const html: string = String(response.result ?? '');
-      const captchaMatch: RegExpMatchArray | null = html.match(/<img[^>]+(?:id|name)=["']captcha-image["'][^>]+src=["']([^"']+)["']/i)
-        ?? html.match(/<img[^>]+src=["']([^"']+)["'][^>]*(?:id|name)=["']captcha-image["']/i);
-      const captchaPath: string = captchaMatch?.[1] ?? '';
+      const imageTags: RegExpMatchArray | null = html.match(/<img\b[^>]*>/gi);
+      let captchaPath: string = '';
+      if (imageTags) {
+        for (const tag of imageTags) {
+          if (!/captcha|验证码/i.test(tag)) continue;
+          const source: RegExpMatchArray | null = tag.match(/\bsrc=["']([^"']+)["']/i);
+          if (source?.[1]) { captchaPath = source[1]; break; }
+        }
+      }
       const captchaUrl: string = captchaPath.length > 0
         ? (captchaPath.startsWith('http') ? captchaPath : `${V2exService.base()}${captchaPath.startsWith('/') ? captchaPath : `/${captchaPath}`}`) + (captchaPath.indexOf('?') >= 0 ? `&now=${Date.now()}` : `?now=${Date.now()}`)
         : '';
@@ -622,10 +651,11 @@ export class V2exService {
       const usernameField: string = V2exService.formInputName(html, '用户名|username|email', 'u');
       const passwordField: string = V2exService.formInputName(html, '密码|password', 'p');
       const codeField: string = V2exService.formInputName(html, '验证码|captcha|code|机器', 'code');
+      const next: string = V2exService.formHiddenValue(html, 'next');
       // Keep the cookie snapshot paired with this nonce and captcha. The
       // reference client passes the same cookie to its image request instead
       // of reading a possibly changed global jar later.
-      return { captchaUrl, cookie: V2exService.nativeCookieOnly(), once, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
+      return { captchaUrl, cookie: V2exService.nativeCookieOnly(), once, next, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
     } finally { request.destroy(); }
   }
 
@@ -642,14 +672,16 @@ export class V2exService {
         },
         connectTimeout: 8000,
         readTimeout: 12000,
+        usingCache: false,
         // Keep the challenge as binary data. Falling back to a URL can issue
         // a second request without the native Cookie and display a different
         // code from the one accepted by the matching POST.
         expectDataType: http.HttpDataType.ARRAY_BUFFER
       });
-      // Some V2EX deployments refresh PB3_SESSION while issuing the image.
-      // Keep that session paired with the challenge used by the subsequent POST.
-      V2exService.rememberResponseCookies(response);
+      // Keep the form session captured by signinInfo intact. The captcha
+      // endpoint can emit an unrelated refresh cookie on some gateways; if
+      // that value replaces PB3_SESSION here, the image and POST no longer
+      // refer to the same challenge.
       if (response.responseCode < 200 || response.responseCode >= 400) throw new Error(`验证码请求失败 (${response.responseCode})`);
       // ARRAY_BUFFER is returned as ArrayBuffer on most API levels, while a
       // few device builds expose a Uint8Array view. Normalize both forms
@@ -678,14 +710,22 @@ export class V2exService {
     // Keep the native POST identical to the web form. The field
     // names are deployment-specific hashes; the H5 client submits only those
     // fields and the hidden nonce (the username is stripped before posting).
-    const values: string = `${V2exService.formValue(info.usernameField)}=${V2exService.formValue(username)}&${V2exService.formValue(info.passwordField)}=${V2exService.formValue(password.trim())}&${V2exService.formValue(info.codeField)}=${V2exService.formValue(code.trim())}&once=${V2exService.formValue(info.once)}`;
+    const nextValue: string = info.next.length > 0 ? `&next=${V2exService.formValue(info.next)}` : '';
+    const values: string = `${V2exService.formValue(info.usernameField)}=${V2exService.formValue(username)}&${V2exService.formValue(info.passwordField)}=${V2exService.formValue(password.trim())}&${V2exService.formValue(info.codeField)}=${V2exService.formValue(code.trim())}&once=${V2exService.formValue(info.once)}${nextValue}`;
     const request: http.HttpRequest = http.createHttp();
+    const headerCookies: string[] = [];
+    request.on('headersReceive', (headers: Object): void => {
+      headerCookies.push(...V2exService.collectHeaderSetCookieParts(headers));
+    });
     try {
       const response: http.HttpResponse = await request.request(`${V2exService.base()}/signin`, {
         method: http.RequestMethod.POST,
         header: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Cookie': V2exService.nativeCookieOnly(),
+          // Use the exact cookie snapshot that rendered this form and image.
+          // Other background requests must not replace the challenge session
+          // between captcha display and submit.
+          'Cookie': info.cookie.length > 0 ? info.cookie : V2exService.nativeCookieOnly(),
           'Referer': `${V2exService.base()}/signin`,
           'Origin': V2exService.base(),
           'User-Agent': 'Mozilla/5.0 (HarmonyOS; Mobile) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36'
@@ -693,9 +733,10 @@ export class V2exService {
         extraData: values,
         connectTimeout: 8000,
         readTimeout: 12000,
+        usingCache: false,
         expectDataType: http.HttpDataType.STRING
       });
-      V2exService.rememberResponseCookies(response);
+      V2exService.rememberResponseCookies(response, headerCookies);
       const html: string = String(response.result ?? '');
       if (/id=["']otp_code["']/i.test(html)) {
         const otpOnce: string = V2exService.formHiddenValue(html, 'once');

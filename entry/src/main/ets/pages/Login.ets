@@ -60,6 +60,10 @@ struct Login {
   private async loadSigninInfo(): Promise<void> {
     const sequence: number = ++this.signinLoadSequence;
     this.loading = true;
+    // A captcha is bound to the PB3 session that rendered the form. Start
+    // every refresh with a clean native session so a previously rejected
+    // challenge cannot be reused accidentally. H5 cookies remain isolated.
+    V2exService.resetNativeSigninSession();
     // A challenge is single-use. Clear the previous answer whenever the
     // image is refreshed, including after a rejected submission, so a new
     // code can never be appended to the expired one.
