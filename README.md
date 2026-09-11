@@ -59,7 +59,7 @@ devecocli run --module entry@default --device <device-serial> --product default 
 ## 项目标识
 
 - Bundle：`io.github.qinlinglong.v2ex`
-- 初始版本：`1.0.0`
+- 当前版本：`1.0.1`
 - 项目目录：`v2ex-harmonyos`
 
 ## 真机验证

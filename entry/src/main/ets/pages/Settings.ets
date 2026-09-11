@@ -147,7 +147,7 @@ struct Settings {
         Row() { Text('域名配置').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('V2EX').fontSize(14).fontColor(themeAccentText(this.themeColor, this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
           .onClick(() => router.pushUrl({ url: 'pages/ConfigureDomain' }))
-        Row() { Text('当前版本').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('1.0.0').fontSize(14).fontColor(themeMutedText(this.darkMode)) }
+        Row() { Text('当前版本').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Text('1.0.1').fontSize(14).fontColor(themeMutedText(this.darkMode)) }
           .width('100%').padding(18).backgroundColor(this.surface()).margin({ top: 1 })
         if (this.cachedMemberJson.trim().length > 0) {
           Row() { Text('退出登录').fontSize(16).fontColor(this.primaryText()).layoutWeight(1); Button(this.signingOut ? '退出中…' : '退出').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
