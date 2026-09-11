@@ -1,7 +1,7 @@
 import { router } from '@kit.ArkUI';
 import { V2exService } from '../service/V2exService';
 import { V2exMember, V2exNode, V2exTopic } from '../model/V2exModels';
-import { applyThemeSystemBars, themeAccentText, themeMutedText, themeOnColor, themeSecondaryText } from '../common/Theme';
+import { applyThemeSystemBars, setDarkMode, themeAccentText, themeMutedText, themeOnColor, themeSecondaryText } from '../common/Theme';
 
 function relativeTime(unix: number): string {
   if (!unix) return '';
@@ -124,11 +124,7 @@ struct Index {
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
   private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
   private toggleDarkMode(): void {
-    this.darkMode = !this.darkMode;
-    // Re-registering after the value changes writes the current value to the
-    // persistent store even when the page was created before the binding.
-    PersistentStorage.persistProp('v2exDarkMode', this.darkMode);
-    applyThemeSystemBars(this.darkMode);
+    setDarkMode(!this.darkMode);
   }
 
   private isTopicTab(): boolean {

@@ -23,6 +23,17 @@ export function applyThemeSystemBars(darkMode: boolean): void {
   } catch (_) { /* system bars are best effort on older devices */ }
 }
 
+/** Update the shared appearance value and make the change survive relaunch. */
+export function setDarkMode(value: boolean): void {
+  try {
+    AppStorage.setOrCreate('v2exDarkMode', value);
+    // persistProp reads the current AppStorage value when the key is already
+    // registered, so this call writes the newly selected mode immediately.
+    PersistentStorage.persistProp('v2exDarkMode', value);
+  } catch (_) { /* storage may be unavailable during the earliest startup */ }
+  applyThemeSystemBars(value);
+}
+
 export function themeSurface(darkMode: boolean): string {
   return darkMode ? '#18202A' : '#FFFFFF';
 }

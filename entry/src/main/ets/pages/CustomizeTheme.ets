@@ -1,5 +1,5 @@
 import { router } from '@kit.ArkUI';
-import { applyThemeSystemBars, themeAccentText, themeMutedText, themeOnColor } from '../common/Theme';
+import { applyThemeSystemBars, setDarkMode, themeAccentText, themeMutedText, themeOnColor } from '../common/Theme';
 
 @Entry
 @Component
@@ -44,7 +44,7 @@ struct CustomizeTheme {
               else Image($r('app.media.ic_dark_moon')).width(20).height(20).objectFit(ImageFit.Contain)
             }
               .width(56).height(32).borderRadius(16).backgroundColor(this.themeColor)
-              .onClick(() => { this.darkMode = !this.darkMode; applyThemeSystemBars(this.darkMode); })
+              .onClick(() => setDarkMode(!this.darkMode))
           }.width('100%').padding({ top: 18, bottom: 18 }).margin({ top: 12 })
           Text('主题设置会保存到本机，并应用到首页、详情、节点、个人中心和设置页面。')
             .fontSize(13).fontColor(themeMutedText(this.darkMode)).lineHeight(21).width('100%').margin({ top: 18 })
