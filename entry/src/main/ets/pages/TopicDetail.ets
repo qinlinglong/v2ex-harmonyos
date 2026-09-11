@@ -82,6 +82,13 @@ function isImageUrl(value: string): boolean {
     || /\.(?:png|jpe?g|gif|webp|bmp|svg)(?:[?#].*)?$/i.test(url);
 }
 
+// H5 renders forum emoticons as small inline images. They arrive here as
+// ordinary image parts, so identify those paths before using the body-image
+// full-width layout.
+function isInlineEmojiImage(value: string): boolean {
+  return /(?:emoji|emoticon|smiley|smileys|emotion|twemoji|\/face(?:s)?\/)/i.test(value);
+}
+
 function splitTableRow(line: string): string[] {
   let row: string = line.trim();
   if (row.startsWith('|')) row = row.substring(1);
@@ -894,9 +901,14 @@ struct TopicDetail {
                   }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
                     .margin({ top: 16, bottom: 4 })
                 } else if (part.kind === 'image') {
-                  Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
-                    .margin({ top: 14, bottom: 4 })
-                    .onClick(() => this.openLink(part.value))
+                  if (isInlineEmojiImage(part.value)) {
+                    Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
+                      .margin({ top: 8 }).onClick(() => this.openLink(part.value))
+                  } else {
+                    Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
+                      .margin({ top: 14, bottom: 4 })
+                      .onClick(() => this.openLink(part.value))
+                  }
                 } else if (part.kind === 'link') {
                   Column() {
                     Text(part.label ?? part.value).fontSize(16).fontColor(themeAccentText(this.themeColor, this.darkMode)).lineHeight(26)
@@ -1025,8 +1037,13 @@ struct TopicDetail {
                       }.width('100%').border({ width: 1, color: this.darkMode ? '#3A4858' : '#D7E0EA' })
                         .margin({ top: 10, bottom: 2 })
                     } else if (part.kind === 'image') {
-                      Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
-                        .onClick(() => this.openLink(part.value))
+                      if (isInlineEmojiImage(part.value)) {
+                        Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
+                          .margin({ top: 8 }).onClick(() => this.openLink(part.value))
+                      } else {
+                        Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
+                          .onClick(() => this.openLink(part.value))
+                      }
                     } else if (part.kind === 'mention') {
                       Text(`@${part.value}`).fontSize(15).fontColor(themeAccentText(this.themeColor, this.darkMode)).lineHeight(23).margin({ top: 8 })
                         .maxLines(1).wordBreak(WordBreak.BREAK_WORD).flexShrink(0)
