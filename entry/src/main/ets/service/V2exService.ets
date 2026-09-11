@@ -1346,6 +1346,16 @@ export class V2exService {
       });
       if (!V2exService.mutationSucceeded(response)) {
         const reason: string = V2exService.mutationError(response);
+        // Some gateways return the previous form HTML after accepting the
+        // POST. If that stale page contains the old empty-content warning,
+        // confirm the topic itself before surfacing an error to the user.
+        if (/回复内容不能为空/i.test(reason)) {
+          try {
+            const refreshed: string = await V2exService.get(`/t/${topicId}`, true);
+            const needle: string = V2exService.cleanHtml(content).trim().substring(0, 48);
+            if (needle.length > 0 && V2exService.cleanHtml(refreshed).indexOf(needle) >= 0) return true;
+          } catch (_) { /* keep the original server error below */ }
+        }
         throw new Error(reason.length > 0 ? reason : (V2exService.signedInHtml(String(response.result ?? '')) ? '回复失败，请稍后重试' : '登录状态已失效，请重新登录'));
       }
       return true;
