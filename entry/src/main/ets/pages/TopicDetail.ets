@@ -17,7 +17,7 @@ const BASE64_MENU_ID: TextMenuItemId = TextMenuItemId.of('v2ex_base64_decode');
  * Normalize content copied from Markdown editors and forum posts. Some posts
  * contain escaped HTML (`\\<p>`), numeric spaces (`&#x20;`) or an image URL
  * wrapped in Markdown inside an HTML img tag. Treat those forms as markup so
- * the detail view renders the same image and text as the H5 page.
+ * the detail view renders the same image and text as the web page.
  */
 function normalizeDetailMarkup(value: string): string {
   return value
@@ -82,7 +82,7 @@ function isImageUrl(value: string): boolean {
     || /\.(?:png|jpe?g|gif|webp|bmp|svg)(?:[?#].*)?$/i.test(url);
 }
 
-// H5 renders forum emoticons as small inline images. They arrive here as
+// The web page renders forum emoticons as small inline images. They arrive here as
 // ordinary image parts, so identify those paths before using the body-image
 // full-width layout.
 function isInlineEmojiImage(value: string): boolean {
@@ -165,16 +165,15 @@ function plainMarkdown(value: string): string {
 
 function replyTextParts(value: string): ReplyTextPart[] {
   const parts: ReplyTextPart[] = [];
-  // Keep forum emoji inside the same text flow, but render the glyph a little
-  // smaller because HarmonyOS color emoji metrics are larger than Latin text
-  // at the same font size. Mentions remain separate so they stay clickable.
-  const pattern: RegExp = /@([A-Za-z0-9_\-\u4e00-\u9fff]+)|([\uD83C-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF])/g;
+  // Keep emoji in the same Text node as surrounding content. HarmonyOS gives
+  // a standalone emoji Text an oversized minimum line box, while the web page renders
+  // the same glyph inline. Mentions remain separate so they stay clickable.
+  const pattern: RegExp = /@([A-Za-z0-9_\-\u4e00-\u9fff]+)/g;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(value);
   while (match !== null) {
     if (match.index > cursor) parts.push({ kind: 'text', value: value.substring(cursor, match.index) });
     if (match[1]) parts.push({ kind: 'mention', value: match[1] });
-    else if (match[2]) parts.push({ kind: 'emoji', value: match[2] });
     cursor = match.index + match[0].length;
     match = pattern.exec(value);
   }
@@ -189,7 +188,7 @@ function replyTextParts(value: string): ReplyTextPart[] {
  * before rendering so the mention remains one inline, clickable unit.
  */
 function replyDetailParts(value: string): DetailPart[] {
-  // The rendered H5 markup may put the @ marker and its linked username on
+  // The rendered markup may put the @ marker and its linked username on
   // separate lines. Remove that structural newline, and the first newline
   // after the mention, before parsing. This keeps @username and a short reply
   // body in the same visual line while leaving unrelated paragraph breaks.
@@ -1059,12 +1058,11 @@ struct TopicDetail {
                       Flex({ wrap: FlexWrap.Wrap }) {
                         ForEach(replyTextParts(plainMarkdown(part.value)), (fragment: ReplyTextPart) => {
                           Text(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value)
-                            // Keep an @mention together like the H5 renderer;
+                            // Keep an @mention together like the web renderer;
                             // otherwise ArkUI may break after the @ glyph when
-                            // the flex row wraps. Native emoji metrics are
-                            // larger than H5 at the same point size, so scale
-                            // them down independently from normal text.
-                            .fontSize(fragment.kind === 'emoji' ? 8 : 15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(fragment.kind === 'emoji' ? 16 : 23)
+                            // the flex row wraps. Emoji stay in the normal text
+                            // node so they use the same line box as surrounding content.
+                            .fontSize(15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(23)
                             .maxLines(fragment.kind === 'mention' ? 1 : 100)
                             .wordBreak(WordBreak.BREAK_WORD)
                             .flexShrink(fragment.kind === 'mention' ? 0 : 1)
