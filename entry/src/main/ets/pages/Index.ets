@@ -78,6 +78,9 @@ struct Index {
   @State loadingMoreTopics: boolean = false;
   @State noMoreTopics: boolean = false;
   private homeScroller: ListScroller = new ListScroller();
+  // Every tab load gets a monotonically increasing token. A slow request from
+  // the previous tab must never overwrite the tab the user just selected.
+  private loadToken: number = 0;
 
   aboutToAppear(): void {
     applyThemeSystemBars(this.darkMode);
@@ -133,24 +136,34 @@ struct Index {
   }
 
   private async loadTopics(kind: 'latest' | 'hot'): Promise<void> {
-    if (this.loading) return;
+    const token: number = ++this.loadToken;
     this.loading = true;
     this.errorText = '';
     this.topicPage = 1;
     this.noMoreTopics = false;
-    try { this.topics = await V2exService.topics(kind, 1); }
-    catch (_) { this.errorText = '暂时无法连接 V2EX，请稍后重试'; }
-    finally { this.loading = false; this.prefetchHomeTopics(); }
+    try {
+      const loaded: V2exTopic[] = await V2exService.topics(kind, 1);
+      if (token === this.loadToken) this.topics = loaded;
+    } catch (_) {
+      if (token === this.loadToken) this.errorText = '暂时无法连接 V2EX，请稍后重试';
+    } finally {
+      if (token === this.loadToken) { this.loading = false; this.prefetchHomeTopics(); }
+    }
   }
 
   private selectTab(index: number): void {
     this.selectedTab = index;
+    ++this.loadToken;
     // Rebind the content list at its first item whenever the tab changes.
     // Delay one frame so the conditional list has been rebuilt before the
     // scroll command is applied.
     setTimeout((): void => this.homeScroller.scrollToIndex(0, false), 0);
     this.topicPage = 1;
     this.noMoreTopics = false;
+    // A tab with already cached content does not start a request. Clear the
+    // previous tab's loading flag in that case; request based tabs set it back
+    // to true immediately in their load method.
+    this.loading = false;
     const tab: HomeTabItem = this.activeTab();
     if (tab.type === 'latest') this.loadTopics('latest');
     else if (tab.type === 'hot') this.loadTopics('hot');
@@ -167,21 +180,31 @@ struct Index {
   }
 
   private async loadTopicsForNode(name: string): Promise<void> {
-    if (this.loading) return;
+    const token: number = ++this.loadToken;
     this.loading = true;
     this.errorText = '';
-    try { this.topics = await V2exService.topicsForNode(name); }
-    catch (_) { this.errorText = '节点内容加载失败，请稍后重试'; }
-    finally { this.loading = false; }
+    try {
+      const loaded: V2exTopic[] = await V2exService.topicsForNode(name);
+      if (token === this.loadToken) this.topics = loaded;
+    } catch (_) {
+      if (token === this.loadToken) this.errorText = '节点内容加载失败，请稍后重试';
+    } finally {
+      if (token === this.loadToken) this.loading = false;
+    }
   }
 
   private async loadTopicsForTab(name: string, page: number = 1): Promise<void> {
-    if (this.loading) return;
+    const token: number = ++this.loadToken;
     this.loading = true;
     this.errorText = '';
-    try { this.topics = await V2exService.topicsForTab(name, page); this.topicPage = page; }
-    catch (_) { this.errorText = '板块内容加载失败，请稍后重试'; }
-    finally { this.loading = false; this.prefetchHomeTopics(); }
+    try {
+      const loaded: V2exTopic[] = await V2exService.topicsForTab(name, page);
+      if (token === this.loadToken) { this.topics = loaded; this.topicPage = page; }
+    } catch (_) {
+      if (token === this.loadToken) this.errorText = '板块内容加载失败，请稍后重试';
+    } finally {
+      if (token === this.loadToken) { this.loading = false; this.prefetchHomeTopics(); }
+    }
   }
 
   private async loadMoreHomeTopics(): Promise<void> {
@@ -236,19 +259,31 @@ struct Index {
   }
 
   private async loadNodes(): Promise<void> {
+    const token: number = ++this.loadToken;
     this.loading = true;
     this.errorText = '';
-    try { this.nodes = await V2exService.nodes(); }
-    catch (_) { this.errorText = '节点加载失败，请稍后重试'; }
-    finally { this.loading = false; }
+    try {
+      const loaded: V2exNode[] = await V2exService.nodes();
+      if (token === this.loadToken) this.nodes = loaded;
+    } catch (_) {
+      if (token === this.loadToken) this.errorText = '节点加载失败，请稍后重试';
+    } finally {
+      if (token === this.loadToken) this.loading = false;
+    }
   }
 
   private async loadXna(): Promise<void> {
+    const token: number = ++this.loadToken;
     this.loading = true;
     this.errorText = '';
-    try { this.xnaTopics = await V2exService.xnaTopics(); }
-    catch (_) { this.errorText = 'VXNA 加载失败，请稍后重试'; }
-    finally { this.loading = false; }
+    try {
+      const loaded: V2exTopic[] = await V2exService.xnaTopics();
+      if (token === this.loadToken) this.xnaTopics = loaded;
+    } catch (_) {
+      if (token === this.loadToken) this.errorText = 'VXNA 加载失败，请稍后重试';
+    } finally {
+      if (token === this.loadToken) this.loading = false;
+    }
   }
 
   private async loadCurrentMember(): Promise<void> {

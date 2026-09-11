@@ -69,12 +69,16 @@ struct Notifications {
   }
 
   private async remove(item: V2exNotification): Promise<void> {
+    if (this.deletingId !== 0) return;
     this.deletingId = item.id;
     try {
       const ok: boolean = await V2exService.notificationAction(item.id, 'delete', item.once);
       if (ok) {
         this.items = this.items.filter((value: V2exNotification) => value.id !== item.id);
         this.cacheJson = JSON.stringify(this.items);
+        // Keep the list filled after deletion, matching the H5 page's
+        // /notifications/below refresh instead of leaving a permanent gap.
+        if (!this.noMore) await this.loadMore();
       } else this.status = '删除失败，请先登录';
     } catch (_) { this.status = '删除失败，请稍后重试'; }
     finally { this.deletingId = 0; }
@@ -95,11 +99,12 @@ struct Notifications {
             Text(item.topicTitle).fontSize(15).fontColor(themePrimaryText(this.darkMode)).maxLines(2)
               .textOverflow({ overflow: TextOverflow.Ellipsis }).layoutWeight(1)
             Image($r('app.media.ic_delete')).width(18).height(18).fillColor('#C05A73').margin({ left: 10 })
+              .opacity(this.deletingId === item.id ? 0.45 : 1)
               .onClick(() => this.remove(item)).hitTestBehavior(HitTestMode.Block)
           }.width('100%').margin({ top: 6 })
         }.alignItems(HorizontalAlign.Start).margin({ left: 12 }).layoutWeight(1)
       }.width('100%').padding({ left: 18, right: 18, top: 15, bottom: 15 }).backgroundColor(themeSurface(this.darkMode))
-    }.onClick(() => router.pushUrl({ url: 'pages/TopicDetail', params: { id: item.topicId } }))
+    }.onClick(() => { if (this.deletingId === 0) router.pushUrl({ url: 'pages/TopicDetail', params: { id: item.topicId } }); })
   }
 
   build() {

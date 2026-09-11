@@ -976,9 +976,12 @@ export class V2exService {
       const avatarMatch: RegExpMatchArray | null = block.match(/<img[^>]+src=["']([^"']+)["'][^>]*alt=["']([^"']+)["']/i);
       const topicMatch: RegExpMatchArray | null = block.match(/<a[^>]+href=["']\/t\/(\d+)[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
       if (avatarMatch && topicMatch) {
-        const deleteMatch: RegExpMatchArray | null = block.match(/href=["']\/delete\/notification\/\d+\?once=([^"']+)["']/i)
-          ?? block.match(/href=["'][^"']*\/delete\/notification\/\d+\?once=([^"']+)["']/i)
-          ?? block.match(/onclick=["'][^"']*,\s*([\w-]+)\s*\)["']/i);
+        // The current H5 page uses onclick="deleteNotification(id, once)"
+        // while older markup exposed the same token in a delete href. Keep
+        // both forms and bind the token to this notification id so a row can
+        // always be removed without a second page fetch.
+        const deleteMatch: RegExpMatchArray | null = block.match(new RegExp(`href=["'][^"']*\\/delete\\/notification\\/${match[1]}\\?once=([^"']+)["']`, 'i'))
+          ?? block.match(new RegExp(`onclick=["'][^"']*deleteNotification\\(\\s*${match[1]}\\s*,\\s*["']?([^,'"\\s)]+)`, 'i'));
         const createdMatch: RegExpMatchArray | null = block.match(/class=["'][^"']*\b(?:snow|fade)\b[^"']*["'][^>]*>([\s\S]*?)<\//i);
         result.push({
           id: Number(match[1]), once: deleteMatch?.[1], avatar: V2exService.assetUrl(avatarMatch[1]), username: avatarMatch[2],
@@ -1561,10 +1564,14 @@ export class V2exService {
   }
 
   static async notificationAction(notificationId: number, action: 'delete', once: string = ''): Promise<boolean> {
-    const html: string = await V2exService.get('/notifications', true);
     let onceValue: string = once;
     if (onceValue.length === 0) {
+      // A parsed row already carries the H5 token. Do not perform a second
+      // notifications request in that case: it can be stale or rate-limited
+      // and used to make the trash button look inert even with a valid token.
+      const html: string = await V2exService.get('/notifications', true);
       const onceMatch: RegExpMatchArray | null = html.match(new RegExp(`/delete/notification/${notificationId}\\?once=([^"']+)`, 'i'))
+        ?? html.match(new RegExp(`deleteNotification\\(\\s*${notificationId}\\s*,\\s*["']?([^,'"\\s)]+)`, 'i'))
         ?? html.match(/name=["']once["'][^>]*value=["']([^"']+)["']/i);
       onceValue = onceMatch?.[1] ?? '';
     }

@@ -95,6 +95,7 @@ struct NodeTopics {
           this.cacheJson = JSON.stringify(cache);
         } catch (_) { /* cache failures do not affect the page */ }
         this.page += 1;
+        this.loadMoreStatus = '';
       }
     } catch (_) { this.loadMoreStatus = '加载更多失败'; }
     finally { this.loadingMore = false; }

@@ -1047,7 +1047,7 @@ struct TopicDetail {
                             // the flex row wraps. Native emoji metrics are
                             // larger than H5 at the same point size, so scale
                             // them down independently from normal text.
-                            .fontSize(fragment.kind === 'emoji' ? 10 : 15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(fragment.kind === 'emoji' ? 20 : 23)
+                            .fontSize(fragment.kind === 'emoji' ? 8 : 15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(fragment.kind === 'emoji' ? 16 : 23)
                             .maxLines(fragment.kind === 'mention' ? 1 : 100)
                             .wordBreak(WordBreak.BREAK_WORD)
                             .flexShrink(fragment.kind === 'mention' ? 0 : 1)
