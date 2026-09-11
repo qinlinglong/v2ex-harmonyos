@@ -49,19 +49,37 @@ function appendTextWithLinks(parts: DetailPart[], value: string): void {
 }
 
 function appendInlineParts(parts: DetailPart[], markdown: string): void {
-  const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
+  // V2EX's native format leaves image URLs as plain text (for example
+  // https://i.v2ex.co/xxxx.png). Keep Markdown links and native links in the
+  // same pass so both formats render identically.
+  const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|((?:https?:\/\/|\/\/)[^\s<>()]+)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
-    const before: string = markdown.substring(cursor, match.index).trim();
+    const before: string = markdown.substring(cursor, match.index);
     if (before.length > 0) appendTextWithLinks(parts, before);
     if (match[1]) parts.push({ kind: 'image', value: match[1] });
-    else parts.push({ kind: 'link', value: match[3], label: match[2] });
+    else if (match[2]) parts.push({ kind: 'link', value: match[3], label: match[2] });
+    else {
+      const rawUrl: string = match[4];
+      const url: string = rawUrl.replace(/[.,!?;:，。！？；：）)]+$/g, '');
+      const punctuation: string = rawUrl.substring(url.length);
+      if (isImageUrl(url)) parts.push({ kind: 'image', value: url });
+      else parts.push({ kind: 'link', value: url, label: url });
+      if (punctuation.length > 0) parts.push({ kind: 'text', value: punctuation });
+    }
     cursor = match.index + match[0].length;
     match = pattern.exec(markdown);
   }
-  const tail: string = markdown.substring(cursor).trim();
+  const tail: string = markdown.substring(cursor);
   if (tail.length > 0) appendTextWithLinks(parts, tail);
+}
+
+function isImageUrl(value: string): boolean {
+  const url: string = value.trim().toLowerCase();
+  return /^(?:https?:)?\/\/i\.v2ex\.co\//i.test(url)
+    || /^(?:https?:)?\/\/(?:i\.)?imgur\.com\//i.test(url)
+    || /\.(?:png|jpe?g|gif|webp|bmp|svg)(?:[?#].*)?$/i.test(url);
 }
 
 function splitTableRow(line: string): string[] {
@@ -645,9 +663,11 @@ struct TopicDetail {
   }
 
   private contentUrl(url: string): string {
-    if (!url.startsWith('/')) return url;
+    const normalized: string = url.trim().replace(/&amp;/gi, '&');
+    if (normalized.startsWith('//')) return `https:${normalized}`;
+    if (!normalized.startsWith('/')) return normalized;
     const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
-    return `${configured.replace(/\/$/, '')}${url}`;
+    return `${configured.replace(/\/$/, '')}${normalized}`;
   }
 
   build() {

@@ -8,24 +8,30 @@ interface PreviewPart { kind: string; value: string; label?: string; }
 
 function previewParts(markdown: string, syntax: string = 'markdown'): PreviewPart[] {
   const parts: PreviewPart[] = [];
-  const pattern: RegExp = syntax === 'default'
-    ? /((?:https?:\/\/|\/)[^\s<>()]+\.(?:png|jpe?g|gif|webp)(?:\?[^\s<>()]*)?)|!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi
-    : /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/)[^)\s]+)\s*\)/gi;
+  const pattern: RegExp = /!\[[^\]]*\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|\[([^\]]+)\]\(\s*((?:https?:\/\/|\/\/|\/)[^)\s]+)\s*\)|((?:https?:\/\/|\/\/)[^\s<>()]+)/gi;
   let cursor: number = 0;
   let match: RegExpExecArray | null = pattern.exec(markdown);
   while (match !== null) {
-    const before: string = markdown.substring(cursor, match.index).trim();
+    const before: string = markdown.substring(cursor, match.index);
     if (before.length > 0) parts.push({ kind: 'text', value: before });
-    if (syntax === 'default' && (match[1] || match[2])) parts.push({ kind: 'image', value: match[1] ?? match[2] });
-    else if (syntax === 'markdown' && match[1]) parts.push({ kind: 'image', value: match[1] });
-    else parts.push({ kind: 'link', value: syntax === 'default' ? match[1] ?? match[4] : match[3], label: syntax === 'default' ? match[1] ?? match[3] : match[2] });
+    if (match[1]) parts.push({ kind: 'image', value: match[1] });
+    else if (match[2]) parts.push({ kind: 'link', value: match[3], label: match[2] });
+    else if (syntax === 'default' && isPreviewImageUrl(match[4])) parts.push({ kind: 'image', value: match[4] });
+    else parts.push({ kind: 'link', value: match[4], label: match[4] });
     cursor = match.index + match[0].length;
     match = pattern.exec(markdown);
   }
-  const tail: string = markdown.substring(cursor).trim();
+  const tail: string = markdown.substring(cursor);
   if (tail.length > 0) parts.push({ kind: 'text', value: tail });
-  if (parts.length === 0 && markdown.trim().length > 0) parts.push({ kind: 'text', value: markdown.trim() });
+  if (parts.length === 0 && markdown.length > 0) parts.push({ kind: 'text', value: markdown });
   return parts;
+}
+
+function isPreviewImageUrl(value: string): boolean {
+  const url: string = value.trim().toLowerCase();
+  return /^(?:https?:)?\/\/i\.v2ex\.co\//i.test(url)
+    || /^(?:https?:)?\/\/(?:i\.)?imgur\.com\//i.test(url)
+    || /\.(?:png|jpe?g|gif|webp|bmp|svg)(?:[?#].*)?$/i.test(url);
 }
 
 function previewText(value: string): string {
@@ -130,9 +136,11 @@ struct WriteTopic {
   }
 
   private contentUrl(url: string): string {
-    if (!url.startsWith('/')) return url;
+    const normalized: string = url.trim().replace(/&amp;/gi, '&');
+    if (normalized.startsWith('//')) return `https:${normalized}`;
+    if (!normalized.startsWith('/')) return normalized;
     const configured: string = AppStorage.get<string>('v2exDomain') ?? 'https://www.v2ex.com';
-    return `${configured.replace(/\/$/, '')}${url}`;
+    return `${configured.replace(/\/$/, '')}${normalized}`;
   }
 
   private openPreviewLink(url: string): void {

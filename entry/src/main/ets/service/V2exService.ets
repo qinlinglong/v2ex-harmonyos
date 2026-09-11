@@ -318,10 +318,15 @@ export class V2exService {
       .replace(/&gt;/gi, '>').replace(/&#39;/gi, "'").trim();
   }
   private static htmlContentToMarkdown(value: string): string {
-    return V2exService.cleanHtml(value
-      .replace(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi, '\n![图片]($1)\n')
+    const withImages: string = value.replace(/<img\b[^>]*?\bsrc\s*=\s*(?:["']([^"']+)["']|([^\s>]+))[^>]*>/gi,
+      (_full: string, quoted: string, unquoted: string) => `\n![图片](${quoted ?? unquoted})\n`);
+    const withLinks: string = withImages
       .replace(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, '[$2]($1)')
-      .replace(/<\/p>|<br\s*\/?>(\r?\n)?/gi, '\n'));
+      .replace(/<\/p>|<br\s*\/?>(\r?\n)?/gi, '\n');
+    // Native V2EX image links are wrapped in an anchor. Remove that wrapper
+    // after conversion so the detail renderer receives a standalone image.
+    const flattened: string = withLinks.replace(/\[\s*!\[([^\]]*)\]\(([^)\s]+)\)\s*\]\([^)]+\)/gi, '![$1]($2)');
+    return V2exService.cleanHtml(flattened);
   }
   private static signedInHtml(html: string): boolean {
     // Current V2EX uses /signout?once=... while older pages used /logout.
