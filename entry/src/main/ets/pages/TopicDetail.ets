@@ -905,7 +905,10 @@ struct TopicDetail {
                     Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                       .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                   } else {
-                    Image(this.contentUrl(part.value)).constraintSize({ maxWidth: '100%', maxHeight: 520 }).objectFit(ImageFit.Contain)
+                    // The H5 page caps embedded images at 500px. ArkUI can
+                    // otherwise keep the source dimensions when only a
+                    // percentage constraint is supplied.
+                    Image(this.contentUrl(part.value)).width(500).height(500).objectFit(ImageFit.Contain)
                       .margin({ top: 14, bottom: 4 })
                       .onClick(() => this.openLink(part.value))
                   }
