@@ -65,3 +65,7 @@ devecocli run --module entry@default --device <device-serial> --product default 
 ## 真机验证
 
 已使用 DevEco CLI 在 HarmonyOS 6.1.1(24) 真机上验证首页 Tab、网络失败后的个人中心切换、节点列表/分页、主题详情、回复编辑入口、搜索、主题设置、主题屏蔽和社区排行页面。`devecocli check lint` 无缺陷；构建输出中的 ArkTS `pushUrl/back/getParams` 为 API 弃用提示，不影响当前构建。
+
+## 致谢
+
+感谢 [liaoliao666/v2ex](https://github.com/liaoliao666/v2ex) 开源项目，在表情展示、评论楼层、回复交互和详情页信息组织等方面提供了有价值的参考。

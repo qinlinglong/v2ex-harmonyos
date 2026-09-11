@@ -1094,9 +1094,10 @@ struct TopicDetail {
                         // The replies API does not expose thanks. Keep the
                         // count absent until the H5 page provides a real value
                         // instead of showing a misleading zero for every row.
-                        if (reply.thanks !== undefined) {
-                          Text(`${reply.thanks}`).fontSize(13).fontColor(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? '#D05A73' : themeSecondaryText(this.darkMode)).margin({ left: 4 })
-                        }
+                        Text(reply.thanks !== undefined && reply.thanks > 0 ? `${reply.thanks}` : '感谢')
+                          .fontSize(13)
+                          .fontColor(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? '#D05A73' : themeSecondaryText(this.darkMode))
+                          .margin({ left: 4 })
                       }.padding({ left: 8, right: 8, top: 5, bottom: 5 })
                         .onClick(() => { if (!this.isSelf(reply.member?.username)) this.thankReply(reply.id); })
                     }
