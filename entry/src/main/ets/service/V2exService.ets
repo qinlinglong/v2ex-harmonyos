@@ -447,13 +447,12 @@ export class V2exService {
     // no likes even when the page contained a count.
     const count: RegExpMatchArray | null = value.match(/([\d,]+)\s*(?:感谢|thanks?)/i)
       ?? value.match(/(?:感谢|thanks?)\s*[:：]?\s*([\d,]+)/i);
-    if (count) return Number((count[1] ?? '').replace(/,/g, ''));
-    // Some authenticated pages put the number in a sibling element instead
-    // of the `small fade` span. Restrict the fallback to text near the thank
-    // action so numbers in the reply body cannot be mistaken for a count.
-    const nearby: RegExpMatchArray | null = block.match(/(?:感谢|thanks?)[\s\S]{0,120}?([\d,]+)/i)
-      ?? block.match(/([\d,]+)[\s\S]{0,120}?(?:感谢|thanks?)/i);
-    return nearby ? Number((nearby[1] ?? '').replace(/,/g, '')) : undefined;
+    // Do not search the complete reply block as a fallback.  Reply ids,
+    // timestamps and numbers in the body are all close to the thank action
+    // on the H5 page and used to be mistaken for the like count (for example
+    // values such as 18075764).  A count is valid only when it appears in the
+    // dedicated small/fade action label.
+    return count ? Number((count[1] ?? '').replace(/,/g, '')) : undefined;
   }
   private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();

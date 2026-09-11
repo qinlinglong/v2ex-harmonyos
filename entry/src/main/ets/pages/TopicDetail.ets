@@ -272,6 +272,10 @@ struct TopicDetail {
   @State noMoreReplies: boolean = false;
   @State replyMoreStatus: string = '';
   @State ignored: boolean = false;
+  // Keep the expanded state local to the detail screen. Long replies are
+  // folded to the same readable height used by V2EX_Polish and can be
+  // expanded without reloading the topic.
+  @State expandedReplyIdsJson: string = '[]';
   @State base64Result: string = '';
   @State base64Source: string = '';
   @State base64SelectedText: string = '';
@@ -686,6 +690,38 @@ struct TopicDetail {
     return sourceIndex >= 0 ? sourceIndex + 1 : renderedIndex + 1;
   }
 
+  private expandedReplyIds(): number[] {
+    try {
+      const value: number[] = JSON.parse(this.expandedReplyIdsJson) as number[];
+      return Array.isArray(value) ? value : [];
+    } catch (_) { return []; }
+  }
+
+  private shouldFoldReply(reply: V2exReply): boolean {
+    const parts: DetailPart[] = replyDetailParts(reply.content);
+    // Keep structured content intact. Folding plain text only avoids cutting
+    // a Markdown image, link, code block or table in the middle.
+    if (parts.some((part: DetailPart) => part.kind !== 'text' && part.kind !== 'mention')) return false;
+    return plainMarkdown(reply.content).trim().length > 600;
+  }
+
+  private isReplyExpanded(replyId: number): boolean {
+    return this.expandedReplyIds().indexOf(replyId) >= 0;
+  }
+
+  private toggleReplyExpanded(replyId: number): void {
+    const ids: number[] = this.expandedReplyIds();
+    const index: number = ids.indexOf(replyId);
+    if (index >= 0) ids.splice(index, 1);
+    else ids.push(replyId);
+    this.expandedReplyIdsJson = JSON.stringify(ids);
+  }
+
+  private replyDisplayParts(reply: V2exReply): DetailPart[] {
+    if (!this.shouldFoldReply(reply) || this.isReplyExpanded(reply.id)) return replyDetailParts(reply.content);
+    return [{ kind: 'text', value: `${plainMarkdown(reply.content).trim().substring(0, 600)}…` }];
+  }
+
   private beginEditReply(reply: V2exReply): void {
     if (!this.canEditReply(reply)) {
       this.replyStatus = '当前回复不可编辑';
@@ -1012,7 +1048,7 @@ struct TopicDetail {
                     Button('保存').fontSize(13).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor)).onClick(() => this.saveReplyEdit())
                   }.width('100%').margin({ top: 8 })
                 } else {
-                  ForEach(replyDetailParts(reply.content), (part: DetailPart) => {
+                  ForEach(this.replyDisplayParts(reply), (part: DetailPart) => {
                     if (part.kind === 'code') {
                       Text(part.value).fontSize(13).fontColor(this.bodyText()).lineHeight(20).fontFamily('monospace')
                         .width('100%').padding(10).backgroundColor(this.darkMode ? '#18212B' : '#F3F5F7')
@@ -1085,6 +1121,11 @@ struct TopicDetail {
                       }.width('100%').margin({ top: 8 })
                     }
                   }, (part: DetailPart, partIndex: number) => `reply-part-${reply.id}-${part.kind}-${partIndex}`)
+                  if (this.shouldFoldReply(reply)) {
+                    Text(this.isReplyExpanded(reply.id) ? '收起回复' : '展开回复').fontSize(13)
+                      .fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ top: 8 })
+                      .onClick(() => this.toggleReplyExpanded(reply.id))
+                  }
                   if (this.base64Result.length > 0 && this.base64Source.length > 0 && plainMarkdown(reply.content).indexOf(this.base64Source) >= 0) this.base64Card()
                   Row() {
                     if (!this.isSelf(reply.member?.username) || (reply.thanks ?? 0) > 0) {

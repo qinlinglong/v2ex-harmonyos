@@ -69,3 +69,5 @@ devecocli run --module entry@default --device <device-serial> --product default 
 ## 致谢
 
 感谢 [liaoliao666/v2ex](https://github.com/liaoliao666/v2ex) 开源项目，在表情展示、评论楼层、回复交互和详情页信息组织等方面提供了有价值的参考。
+
+感谢 [V2EX_Polish](https://github.com/coolpace/V2EX_Polish) 开源项目，在表情处理、评论楼层、热门评论和回复交互优化等方面提供了有价值的参考。
