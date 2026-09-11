@@ -25,6 +25,19 @@ export interface V2exSigninResult {
   member?: V2exMember;
 }
 
+interface V2exSigninInputMeta {
+  type: string;
+  name: string;
+  placeholder: string;
+  context: string;
+}
+
+interface V2exSigninFieldNames {
+  username: string;
+  password: string;
+  code: string;
+}
+
 export class V2exService {
   private static readonly LOG_DOMAIN: number = 0x4F32;
   // Node metadata is shared by the home page, node navigation and hot-topic
@@ -178,31 +191,70 @@ export class V2exService {
     try { AppStorage.setOrCreate('v2exNativeCookie', cookieHeader); } catch (_) { /* storage may be unavailable during startup */ }
   }
 
-  private static formInputName(html: string, label: string, fallback: string): string {
-    const inputs: RegExpMatchArray | null = html.match(/<input\b[^>]*>/gi);
-    const hint: RegExp = new RegExp(`(?:${label})`, 'i');
-    if (inputs) {
-      for (const input of inputs) {
-        const name: RegExpMatchArray | null = input.match(/\bname=["']([^"']+)["']/i);
-        if (name?.[1] && hint.test(input)) return name[1];
-      }
+  private static inputAttribute(tag: string, attribute: string): string {
+    const match: RegExpMatchArray | null = tag.match(new RegExp(`${attribute}\\s*=\\s*(["'])(.*?)\\1`, 'i'));
+    if (!match?.[2]) return '';
+    return match[2].replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;/gi, "'")
+      .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
+  }
+
+  private static compactInputContext(value: string): string {
+    return value.replace(/<[^>]+>/g, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+      .replace(/\s+/g, ' ').trim();
+  }
+
+  private static inputContext(html: string, index: number, length: number): string {
+    const prefix: string = html.slice(0, index);
+    const containers: RegExpMatchArray | null = prefix.match(/<(tr|div|p|label)\b[^>]*>/gi);
+    const start: number = containers && containers.length > 0
+      ? prefix.lastIndexOf(containers[containers.length - 1]) : Math.max(0, index - 128);
+    const suffix: string = html.slice(index + length);
+    const closing: RegExpMatchArray | null = suffix.match(/<\/(tr|div|p|label)>/i);
+    const end: number = closing && typeof closing.index === 'number'
+      ? index + length + closing.index + closing[0].length : Math.min(html.length, index + length + 256);
+    return V2exService.compactInputContext(html.slice(start, end));
+  }
+
+  private static signinInputs(html: string): V2exSigninInputMeta[] {
+    const result: V2exSigninInputMeta[] = [];
+    const inputRe: RegExp = /<input\b[^>]*>/gi;
+    let match: RegExpExecArray | null = inputRe.exec(html);
+    while (match) {
+      const tag: string = match[0];
+      result.push({
+        type: (V2exService.inputAttribute(tag, 'type') || 'text').toLowerCase(),
+        name: V2exService.inputAttribute(tag, 'name'),
+        placeholder: V2exService.inputAttribute(tag, 'placeholder'),
+        context: V2exService.inputContext(html, match.index, tag.length)
+      });
+      match = inputRe.exec(html);
     }
-    // Some deployments render labels outside the input tag. Keep a row-level
-    // fallback for those pages while still limiting the match to one form row.
-    // `label` contains alternatives (for example `用户名|username|email`).
-    // Group them before appending the row matcher; otherwise RegExp's `|`
-    // precedence lets the first Chinese alternative match by itself and the
-    // parser silently falls back to the wrong static field name.
-    const rows: RegExpMatchArray | null = html.match(/<tr\b[^>]*>[\s\S]*?<\/tr>/gi);
-    if (rows) {
-      for (const currentRow of rows) {
-        if (!new RegExp(`(?:${label})`, 'i').test(currentRow)) continue;
-        const rowInput: RegExpMatchArray | null = currentRow.match(/<input\b[^>]*\bname=["']([^"']+)["'][^>]*>/i);
-        if (rowInput?.[1]) return rowInput[1];
-      }
-    }
-    const row: RegExpMatchArray | null = html.match(new RegExp(`(?:${label})[\\s\\S]{0,900}?<input[^>]+name=["']([^"']+)["']`, 'i'));
-    return row?.[1] ?? fallback;
+    return result;
+  }
+
+  private static signinFieldNames(html: string): V2exSigninFieldNames {
+    const inputs: V2exSigninInputMeta[] = V2exService.signinInputs(html);
+    const namedText: V2exSigninInputMeta[] = inputs.filter((item: V2exSigninInputMeta): boolean => item.type === 'text' && item.name.length > 0);
+    const captchaHint: RegExp = /captcha|验证码|机器|enter the code|verification/i;
+    const codeHint: RegExp = /captcha|验证码|机器|\bcode\b/i;
+    const codeInput: V2exSigninInputMeta | undefined = namedText.find((item: V2exSigninInputMeta): boolean => {
+      const combined: string = `${item.name} ${item.placeholder} ${item.context}`;
+      return codeHint.test(combined);
+    });
+    const usernameInput: V2exSigninInputMeta | undefined = namedText.find((item: V2exSigninInputMeta): boolean => {
+      const combined: string = `${item.name} ${item.placeholder} ${item.context}`;
+      return /username|email|用户名|电子邮件/i.test(combined) && !captchaHint.test(combined);
+    }) ?? namedText.find((item: V2exSigninInputMeta): boolean => {
+      const combined: string = `${item.name} ${item.placeholder} ${item.context}`;
+      return !captchaHint.test(combined);
+    });
+    const passwordInput: V2exSigninInputMeta | undefined = inputs.find((item: V2exSigninInputMeta): boolean => item.type === 'password' && item.name.length > 0);
+    return {
+      username: usernameInput?.name ?? 'u',
+      password: passwordInput?.name ?? 'p',
+      code: codeInput?.name ?? 'code'
+    };
   }
 
   private static formHiddenValue(html: string, name: string): string {
@@ -644,13 +696,18 @@ export class V2exService {
           if (source?.[1]) { captchaPath = source[1]; break; }
         }
       }
+      // Keep the exact URL from the form. The reference client disables the
+      // HTTP cache for this binary request; adding a cache-busting query here
+      // can make V2EX issue a different challenge for endpoints such as
+      // /_captcha, leaving the displayed image and POST code out of sync.
       const captchaUrl: string = captchaPath.length > 0
-        ? (captchaPath.startsWith('http') ? captchaPath : `${V2exService.base()}${captchaPath.startsWith('/') ? captchaPath : `/${captchaPath}`}`) + (captchaPath.indexOf('?') >= 0 ? `&now=${Date.now()}` : `?now=${Date.now()}`)
+        ? (captchaPath.startsWith('http') ? captchaPath : `${V2exService.base()}${captchaPath.startsWith('/') ? captchaPath : `/${captchaPath}`}`)
         : '';
       const once: string = V2exService.formHiddenValue(html, 'once');
-      const usernameField: string = V2exService.formInputName(html, '用户名|username|email', 'u');
-      const passwordField: string = V2exService.formInputName(html, '密码|password', 'p');
-      const codeField: string = V2exService.formInputName(html, '验证码|captcha|code|机器', 'code');
+      const signinFields: V2exSigninFieldNames = V2exService.signinFieldNames(html);
+      const usernameField: string = signinFields.username;
+      const passwordField: string = signinFields.password;
+      const codeField: string = signinFields.code;
       const next: string = V2exService.formHiddenValue(html, 'next');
       // Keep the cookie snapshot paired with this nonce and captcha. The
       // reference client passes the same cookie to its image request instead

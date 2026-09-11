@@ -190,7 +190,10 @@ struct Login {
               } else {
                 Text(this.loading ? '正在加载验证码…' : '验证码加载失败，点击重试').width('100%').aspectRatio(4).margin({ top: 6 }).textAlign(TextAlign.Center).fontColor(themeSecondaryText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).borderRadius(8).onClick(() => { if (!this.loading) this.loadSigninInfo(); })
               }
-              TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Email).onChange((value: string) => this.code = value)
+              // Captcha answers are opaque short strings. Keep a plain input
+              // type so ArkUI does not apply email normalization or filtering
+              // before the value is posted to V2EX.
+              TextInput({ placeholder: '请输入上图中的验证码，点击图片可更换', text: this.code }).width('100%').height(52).margin({ top: 8 }).fontSize(16).fontColor(themePrimaryText(this.darkMode)).placeholderColor(themeMutedText(this.darkMode)).backgroundColor(themeInputBackground(this.darkMode)).type(InputType.Normal).onChange((value: string) => this.code = value)
               if (this.status.length > 0) Text(this.status).fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).width('100%').lineHeight(20).margin({ top: 12 })
               Button(this.submitting ? '登录中…' : '登录').width('100%').height(48).margin({ top: 16 }).backgroundColor(this.themeColor).fontColor(themeOnColor(this.themeColor))
                 .enabled(!this.loading && !this.submitting && this.signinInfo !== undefined && !this.limited)
