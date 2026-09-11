@@ -908,7 +908,7 @@ struct TopicDetail {
                     // The H5 page caps embedded images at 500px. ArkUI can
                     // otherwise keep the source dimensions when only a
                     // percentage constraint is supplied.
-                    Image(this.contentUrl(part.value)).width(500).height(500).objectFit(ImageFit.Contain)
+                    Image(this.contentUrl(part.value)).width(170).height(170).objectFit(ImageFit.Contain)
                       .margin({ top: 14, bottom: 4 })
                       .onClick(() => this.openLink(part.value))
                   }
@@ -1049,7 +1049,7 @@ struct TopicDetail {
                         // could therefore occupy the whole 1120px viewport.
                         // Match the H5 embedded-image limit with a bounded
                         // container and preserve the source aspect ratio.
-                        Image(this.contentUrl(part.value)).width(500).height(500).objectFit(ImageFit.Contain).margin({ top: 10 })
+                        Image(this.contentUrl(part.value)).width(170).height(170).objectFit(ImageFit.Contain).margin({ top: 10 })
                           .onClick(() => this.openLink(part.value))
                       }
                     } else if (part.kind === 'mention') {
