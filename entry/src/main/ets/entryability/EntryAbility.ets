@@ -16,6 +16,7 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
+import { loadPersistedDarkMode } from '../common/Theme';
 
 const DOMAIN = 0x0000;
 
@@ -24,8 +25,9 @@ export default class EntryAbility extends UIAbility {
     try {
       // Bind the preference before the start window is resolved so the splash
       // and the first page use the saved appearance setting.
-      PersistentStorage.persistProps([{ key: 'v2exDarkMode', defaultValue: false }]);
-      const darkMode: boolean = AppStorage.get<boolean>('v2exDarkMode') ?? false;
+      const darkMode: boolean = loadPersistedDarkMode(this.context);
+      AppStorage.setOrCreate('v2exDarkMode', darkMode);
+      PersistentStorage.persistProps([{ key: 'v2exDarkMode', defaultValue: darkMode }]);
       this.context.getApplicationContext().setColorMode(
         darkMode ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
       );

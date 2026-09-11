@@ -1,5 +1,17 @@
 import { common } from '@kit.AbilityKit';
+import { preferences } from '@kit.ArkData';
 import { window } from '@kit.ArkUI';
+
+const APPEARANCE_STORE = 'v2ex_appearance';
+
+/** Read the appearance setting from the device preference store at startup. */
+export function loadPersistedDarkMode(context?: common.UIAbilityContext): boolean {
+  try {
+    const owner: common.UIAbilityContext = context ?? (getContext() as common.UIAbilityContext);
+    const store = preferences.getPreferencesSync(owner, { name: APPEARANCE_STORE });
+    return store.getSync('darkMode', false) as boolean;
+  } catch (_) { return false; }
+}
 
 /** Keep system bars continuous with every native page and the current theme. */
 export function applyThemeSystemBars(darkMode: boolean): void {
@@ -27,6 +39,10 @@ export function applyThemeSystemBars(darkMode: boolean): void {
 export function setDarkMode(value: boolean): void {
   try {
     AppStorage.setOrCreate('v2exDarkMode', value);
+    const owner = getContext() as common.UIAbilityContext;
+    const store = preferences.getPreferencesSync(owner, { name: APPEARANCE_STORE });
+    store.putSync('darkMode', value);
+    store.flushSync();
     // persistProp reads the current AppStorage value when the key is already
     // registered, so this call writes the newly selected mode immediately.
     PersistentStorage.persistProp('v2exDarkMode', value);
