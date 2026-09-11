@@ -28,6 +28,13 @@ export default class EntryAbility extends UIAbility {
       const darkMode: boolean = loadPersistedDarkMode(this.context);
       AppStorage.setOrCreate('v2exDarkMode', darkMode);
       PersistentStorage.persistProps([{ key: 'v2exDarkMode', defaultValue: darkMode }]);
+      // Keep authentication state available to the native pages after the
+      // ability process is recreated. The service also mirrors the cookie to
+      // a preference store for non-UI requests.
+      PersistentStorage.persistProps([
+        { key: 'v2exCachedMember', defaultValue: '' },
+        { key: 'v2exNativeCookie', defaultValue: '' }
+      ]);
       this.context.getApplicationContext().setColorMode(
         darkMode ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
       );

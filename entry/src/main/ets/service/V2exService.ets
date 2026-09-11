@@ -2,7 +2,9 @@ import { http } from '@kit.NetworkKit';
 import { webview } from '@kit.ArkWeb';
 import { fileIo } from '@kit.CoreFileKit';
 import { util } from '@kit.ArkTS';
+import { preferences } from '@kit.ArkData';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { common } from '@kit.AbilityKit';
 import { V2exMember, V2exMemberRelations, V2exNode, V2exNotification, V2exReply, V2exTopic, V2exTopicStats } from '../model/V2exModels';
 
 const API_BASE: string = 'https://www.v2ex.com';
@@ -40,6 +42,7 @@ interface V2exSigninFieldNames {
 
 export class V2exService {
   private static readonly LOG_DOMAIN: number = 0x4F32;
+  private static readonly SESSION_STORE: string = 'v2ex_session';
   // Node metadata is shared by the home page, node navigation and hot-topic
   // pages. Keep a short-lived in-memory copy and coalesce concurrent requests
   // so opening several menu entries does not trigger duplicate full downloads.
@@ -74,8 +77,9 @@ export class V2exService {
   private static cookie(): string {
     let webCookie: string = '';
     try { webCookie = webview.WebCookieManager.fetchCookieSync(V2exService.base()) || ''; } catch (_) { webCookie = ''; }
-    let nativeCookie: string = '';
-    try { nativeCookie = AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { nativeCookie = ''; }
+    // AppStorage is process-scoped. Fall back to the persisted native session
+    // so authenticated requests continue to work after a force-stop/relaunch.
+    const nativeCookie: string = V2exService.nativeCookieOnly();
     return V2exService.mergeCookieHeaders(webCookie, nativeCookie);
   }
 
@@ -90,7 +94,15 @@ export class V2exService {
    * server rejects the POST with a stale-challenge error while H5 keeps working.
    */
   private static nativeCookieOnly(): string {
-    try { return AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { return ''; }
+    try {
+      const current: string = AppStorage.get<string>('v2exNativeCookie') ?? '';
+      if (current.length > 0) return current;
+      const owner = getContext() as common.UIAbilityContext;
+      const store = preferences.getPreferencesSync(owner, { name: V2exService.SESSION_STORE });
+      const persisted: string = store.getSync('nativeCookie', '') as string;
+      if (persisted.length > 0) AppStorage.setOrCreate('v2exNativeCookie', persisted);
+      return persisted;
+    } catch (_) { return ''; }
   }
 
   /**
@@ -100,7 +112,14 @@ export class V2exService {
    * when the entered characters are correct. Keep the H5 cookie jar untouched.
    */
   static resetNativeSigninSession(): void {
-    try { AppStorage.setOrCreate('v2exNativeCookie', ''); } catch (_) { /* storage may be unavailable during startup */ }
+    try {
+      AppStorage.setOrCreate('v2exNativeCookie', '');
+      PersistentStorage.persistProp('v2exNativeCookie', '');
+      const owner = getContext() as common.UIAbilityContext;
+      const store = preferences.getPreferencesSync(owner, { name: V2exService.SESSION_STORE });
+      store.putSync('nativeCookie', '');
+      store.flushSync();
+    } catch (_) { /* storage may be unavailable during startup */ }
   }
 
   private static mergeCookieHeaders(...headers: string[]): string {
@@ -214,7 +233,14 @@ export class V2exService {
     let current: string = '';
     try { current = AppStorage.get<string>('v2exNativeCookie') ?? ''; } catch (_) { current = ''; }
     const cookieHeader: string = V2exService.mergeCookieHeaders(current, cookiePairs);
-    try { AppStorage.setOrCreate('v2exNativeCookie', cookieHeader); } catch (_) { /* storage may be unavailable during startup */ }
+    try {
+      AppStorage.setOrCreate('v2exNativeCookie', cookieHeader);
+      PersistentStorage.persistProp('v2exNativeCookie', cookieHeader);
+      const owner = getContext() as common.UIAbilityContext;
+      const store = preferences.getPreferencesSync(owner, { name: V2exService.SESSION_STORE });
+      store.putSync('nativeCookie', cookieHeader);
+      store.flushSync();
+    } catch (_) { /* storage may be unavailable during startup */ }
   }
 
   private static inputAttribute(tag: string, attribute: string): string {
