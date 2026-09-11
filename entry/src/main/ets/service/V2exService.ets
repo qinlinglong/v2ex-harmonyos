@@ -145,16 +145,42 @@ export class V2exService {
     const parts: string[] = [];
     const rawCookies: Object | undefined = response.cookies;
     if (typeof rawCookies === 'string') {
-      if (rawCookies.length > 0) parts.push(rawCookies);
+      parts.push(...V2exService.normalizeCookieSources(rawCookies));
     } else if (Array.isArray(rawCookies)) {
       const list: Object[] = rawCookies as Object[];
       list.forEach((item: Object): void => {
         const value: string = String(item ?? '');
-        if (value.length > 0) parts.push(value);
+        parts.push(...V2exService.normalizeCookieSources(value));
       });
     }
     parts.push(...V2exService.collectHeaderSetCookieParts(response.header));
     return parts;
+  }
+
+  /**
+   * NetworkKit exposes response.cookies as a Netscape cookie-jar line on some
+   * devices (`domain<TAB>...<TAB>name<TAB>value`) rather than Set-Cookie.
+   * Convert those lines to ordinary name=value pairs before merging. Keeping
+   * the raw jar line would silently drop PB3_SESSION and make every captcha
+   * POST look invalid.
+   */
+  private static normalizeCookieSources(value: string): string[] {
+    const result: string[] = [];
+    value.split(/\r?\n/g).forEach((line: string): void => {
+      const clean: string = line.trim();
+      if (clean.length === 0) return;
+      const fields: string[] = clean.split(/\t+/g);
+      if (fields.length >= 7 && (fields[0].startsWith('#HttpOnly_') || fields[0].indexOf('.') >= 0)) {
+        const name: string = fields[5].trim();
+        const cookieValue: string = fields.slice(6).join('\t').trim();
+        if (name.length > 0 && cookieValue.length > 0) {
+          result.push(`${name}=${cookieValue}`);
+          return;
+        }
+      }
+      result.push(clean);
+    });
+    return result;
   }
 
   private static collectHeaderSetCookieParts(value: Object): string[] {
@@ -712,7 +738,8 @@ export class V2exService {
       // Keep the cookie snapshot paired with this nonce and captcha. The
       // reference client passes the same cookie to its image request instead
       // of reading a possibly changed global jar later.
-      return { captchaUrl, cookie: V2exService.nativeCookieOnly(), once, next, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
+      const sessionCookie: string = V2exService.nativeCookieOnly();
+      return { captchaUrl, cookie: sessionCookie, once, next, usernameField, passwordField, codeField, limited: captchaUrl.length === 0 };
     } finally { request.destroy(); }
   }
 
