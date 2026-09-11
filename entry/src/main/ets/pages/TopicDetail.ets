@@ -1103,7 +1103,9 @@ struct TopicDetail {
                     }
                     Text('回复').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ left: 16 }).onClick(() => {
                       if (reply.member?.username) {
-                        this.replyText = `@${reply.member.username} `;
+                        // Keep the same floor reference used by the H5 client
+                        // so replies remain unambiguous after sorting.
+                        this.replyText = `@${reply.member.username} #${this.replyFloor(reply, index)} `;
                         this.replyComposerOpen = true;
                       }
                     })
