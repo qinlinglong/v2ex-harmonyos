@@ -1041,7 +1041,12 @@ struct TopicDetail {
                         Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                           .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                       } else {
-                        Image(this.contentUrl(part.value)).constraintSize({ maxWidth: '100%', maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
+                        // ArkUI keeps an image's intrinsic width when only a
+                        // percentage constraint is supplied. A reply image
+                        // could therefore occupy the whole 1120px viewport.
+                        // Match the H5 embedded-image limit with a bounded
+                        // container and preserve the source aspect ratio.
+                        Image(this.contentUrl(part.value)).width(500).height(500).objectFit(ImageFit.Contain).margin({ top: 10 })
                           .onClick(() => this.openLink(part.value))
                       }
                     } else if (part.kind === 'mention') {
@@ -1083,7 +1088,12 @@ struct TopicDetail {
                       Row() {
                         Image($r('app.media.ic_heart')).width(17).height(17)
                           .fillColor(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? '#D05A73' : themeSecondaryText(this.darkMode))
-                        Text(`${reply.thanks ?? 0}`).fontSize(13).fontColor(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? '#D05A73' : themeSecondaryText(this.darkMode)).margin({ left: 4 })
+                        // The replies API does not expose thanks. Keep the
+                        // count absent until the H5 page provides a real value
+                        // instead of showing a misleading zero for every row.
+                        if (reply.thanks !== undefined) {
+                          Text(`${reply.thanks}`).fontSize(13).fontColor(this.thankedReplies.indexOf(reply.id) >= 0 || reply.thanked === true ? '#D05A73' : themeSecondaryText(this.darkMode)).margin({ left: 4 })
+                        }
                       }.padding({ left: 8, right: 8, top: 5, bottom: 5 })
                         .onClick(() => { if (!this.isSelf(reply.member?.username)) this.thankReply(reply.id); })
                     }

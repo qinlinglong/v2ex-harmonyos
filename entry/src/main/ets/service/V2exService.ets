@@ -442,8 +442,18 @@ export class V2exService {
   private static replyThanks(block: string): number | undefined {
     const match: RegExpMatchArray | null = block.match(/class=["'][^"']*\bsmall\b[^"']*\bfade\b[^"']*["'][^>]*>([\s\S]*?)<\/[^>]+>/i);
     const value: string = V2exService.cleanHtml(match?.[1] ?? '');
-    const count: RegExpMatchArray | null = value.match(/([\d,]+)\s*感谢/);
-    return count ? Number(count[1].replace(/,/g, '')) : undefined;
+    // H5 has used both “12 感谢” and “感谢 12” over time.  The old parser
+    // only accepted the first order, which made every reply appear to have
+    // no likes even when the page contained a count.
+    const count: RegExpMatchArray | null = value.match(/([\d,]+)\s*(?:感谢|thanks?)/i)
+      ?? value.match(/(?:感谢|thanks?)\s*[:：]?\s*([\d,]+)/i);
+    if (count) return Number((count[1] ?? '').replace(/,/g, ''));
+    // Some authenticated pages put the number in a sibling element instead
+    // of the `small fade` span. Restrict the fallback to text near the thank
+    // action so numbers in the reply body cannot be mistaken for a count.
+    const nearby: RegExpMatchArray | null = block.match(/(?:感谢|thanks?)[\s\S]{0,120}?([\d,]+)/i)
+      ?? block.match(/([\d,]+)[\s\S]{0,120}?(?:感谢|thanks?)/i);
+    return nearby ? Number((nearby[1] ?? '').replace(/,/g, '')) : undefined;
   }
   private static async get(path: string, authenticated: boolean = false): Promise<string> {
     const request: http.HttpRequest = http.createHttp();
