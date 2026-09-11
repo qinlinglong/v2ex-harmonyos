@@ -22,7 +22,14 @@ const DOMAIN = 0x0000;
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     try {
-      this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+      // Bind the preference before the start window is resolved. Otherwise a
+      // device running in dark system mode can show a dark splash while the
+      // app preference (and the first page) is light.
+      PersistentStorage.persistProp('v2exDarkMode', false);
+      const darkMode: boolean = AppStorage.get<boolean>('v2exDarkMode') ?? false;
+      this.context.getApplicationContext().setColorMode(
+        darkMode ? ConfigurationConstant.ColorMode.COLOR_MODE_DARK : ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT
+      );
     } catch (err) {
       hilog.error(DOMAIN, 'testTag', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
     }
@@ -42,15 +49,16 @@ export default class EntryAbility extends UIAbility {
     // Keep the system-bar icons enabled and light-on-dark handling explicit;
     // page roots still apply their own content spacing where needed.
     windowStage.getMainWindow().then((mainWindow: window.Window) => {
+      const darkMode: boolean = AppStorage.get<boolean>('v2exDarkMode') ?? false;
       mainWindow.setWindowLayoutFullScreen(true);
       mainWindow.setWindowSystemBarEnable(['status', 'navigation']);
       return mainWindow.setWindowSystemBarProperties({
-        statusBarColor: '#FFFFFF',
-        navigationBarColor: '#F5F7FA',
-        statusBarContentColor: '#202124',
-        navigationBarContentColor: '#202124',
-        isStatusBarLightIcon: false,
-        isNavigationBarLightIcon: false
+        statusBarColor: darkMode ? '#18202A' : '#FFFFFF',
+        navigationBarColor: darkMode ? '#0F141A' : '#F5F7FA',
+        statusBarContentColor: darkMode ? '#F2F5F8' : '#202124',
+        navigationBarContentColor: darkMode ? '#F2F5F8' : '#202124',
+        isStatusBarLightIcon: !darkMode,
+        isNavigationBarLightIcon: !darkMode
       });
     }).catch((barError: Error) => {
       hilog.warn(DOMAIN, 'testTag', 'Unable to configure immersive bars: %{public}s', JSON.stringify(barError));
