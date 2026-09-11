@@ -360,8 +360,24 @@ export class V2exService {
     // failed pages can contain member links too.
     return /\/(?:signout|logout)\b/i.test(html);
   }
+  private static responseLocation(response: http.HttpResponse): string {
+    try {
+      const headers: Record<string, Object> = response.header as Record<string, Object>;
+      const key: string | undefined = Object.keys(headers).find((name: string): boolean => name.toLowerCase() === 'location');
+      return key ? String(headers[key] ?? '') : '';
+    } catch (_) { return ''; }
+  }
   private static mutationSucceeded(response: http.HttpResponse): boolean {
     if (response.responseCode < 200 || response.responseCode >= 400) return false;
+    // V2EX acknowledges successful form mutations with a redirect. NetworkKit
+    // may still expose the old form HTML as the response body, which can
+    // contain a stale "回复内容不能为空" block. The redirect target is the
+    // authoritative result in that case.
+    if (response.responseCode >= 300 && response.responseCode < 400) {
+      const location: string = V2exService.responseLocation(response);
+      if (/\/signin\b|\/login\b/i.test(location)) return false;
+      if (location.length > 0) return true;
+    }
     const body: string = typeof response.result === 'string' ? response.result : '';
     if (body.length === 0) return true;
     if (/class=["'][^"']*problem|操作失败|请先登录|登录失败|验证码错误/i.test(body)) return false;

@@ -943,7 +943,15 @@ struct TopicDetail {
                       Flex({ wrap: FlexWrap.Wrap }) {
                         ForEach(replyTextParts(plainMarkdown(part.value)), (fragment: ReplyTextPart) => {
                           Text(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value)
-                            .fontSize(fragment.kind === 'emoji' ? 12 : 15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(23)
+                            // Keep an @mention together like the H5 renderer;
+                            // otherwise ArkUI may break after the @ glyph when
+                            // the flex row wraps. Native emoji metrics are
+                            // larger than H5 at the same point size, so scale
+                            // them down independently from normal text.
+                            .fontSize(fragment.kind === 'emoji' ? 10 : 15).fontColor(fragment.kind === 'mention' ? themeAccentText(this.themeColor, this.darkMode) : this.bodyText()).lineHeight(fragment.kind === 'emoji' ? 20 : 23)
+                            .maxLines(fragment.kind === 'mention' ? 1 : 100)
+                            .wordBreak(WordBreak.BREAK_WORD)
+                            .flexShrink(fragment.kind === 'mention' ? 0 : 1)
                             .decoration({ type: fragment.kind === 'mention' ? TextDecorationType.Underline : TextDecorationType.None, color: themeAccentText(this.themeColor, this.darkMode) })
                             .copyOption(CopyOptions.LocalDevice).textSelectable(TextSelectableMode.SELECTABLE_FOCUSABLE)
                             .editMenuOptions(this.selectionMenu(fragment.kind === 'mention' ? `@${fragment.value}` : fragment.value))
