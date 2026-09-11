@@ -904,7 +904,7 @@ struct TopicDetail {
                     Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                       .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                   } else {
-                    Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 520 }).objectFit(ImageFit.Contain)
+                    Image(this.contentUrl(part.value)).constraintSize({ maxWidth: '100%', maxHeight: 520 }).objectFit(ImageFit.Contain)
                       .margin({ top: 14, bottom: 4 })
                       .onClick(() => this.openLink(part.value))
                   }
@@ -1040,7 +1040,7 @@ struct TopicDetail {
                         Image(this.contentUrl(part.value)).width(18).height(18).objectFit(ImageFit.Contain)
                           .margin({ top: 8 }).onClick(() => this.openLink(part.value))
                       } else {
-                        Image(this.contentUrl(part.value)).width('100%').constraintSize({ maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
+                        Image(this.contentUrl(part.value)).constraintSize({ maxWidth: '100%', maxHeight: 360 }).objectFit(ImageFit.Contain).margin({ top: 10 })
                           .onClick(() => this.openLink(part.value))
                       }
                     } else if (part.kind === 'mention') {
