@@ -276,8 +276,7 @@ struct TopicDetail {
   @State noMoreReplies: boolean = false;
   @State replyMoreStatus: string = '';
   @State ignored: boolean = false;
-  // Keep the expanded state local to the detail screen. Long replies are
-  // folded to the same readable height used by V2EX_Polish and can be
+  // Keep expanded state local to the detail screen so long replies can be
   // expanded without reloading the topic.
   @State expandedReplyIdsJson: string = '[]';
   @State base64Result: string = '';
