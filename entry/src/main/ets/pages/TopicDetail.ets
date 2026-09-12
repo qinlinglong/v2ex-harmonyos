@@ -720,6 +720,13 @@ struct TopicDetail {
     const ignored: number[] = this.ignoredReplyIds();
     const list: V2exReply[] = this.replies.filter((reply: V2exReply) => ignored.indexOf(reply.id) < 0);
     if (this.replyOrder === 1) list.reverse();
+    if (this.replyOrder === 2) {
+      list.sort((left: V2exReply, right: V2exReply) => {
+        const thanksDiff: number = (right.thanks ?? 0) - (left.thanks ?? 0);
+        if (thanksDiff !== 0) return thanksDiff;
+        return this.replyFloor(left, 0) - this.replyFloor(right, 0);
+      });
+    }
     return list;
   }
 
@@ -1048,8 +1055,8 @@ struct TopicDetail {
             Row() {
               Text(`回复（${Math.max(this.topic.replies, this.replies.length)}）`).fontSize(17).fontWeight(FontWeight.Medium).fontColor(this.primaryText())
               Blank()
-              Text(this.replyOrder === 0 ? '默认排序' : '最新在前').fontSize(13).fontColor(themeSecondaryText(this.darkMode))
-                .onClick(() => this.replyOrder = this.replyOrder === 0 ? 1 : 0)
+              Text(this.replyOrder === 0 ? '默认排序' : (this.replyOrder === 1 ? '最新在前' : '热度优先')).fontSize(13).fontColor(themeSecondaryText(this.darkMode))
+                .onClick(() => this.replyOrder = (this.replyOrder + 1) % 3)
             }.width('100%').padding({ left: 18, right: 18, top: 20, bottom: 12 })
             ForEach(this.orderedReplies(), (reply: V2exReply, index: number) => {
               Column() {
