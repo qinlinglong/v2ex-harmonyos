@@ -13,6 +13,22 @@ interface ReplyTextPart { kind: string; value: string; }
 
 const BASE64_MENU_ID: TextMenuItemId = TextMenuItemId.of('v2ex_base64_decode');
 
+// A compact set of frequently used forum expressions. The picker inserts the
+// image URL directly, which keeps replies compatible with the native formatter
+// and the Markdown formatter.
+const REPLY_EMOJI_URLS: string[] = [
+  'https://i.imgur.com/L62ZP7V.png', 'https://i.imgur.com/3mPhudo.png',
+  'https://i.imgur.com/agAJ0Rd.png', 'https://i.imgur.com/HZL0hOa.png',
+  'https://i.imgur.com/n119Wvk.png', 'https://i.imgur.com/A5WXoZJ.png',
+  'https://i.imgur.com/U3hKhrT.png', 'https://i.imgur.com/3gCygBS.png',
+  'https://i.imgur.com/14cwgsI.png', 'https://i.imgur.com/fLp3t8s.png',
+  'https://i.imgur.com/km62MY2.png', 'https://i.imgur.com/CXXgF4E.png',
+  'https://i.imgur.com/TkdeN49.png', 'https://i.imgur.com/m7IlCrD.png',
+  'https://i.imgur.com/MAyk5GN.png', 'https://i.imgur.com/eRJTCx7.png',
+  'https://i.imgur.com/Ug1iMq4.png', 'https://i.imgur.com/Gy3nwkC.png',
+  'https://i.imgur.com/e1q9ScT.png', 'https://i.imgur.com/wMfcBqD.png'
+];
+
 /**
  * Normalize content copied from Markdown editors and forum posts. Some posts
  * contain escaped HTML (`\\<p>`), numeric spaces (`&#x20;`) or an image URL
@@ -282,6 +298,7 @@ struct TopicDetail {
   @State base64Result: string = '';
   @State base64Source: string = '';
   @State base64SelectedText: string = '';
+  @State replyEmojiPickerOpen: boolean = false;
   private topicId: number = 0;
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
@@ -403,6 +420,25 @@ struct TopicDetail {
         .margin({ top: 8 }).onClick(() => this.copyBase64Result())
     }.width('100%').padding(10).backgroundColor(this.darkMode ? '#202A35' : '#F3F6FA')
       .borderRadius(8).margin({ top: 8, bottom: 4 })
+  }
+
+  @Builder
+  private replyEmojiPicker(): void {
+    Column() {
+      Flex({ wrap: FlexWrap.Wrap }) {
+        ForEach(REPLY_EMOJI_URLS, (url: string, index: number) => {
+          Image(this.contentUrl(url)).width(30).height(30).objectFit(ImageFit.Contain)
+            .margin(4).onClick(() => this.insertReplyEmoji(url));
+        }, (url: string, index: number) => `reply-emoji-${index}`)
+      }.width('100%')
+    }.width('100%').padding(8).backgroundColor(this.pageBackground()).borderRadius(8)
+      .margin({ top: 6, bottom: 4 })
+  }
+
+  private insertReplyEmoji(url: string): void {
+    const separator: string = this.replyText.length > 0 && !this.replyText.endsWith('\n') ? '\n' : '';
+    this.replyText = `${this.replyText}${separator}${url}\n`;
+    this.replyEmojiPickerOpen = false;
   }
 
   private async toggleIgnoredFromMenu(): Promise<void> {
@@ -1185,9 +1221,13 @@ struct TopicDetail {
                 .backgroundColor(this.pageBackground()).borderRadius(10)
                 .padding({ left: 12, right: 12, top: 8, bottom: 8 })
                 .onChange((value: string) => this.replyText = value)
+              if (this.replyEmojiPickerOpen) this.replyEmojiPicker()
               Row() {
                 if (this.replyStatus.length > 0) Text(this.replyStatus).fontSize(12).fontColor(themeAccentText(this.themeColor, this.darkMode)).maxLines(1)
                 Blank()
+                Text(this.replyEmojiPickerOpen ? '收起表情' : '表情').fontSize(13)
+                  .fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ right: 14 })
+                  .onClick(() => this.replyEmojiPickerOpen = !this.replyEmojiPickerOpen)
                 Text('@ 回复对象').fontSize(13).fontColor(themeAccentText(this.themeColor, this.darkMode)).margin({ right: 14 })
                   .onClick(() => router.pushUrl({ url: 'pages/SearchReplyMember', params: { topicId: this.topicId } }))
                 Text('取消').fontSize(13).fontColor(themeSecondaryText(this.darkMode)).margin({ right: 14 })
