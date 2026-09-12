@@ -300,6 +300,7 @@ struct TopicDetail {
   @State base64SelectedText: string = '';
   @State replyEmojiPickerOpen: boolean = false;
   private topicId: number = 0;
+  private replyPrefetch: Map<number, Promise<V2exReply[]>> = new Map<number, Promise<V2exReply[]>>();
   private surface(): string { return this.darkMode ? '#18202A' : '#FFFFFF'; }
   private pageBackground(): string { return this.darkMode ? '#0F141A' : '#F5F7FA'; }
   private primaryText(): string { return this.darkMode ? '#F2F5F8' : '#202124'; }
@@ -528,6 +529,7 @@ struct TopicDetail {
       this.noMoreReplies = false;
       this.replyMoreStatus = '';
       this.saveRepliesCache(this.topicId, loadedReplies);
+      this.scheduleReplyPrefetch(2);
     }).catch(() => {
       if (this.replies.length === 0) this.replyStatus = '回复暂时无法加载，可稍后重试';
     });
@@ -538,7 +540,10 @@ struct TopicDetail {
     if (this.loading || this.loadingMoreReplies || this.noMoreReplies || this.topicId <= 0) return;
     this.loadingMoreReplies = true;
     try {
-      const next: V2exReply[] = await V2exService.repliesPage(this.topicId, this.replyPage + 1);
+      const nextPage: number = this.replyPage + 1;
+      const prefetched: Promise<V2exReply[]> | undefined = this.replyPrefetch.get(nextPage);
+      const next: V2exReply[] = await (prefetched ?? V2exService.repliesPage(this.topicId, nextPage));
+      this.replyPrefetch.delete(nextPage);
       const unique: V2exReply[] = next.filter((reply: V2exReply) => this.replies.findIndex((item: V2exReply) => item.id === reply.id) < 0);
       if (unique.length === 0) {
         this.noMoreReplies = true;
@@ -548,11 +553,24 @@ struct TopicDetail {
         this.replyPage += 1;
         this.replyMoreStatus = '';
         this.saveRepliesCache(this.topicId, this.replies);
+        this.scheduleReplyPrefetch(this.replyPage + 1);
       }
     } catch (_) {
       this.replyMoreStatus = '加载更多回复失败';
     } finally {
       this.loadingMoreReplies = false;
+    }
+  }
+
+  private scheduleReplyPrefetch(startPage: number): void {
+    if (this.topicId <= 0 || startPage <= 1) return;
+    for (let page = startPage; page < startPage + 2; page += 1) {
+      if (this.replyPrefetch.has(page)) continue;
+      const task: Promise<V2exReply[]> = V2exService.repliesPage(this.topicId, page).catch(() => {
+        this.replyPrefetch.delete(page);
+        throw new Error('预加载失败');
+      });
+      this.replyPrefetch.set(page, task);
     }
   }
 
