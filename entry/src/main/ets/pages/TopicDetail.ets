@@ -736,6 +736,40 @@ struct TopicDetail {
     return sourceIndex >= 0 ? sourceIndex + 1 : renderedIndex + 1;
   }
 
+  private replyDepth(reply: V2exReply): number {
+    const visible: V2exReply[] = this.orderedReplies();
+    let current: V2exReply = reply;
+    let depth: number = 0;
+    const visited: Set<number> = new Set<number>();
+    for (let step = 0; step < 3; step += 1) {
+      if (visited.has(current.id)) break;
+      visited.add(current.id);
+      const floorMatch: RegExpMatchArray | null = current.content.match(/(?:^|\s)#(\d{1,5})(?:\s|$)/);
+      let parent: V2exReply | undefined;
+      if (floorMatch) {
+        const floor: number = Number(floorMatch[1]);
+        parent = visible.find((item: V2exReply) => item.id !== current.id && this.replyFloor(item, 0) === floor);
+      }
+      if (parent === undefined) {
+        const mention: RegExpMatchArray | null = current.content.match(/(?:^|\s)@([A-Za-z0-9_\-]+)/);
+        const username: string = mention?.[1]?.toLowerCase() ?? '';
+        if (username.length > 0) {
+          const currentIndex: number = visible.findIndex((item: V2exReply) => item.id === current.id);
+          for (let index = currentIndex - 1; index >= 0; index -= 1) {
+            if ((visible[index].member?.username ?? '').toLowerCase() === username) {
+              parent = visible[index];
+              break;
+            }
+          }
+        }
+      }
+      if (parent === undefined) break;
+      depth += 1;
+      current = parent;
+    }
+    return depth;
+  }
+
   private expandedReplyIds(): number[] {
     try {
       const value: number[] = JSON.parse(this.expandedReplyIdsJson) as number[];
@@ -1210,7 +1244,7 @@ struct TopicDetail {
                   }.width('100%').margin({ top: 10 })
                 }
               }.width('100%').alignItems(HorizontalAlign.Start).padding({ left: 16, right: 16, top: 16, bottom: 16 })
-                .backgroundColor(this.surface()).margin({ bottom: 1 })
+                .backgroundColor(this.surface()).margin({ left: this.replyDepth(reply) * 18, bottom: 1 })
             }, (reply: V2exReply) => `${reply.id}`)
             if (this.replies.length > 0) {
               Row() {
