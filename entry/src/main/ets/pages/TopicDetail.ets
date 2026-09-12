@@ -949,7 +949,7 @@ struct TopicDetail {
                     // column width (about 500 CSS px). Keep a bounded native
                     // box that maps to that width on the phone while leaving
                     // a separate 18vp path for inline expressions.
-                    Image(this.contentUrl(part.value)).width(330).height(330).objectFit(ImageFit.Contain)
+                    Image(this.contentUrl(part.value)).width(380).height(380).objectFit(ImageFit.Contain)
                       .margin({ top: 14, bottom: 4 })
                       .onClick(() => this.openLink(part.value))
                   }
@@ -1087,7 +1087,7 @@ struct TopicDetail {
                       } else {
                         // Use the same H5-sized bounded box for reply images;
                         // inline expressions take the 18vp branch above.
-                        Image(this.contentUrl(part.value)).width(330).height(330).objectFit(ImageFit.Contain).margin({ top: 10 })
+                        Image(this.contentUrl(part.value)).width(380).height(380).objectFit(ImageFit.Contain).margin({ top: 10 })
                           .onClick(() => this.openLink(part.value))
                       }
                     } else if (part.kind === 'mention') {
